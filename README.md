@@ -1,3 +1,3 @@
-#Another MAL client
+# Another MAL client
 
 This time with CLI
