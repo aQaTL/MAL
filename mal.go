@@ -40,7 +40,7 @@ func main() {
 		}
 		c := mal.NewClient(string(credentials))
 
-		list := c.GetAnimeList(mal.Watching)
+		list := c.AnimeList(mal.Completed)
 		for _, anime := range list {
 			fmt.Printf("%v\n", anime.Title)
 		}
@@ -67,7 +67,4 @@ func cacheCredentials(username, password string) {
 	if err != nil {
 		log.Printf("Caching credentials failed: %v", err)
 	}
-}
-
-func loadCredentials() {
 }
