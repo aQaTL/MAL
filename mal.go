@@ -13,7 +13,7 @@ import (
 )
 
 const CredentialsFile = "cred.dat"
-const MalCacheFile = "cache.json"
+const MalCacheFile = "cache.xml"
 
 func main() {
 	app := cli.NewApp()
@@ -32,10 +32,6 @@ func main() {
 		cli.BoolFlag{
 			Name:  "sp, save-password",
 			Usage: "save your password. Use with caution, your password can be decoded",
-		},
-		cli.BoolTFlag{
-			Name:  "cache",
-			Usage: "cache your list",
 		},
 		cli.BoolFlag{
 			Name:  "r, refresh",
@@ -66,7 +62,7 @@ func defaultAction(ctx *cli.Context) {
 
 	var list []*mal.Anime
 
-	if ctx.Bool("refresh") {
+	if ctx.Bool("refresh") || cacheNotExist() {
 		list = c.AnimeList(mal.Watching)
 	} else {
 		list = loadCachedList()
@@ -82,13 +78,17 @@ func defaultAction(ctx *cli.Context) {
 		cacheCredentials(ctx.String("username"), ctx.String("password"))
 	}
 
-	if ctx.BoolT("cache") {
-		cacheList(list)
-	}
+	cacheList(list)
 }
 
 func basicAuth(username, password string) string {
 	return "Basic " + base64.StdEncoding.EncodeToString([]byte(username+":"+password))
+}
+
+func cacheNotExist() bool {
+	f, err := os.Open(MalCacheFile)
+	defer f.Close()
+	return os.IsNotExist(err)
 }
 
 func loadCachedList() []*mal.Anime {
