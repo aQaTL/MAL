@@ -58,7 +58,7 @@ func verifyCredentials(credentials string) bool {
 		log.Printf("Response error: %v", err)
 		return false
 	}
-	log.Printf("Credentials verification myStatus: %v", resp.Status)
+	log.Printf("Credentials verification status: %v", resp.Status)
 
 	return resp.StatusCode == 200
 }

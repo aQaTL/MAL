@@ -8,10 +8,10 @@ import (
 	"encoding/base64"
 	"io/ioutil"
 	"sort"
-	"fmt"
 )
 
 const CredentialsFile = "cred.dat"
+const MalCacheFile = "cache.json"
 
 func main() {
 	app := cli.NewApp()
@@ -20,38 +20,28 @@ func main() {
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name: "u, username",
+			Name:  "u, username",
 			Usage: "specify username",
 		},
 		cli.StringFlag{
-			Name: "p, password",
+			Name:  "p, password",
 			Usage: "specify password",
 		},
 		cli.BoolFlag{
-			Name: "c, cache",
-			Usage: "Cache / save your password. Use with caution, your password can be decoded",
+			Name:  "sp, save-password",
+			Usage: "save your password. Use with caution, your password can be decoded",
+		},
+		cli.BoolTFlag{
+			Name:  "cache",
+			Usage: "cache your list",
+		},
+		cli.BoolFlag{
+			Name:  "r, refresh",
+			Usage: "refreshes cache file",
 		},
 	}
 
-	app.Action = func(ctx *cli.Context) {
-		credentials, err := ioutil.ReadFile(CredentialsFile)
-		if err != nil {
-			//credentials not found, using given username and password
-			credentials = []byte(basicAuth(ctx.String("username"), ctx.String("password")))
-		}
-		c := mal.NewClient(string(credentials))
-
-		list := c.AnimeList(mal.Watching)
-		sort.Sort(mal.AnimeSortByLastUpdated(list))
-
-		for _, anime := range list {
-			fmt.Println(anime.Title)
-		}
-
-		if ctx.Bool("cache") {
-			cacheCredentials(ctx.String("username"), ctx.String("password"))
-		}
-	}
+	app.Action = defaultAction
 
 	if err := app.Run(os.Args); err != nil {
 		log.Printf("Arguments error: %v", err)
@@ -60,8 +50,29 @@ func main() {
 
 }
 
+func defaultAction(ctx *cli.Context) {
+	credentials, err := ioutil.ReadFile(CredentialsFile)
+	if err != nil {
+		//credentials not found, using given username and password
+		credentials = []byte(basicAuth(ctx.String("username"), ctx.String("password")))
+	}
+	c := mal.NewClient(string(credentials))
+
+	list := c.AnimeList(mal.Watching)
+	sort.Sort(mal.AnimeSortByLastUpdated(list))
+	list = list[:10]
+	reverseAnimeSlice(list)
+
+	PrettyList.Execute(os.Stdout, list)
+
+	if ctx.Bool("save-password") {
+		cacheCredentials(ctx.String("username"), ctx.String("password"))
+	}
+
+}
+
 func basicAuth(username, password string) string {
-	return "Basic " + base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
+	return "Basic " + base64.StdEncoding.EncodeToString([]byte(username+":"+password))
 }
 
 func cacheCredentials(username, password string) {
@@ -69,5 +80,12 @@ func cacheCredentials(username, password string) {
 	err := ioutil.WriteFile(CredentialsFile, []byte(credentials), 400)
 	if err != nil {
 		log.Printf("Caching credentials failed: %v", err)
+	}
+}
+
+func reverseAnimeSlice(s []*mal.Anime) {
+	last := len(s) - 1
+	for i := 0; i < len(s)/2; i++ {
+		s[i], s[last-i] = s[last-i], s[i]
 	}
 }
