@@ -15,7 +15,7 @@ const (
 	ApiEndpoint               = BaseMALAddress + "/api"
 	VerifyCredentialsEndpoint = ApiEndpoint + "/account/verify_credentials.xml"
 
-	UserAnimeListEndpoint = BaseMALAddress + "/malappinfo.php?u=%s&status=%s&type=anime" //%s - username %s - myStatus
+	UserAnimeListEndpoint = BaseMALAddress + "/malappinfo.php?u=%s&status=%s&type=anime" //%s - username %s - status
 )
 
 type Client struct {
