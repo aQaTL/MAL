@@ -45,7 +45,7 @@ const (
 	Completed
 	OnHold
 	Dropped
-	PlanToWatch myStatus = 6
+	PlanToWatch myStatus = 6 //Apparently MAL stores this as 6
 )
 
 type Anime struct {

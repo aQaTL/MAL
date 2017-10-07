@@ -21,3 +21,6 @@ mal.iml
 
 # Credentials file
 cred.dat
+
+# Cache file
+cache.json

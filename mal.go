@@ -8,6 +8,8 @@ import (
 	"encoding/base64"
 	"io/ioutil"
 	"sort"
+	"encoding/xml"
+	"io"
 )
 
 const CredentialsFile = "cred.dat"
@@ -39,6 +41,10 @@ func main() {
 			Name:  "r, refresh",
 			Usage: "refreshes cache file",
 		},
+		cli.BoolFlag{
+			Name:  "no-verify",
+			Usage: "don't verify credentials",
+		},
 	}
 
 	app.Action = defaultAction
@@ -58,7 +64,14 @@ func defaultAction(ctx *cli.Context) {
 	}
 	c := mal.NewClient(string(credentials))
 
-	list := c.AnimeList(mal.Watching)
+	var list []*mal.Anime
+
+	if ctx.Bool("refresh") {
+		list = c.AnimeList(mal.Watching)
+	} else {
+		list = loadCachedList()
+	}
+
 	sort.Sort(mal.AnimeSortByLastUpdated(list))
 	list = list[:10]
 	reverseAnimeSlice(list)
@@ -69,10 +82,34 @@ func defaultAction(ctx *cli.Context) {
 		cacheCredentials(ctx.String("username"), ctx.String("password"))
 	}
 
+	if ctx.BoolT("cache") {
+		cacheList(list)
+	}
 }
 
 func basicAuth(username, password string) string {
 	return "Basic " + base64.StdEncoding.EncodeToString([]byte(username+":"+password))
+}
+
+func loadCachedList() []*mal.Anime {
+	f, err := os.Open(MalCacheFile)
+	defer f.Close()
+	if err != nil {
+		log.Printf("Error opening %s file: %v", MalCacheFile, err)
+	}
+
+	list := make([]*mal.Anime, 0)
+
+	decoder := xml.NewDecoder(f)
+	for t, err := decoder.Token(); err != io.EOF; t, err = decoder.Token() {
+		if t, ok := t.(xml.StartElement); ok && t.Name.Local == "Anime" {
+			var anime mal.Anime
+			decoder.DecodeElement(&anime, &t)
+			list = append(list, &anime)
+		}
+	}
+
+	return list
 }
 
 func cacheCredentials(username, password string) {
@@ -87,5 +124,18 @@ func reverseAnimeSlice(s []*mal.Anime) {
 	last := len(s) - 1
 	for i := 0; i < len(s)/2; i++ {
 		s[i], s[last-i] = s[last-i], s[i]
+	}
+}
+
+func cacheList(list []*mal.Anime) {
+	f, err := os.Create(MalCacheFile)
+	defer f.Close()
+	if err != nil {
+		log.Printf("Error creating %s file: %v", MalCacheFile, err)
+	}
+
+	encoder := xml.NewEncoder(f)
+	if err := encoder.Encode(list); err != nil {
+		log.Printf("Caching error: %v", err)
 	}
 }

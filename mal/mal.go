@@ -89,7 +89,7 @@ func (c *Client) AnimeList(status myStatus) []*Anime {
 				decoder.DecodeElement(&c, &t)
 			case "anime":
 				anime := new(Anime)
-				decoder.DecodeElement(anime, &t)
+				decoder.DecodeElement(&anime, &t)
 				if anime.MyStatus == status {
 					list = append(list, anime)
 				}
