@@ -1,5 +1,7 @@
 package mal
 
+import "sort"
+
 type animeType int
 
 const (
@@ -67,4 +69,27 @@ type Anime struct {
 	MyRewatchingEpisode int        `xml:"my_rewatching_ep"`
 	LastUpdated         int        `xml:"my_last_updated"`
 	MyTags              string     `xml:"my_tags"`
+}
+
+type AnimeCustomSort struct {
+	List  []*Anime
+	LessF func(x, y *Anime) bool
+}
+
+func (acs AnimeCustomSort) Len() int {
+	return len(acs.List)
+}
+
+func (acs AnimeCustomSort) Less(i, j int) bool {
+	return acs.LessF(acs.List[i], acs.List[j])
+}
+
+func (acs AnimeCustomSort) Swap(i, j int) {
+	acs.List[i], acs.List[j] = acs.List[j], acs.List[i]
+}
+
+func AnimeSortByLastUpdated(list []*Anime) sort.Interface {
+	return AnimeCustomSort{list, func(x, y *Anime) bool {
+		return x.LastUpdated > y.LastUpdated
+	}}
 }

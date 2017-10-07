@@ -4,10 +4,11 @@ import (
 	"github.com/aqatl/mal/mal"
 	"github.com/urfave/cli"
 	"os"
-	"fmt"
 	"log"
 	"encoding/base64"
 	"io/ioutil"
+	"sort"
+	"fmt"
 )
 
 const CredentialsFile = "cred.dat"
@@ -40,9 +41,11 @@ func main() {
 		}
 		c := mal.NewClient(string(credentials))
 
-		list := c.AnimeList(mal.Completed)
+		list := c.AnimeList(mal.Watching)
+		sort.Sort(mal.AnimeSortByLastUpdated(list))
+
 		for _, anime := range list {
-			fmt.Printf("%v\n", anime.Title)
+			fmt.Println(anime.Title)
 		}
 
 		if ctx.Bool("cache") {

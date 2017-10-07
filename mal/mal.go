@@ -63,7 +63,7 @@ func verifyCredentials(credentials string) bool {
 	return resp.StatusCode == 200
 }
 
-func (c *Client) AnimeList(status myStatus) []Anime {
+func (c *Client) AnimeList(status myStatus) []*Anime {
 	url := fmt.Sprintf(UserAnimeListEndpoint, c.Username, "all") //Anything other than `all` doesn't really work
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -74,13 +74,13 @@ func (c *Client) AnimeList(status myStatus) []Anime {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Printf("Anime list getting error: %v", err)
+		log.Printf("List list getting error: %v", err)
 	}
 
 	decoder := xml.NewDecoder(resp.Body)
 	decoder.Strict = false
 
-	list := make([]Anime, 0)
+	list := make([]*Anime, 0)
 
 	for t, err := decoder.Token(); err != io.EOF; t, err = decoder.Token() {
 		if t, ok := t.(xml.StartElement); ok {
@@ -88,8 +88,8 @@ func (c *Client) AnimeList(status myStatus) []Anime {
 			case "myinfo":
 				decoder.DecodeElement(&c, &t)
 			case "anime":
-				anime := Anime{}
-				decoder.DecodeElement(&anime, &t)
+				anime := new(Anime)
+				decoder.DecodeElement(anime, &t)
 				if anime.MyStatus == status {
 					list = append(list, anime)
 				}
