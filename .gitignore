@@ -19,8 +19,5 @@
 mal.iml
 .idea
 
-# Credentials file
-cred.dat
-
-# Cache file
-cache.xml
+# User files
+data

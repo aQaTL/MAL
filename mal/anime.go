@@ -71,6 +71,18 @@ type Anime struct {
 	MyTags              string     `xml:"my_tags"`
 }
 
+const AnimeXMLTemplate = `<?xml version="1.0" encoding="UTF-8"?>
+<entry>
+	<episode>{{.WatchedEpisodes}}</episode>
+	<status>{{.MyStatus}}</status>
+	<score>{{.MyScore}}</score>
+	<times_rewatched>{{.MyRewatching}}</times_rewatched>
+	<rewatch_value>{{.MyRewatchingEpisode}}</rewatch_value>
+	<date_start>{{.MyStart}}</date_start>
+	<date_finish>{{.MyFinish}}</date_finish>
+	<tags>{{.MyTags}}</tags>
+</entry>`
+
 type AnimeCustomSort struct {
 	List  []*Anime
 	LessF func(x, y *Anime) bool

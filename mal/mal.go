@@ -8,12 +8,18 @@ import (
 	"strings"
 	"encoding/xml"
 	"io"
+	"text/template"
+	"bytes"
+	"net/url"
+	"io/ioutil"
 )
 
 const (
 	BaseMALAddress            = "https://myanimelist.net"
 	ApiEndpoint               = BaseMALAddress + "/api"
 	VerifyCredentialsEndpoint = ApiEndpoint + "/account/verify_credentials.xml"
+
+	UpdateEndpoint = ApiEndpoint + "/animelist/update/%d.xml" //%d - anime database ID
 
 	UserAnimeListEndpoint = BaseMALAddress + "/malappinfo.php?u=%s&status=%s&type=anime" //%s - username %s - status
 )
@@ -63,6 +69,16 @@ func verifyCredentials(credentials string) bool {
 	return resp.StatusCode == 200
 }
 
+func newRequest(url, credentials, method string) *http.Request {
+	req, err := http.NewRequest(method, url, nil)
+	if err != nil {
+		log.Printf("Request creation error: %v", err)
+		return nil
+	}
+	req.Header.Add("Authorization", credentials)
+	return req
+}
+
 func (c *Client) AnimeList(status myStatus) []*Anime {
 	url := fmt.Sprintf(UserAnimeListEndpoint, c.Username, "all") //Anything other than `all` doesn't really work
 
@@ -90,7 +106,7 @@ func (c *Client) AnimeList(status myStatus) []*Anime {
 			case "anime":
 				anime := new(Anime)
 				decoder.DecodeElement(&anime, &t)
-				if anime.MyStatus == status {
+				if anime.MyStatus == status || status == All {
 					list = append(list, anime)
 				}
 			}
@@ -100,12 +116,45 @@ func (c *Client) AnimeList(status myStatus) []*Anime {
 	return list
 }
 
-func newRequest(url, credentials, method string) *http.Request {
-	req, err := http.NewRequest(method, url, nil)
+func (c *Client) Update(entry *Anime) bool {
+	buf := &bytes.Buffer{}
+
+	template.Must(
+		template.New("animeXML").
+			Parse(AnimeXMLTemplate)).
+		Execute(buf, entry)
+
+	payload := url.Values{}
+	payload.Set("data", buf.String())
+
+	req, err := http.NewRequest(
+		http.MethodPost,
+		fmt.Sprintf(UpdateEndpoint, entry.ID),
+		strings.NewReader(payload.Encode()),
+	)
+
 	if err != nil {
-		log.Printf("Request creation error: %v", err)
-		return nil
+		log.Printf("Error creating http request: %v", err)
+		return false
 	}
-	req.Header.Add("Authorization", credentials)
-	return req
+	req.Header.Set("Authorization", c.credentials)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Printf("Error getting response for %d - %s update: %v", entry.ID, entry.Title, err)
+		return false
+	}
+
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Error reading body: %v", err)
+	}
+	body := string(bodyBytes)
+
+	if body != "Updated" || resp.StatusCode != 200 {
+		log.Printf("Body: %v\nStatus: %s", body, resp.Status)
+		return false
+	}
+	return true
 }
