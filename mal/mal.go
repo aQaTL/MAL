@@ -18,7 +18,10 @@ const (
 	BaseMALAddress            = "https://myanimelist.net"
 	ApiEndpoint               = BaseMALAddress + "/api"
 	VerifyCredentialsEndpoint = ApiEndpoint + "/account/verify_credentials.xml"
+)
 
+//For using as a printf format
+const (
 	UpdateEndpoint = ApiEndpoint + "/animelist/update/%d.xml" //%d - anime database ID
 
 	UserAnimeListEndpoint = BaseMALAddress + "/malappinfo.php?u=%s&status=%s&type=anime" //%s - username %s - status

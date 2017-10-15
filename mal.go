@@ -10,10 +10,13 @@ import (
 	"sort"
 	"encoding/xml"
 	"io"
+	"strconv"
 )
 
-const CredentialsFile = "cred.dat"
-const MalCacheFile = "cache.xml"
+const cacheDir = "data" + string(os.PathSeparator)
+const CredentialsFile = cacheDir + "cred.dat"
+const MalCacheFile = cacheDir + "cache.xml"
+const ConfigFile = cacheDir + "config.json"
 
 func main() {
 	app := cli.NewApp()
@@ -43,42 +46,75 @@ func main() {
 		},
 	}
 
+	app.Commands = []cli.Command{
+		cli.Command{
+			Name:     "inc",
+			Aliases:  []string{"+1"},
+			Category: "Update",
+			Usage:    "Increment selected entry by one",
+			UsageText: "mal inc",
+			Action:   incrementEntry,
+			Flags: []cli.Flag{
+				cli.IntFlag{
+					Name:  "n",
+					Usage: "Specify exact episode to set the entry to",
+				},
+			},
+		},
+		cli.Command{
+			Name:     "sel",
+			Aliases:  []string{"select"},
+			Category: "Config",
+			Usage:    "Select an entry",
+			UsageText: "mal sel [entry ID]",
+			Action:   selectEntry,
+		},
+	}
+
 	app.Action = defaultAction
 
 	if err := app.Run(os.Args); err != nil {
 		log.Printf("Arguments error: %v", err)
 		os.Exit(1)
 	}
-
 }
 
 func defaultAction(ctx *cli.Context) {
-	credentials, err := ioutil.ReadFile(CredentialsFile)
-	if err != nil {
-		//credentials not found, using given username and password
-		credentials = []byte(basicAuth(ctx.String("username"), ctx.String("password")))
-	}
-	c := mal.NewClient(string(credentials))
+	c := mal.NewClient(credentials(ctx))
+
+	config := LoadConfig()
 
 	var list []*mal.Anime
-
 	if ctx.Bool("refresh") || cacheNotExist() {
-		list = c.AnimeList(mal.Watching)
+		list = c.AnimeList(mal.All)
 	} else {
 		list = loadCachedList()
 	}
-
 	sort.Sort(mal.AnimeSortByLastUpdated(list))
-	list = list[:10]
-	reverseAnimeSlice(list)
 
-	PrettyList.Execute(os.Stdout, list)
+	visibleEntries := config.MaxVisibleEntries
+	if visibleEntries > len(list) {
+		visibleEntries = len(list)
+	}
+	visibleList := list[:visibleEntries]
+	reverseAnimeSlice(visibleList)
+
+	PrettyList.Execute(os.Stdout, PrettyListData{visibleList, config.SelectedID})
 
 	if ctx.Bool("save-password") {
 		cacheCredentials(ctx.String("username"), ctx.String("password"))
 	}
 
 	cacheList(list)
+}
+
+func credentials(ctx *cli.Context) string {
+	credentials, err := ioutil.ReadFile(CredentialsFile)
+	if err != nil {
+		//credentials not found, using given username and password
+		credentials = []byte(basicAuth(ctx.String("username"), ctx.String("password")))
+	}
+	return string(credentials)
 }
 
 func basicAuth(username, password string) string {
@@ -138,4 +174,50 @@ func cacheList(list []*mal.Anime) {
 	if err := encoder.Encode(list); err != nil {
 		log.Printf("Caching error: %v", err)
 	}
+}
+
+func incrementEntry(ctx *cli.Context) error {
+	c := mal.NewClient(credentials(ctx))
+	cfg := LoadConfig()
+
+	if cfg.SelectedID == 0 {
+		log.Fatalln("No entry selected")
+	}
+
+	list := loadCachedList()
+	var selectedEntry *mal.Anime
+	for _, entry := range list {
+		if entry.ID == cfg.SelectedID {
+			selectedEntry = entry
+			break
+		}
+	}
+
+	if selectedEntry == nil {
+		log.Fatalln("No entry found")
+	}
+
+	if ctx.Int("n") > 0 {
+		selectedEntry.WatchedEpisodes = ctx.Int("n")
+	} else {
+		selectedEntry.WatchedEpisodes++
+	}
+
+	if c.Update(selectedEntry) {
+		log.Printf("Updated successfully")
+	}
+	return nil
+}
+
+func selectEntry(ctx *cli.Context) error {
+	cfg := LoadConfig()
+
+	id, err := strconv.Atoi(ctx.Args().First())
+	if err != nil {
+		log.Fatalf("Error parsing id: %v", err)
+	}
+
+	cfg.SelectedID = id
+	cfg.Save()
+	return nil
 }

@@ -11,10 +11,9 @@ type Config struct {
 	MaxVisibleEntries int
 }
 
-func loadConfig() (config *Config) {
+func LoadConfig() (config *Config) {
 	config = new(Config)
 	config.MaxVisibleEntries = 10
-	config.SelectedID = 21
 
 	f, err := os.Open(ConfigFile)
 	defer f.Close()
@@ -30,7 +29,7 @@ func loadConfig() (config *Config) {
 	return
 }
 
-func saveConfig(config *Config) {
+func (cfg *Config) Save() {
 	f, err := os.Create(ConfigFile)
 	defer f.Close()
 	if err != nil {
@@ -38,7 +37,7 @@ func saveConfig(config *Config) {
 	}
 
 	encoder := json.NewEncoder(f)
-	if err := encoder.Encode(config); err != nil {
+	if err := encoder.Encode(cfg); err != nil {
 		log.Printf("Error encoding %s file: %v", ConfigFile, err)
 	}
 }
