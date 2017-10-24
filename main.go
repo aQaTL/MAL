@@ -5,20 +5,21 @@ import (
 	"github.com/urfave/cli"
 	"os"
 	"log"
-	"encoding/base64"
-	"io/ioutil"
 	"sort"
-	"encoding/xml"
-	"io"
 	"strconv"
+	"path/filepath"
 )
 
-const cacheDir = "data" + string(os.PathSeparator)
-const CredentialsFile = cacheDir + "cred.dat"
-const MalCacheFile = cacheDir + "cache.xml"
-const ConfigFile = cacheDir + "config.json"
+var dataDir = filepath.Join(homeDir(), ".mal")
+var (
+	CredentialsFile = dataDir + "cred.dat"
+	MalCacheFile    = dataDir + "cache.xml"
+	ConfigFile      = dataDir + "config.json"
+)
 
 func main() {
+	checkDataDir()
+
 	app := cli.NewApp()
 	app.Name = "mal"
 	app.Usage = "App for managing your MAL"
@@ -48,12 +49,12 @@ func main() {
 
 	app.Commands = []cli.Command{
 		cli.Command{
-			Name:     "inc",
-			Aliases:  []string{"+1"},
-			Category: "Update",
-			Usage:    "Increment selected entry by one",
+			Name:      "inc",
+			Aliases:   []string{"+1"},
+			Category:  "Update",
+			Usage:     "Increment selected entry by one",
 			UsageText: "mal inc",
-			Action:   incrementEntry,
+			Action:    incrementEntry,
 			Flags: []cli.Flag{
 				cli.IntFlag{
 					Name:  "n",
@@ -62,12 +63,12 @@ func main() {
 			},
 		},
 		cli.Command{
-			Name:     "sel",
-			Aliases:  []string{"select"},
-			Category: "Config",
-			Usage:    "Select an entry",
+			Name:      "sel",
+			Aliases:   []string{"select"},
+			Category:  "Config",
+			Usage:     "Select an entry",
 			UsageText: "mal sel [entry ID]",
-			Action:   selectEntry,
+			Action:    selectEntry,
 		},
 	}
 
@@ -81,6 +82,9 @@ func main() {
 
 func defaultAction(ctx *cli.Context) {
 	c := mal.NewClient(credentials(ctx))
+	if c == nil {
+		os.Exit(1)
+	}
 
 	config := LoadConfig()
 
@@ -108,76 +112,11 @@ func defaultAction(ctx *cli.Context) {
 	cacheList(list)
 }
 
-func credentials(ctx *cli.Context) string {
-	credentials, err := ioutil.ReadFile(CredentialsFile)
-	if err != nil {
-		//credentials not found, using given username and password
-		credentials = []byte(basicAuth(ctx.String("username"), ctx.String("password")))
-	}
-	return string(credentials)
-}
-
-func basicAuth(username, password string) string {
-	return "Basic " + base64.StdEncoding.EncodeToString([]byte(username+":"+password))
-}
-
-func cacheNotExist() bool {
-	f, err := os.Open(MalCacheFile)
-	defer f.Close()
-	return os.IsNotExist(err)
-}
-
-func loadCachedList() []*mal.Anime {
-	f, err := os.Open(MalCacheFile)
-	defer f.Close()
-	if err != nil {
-		log.Printf("Error opening %s file: %v", MalCacheFile, err)
-	}
-
-	list := make([]*mal.Anime, 0)
-
-	decoder := xml.NewDecoder(f)
-	for t, err := decoder.Token(); err != io.EOF; t, err = decoder.Token() {
-		if t, ok := t.(xml.StartElement); ok && t.Name.Local == "Anime" {
-			var anime mal.Anime
-			decoder.DecodeElement(&anime, &t)
-			list = append(list, &anime)
-		}
-	}
-
-	return list
-}
-
-func cacheCredentials(username, password string) {
-	credentials := basicAuth(username, password)
-	err := ioutil.WriteFile(CredentialsFile, []byte(credentials), 400)
-	if err != nil {
-		log.Printf("Caching credentials failed: %v", err)
-	}
-}
-
-func reverseAnimeSlice(s []*mal.Anime) {
-	last := len(s) - 1
-	for i := 0; i < len(s)/2; i++ {
-		s[i], s[last-i] = s[last-i], s[i]
-	}
-}
-
-func cacheList(list []*mal.Anime) {
-	f, err := os.Create(MalCacheFile)
-	defer f.Close()
-	if err != nil {
-		log.Printf("Error creating %s file: %v", MalCacheFile, err)
-	}
-
-	encoder := xml.NewEncoder(f)
-	if err := encoder.Encode(list); err != nil {
-		log.Printf("Caching error: %v", err)
-	}
-}
-
 func incrementEntry(ctx *cli.Context) error {
 	c := mal.NewClient(credentials(ctx))
+	if c == nil {
+		os.Exit(1)
+	}
 	cfg := LoadConfig()
 
 	if cfg.SelectedID == 0 {
