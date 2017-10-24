@@ -10,8 +10,8 @@ import (
 	"io"
 	"text/template"
 	"bytes"
-	"net/url"
 	"io/ioutil"
+	"net/url"
 )
 
 const (
@@ -67,7 +67,10 @@ func verifyCredentials(credentials string) bool {
 		log.Printf("Response error: %v", err)
 		return false
 	}
-	log.Printf("Credentials verification status: %v", resp.Status)
+
+	if resp.StatusCode != 200 {
+		log.Printf("Credentials verification status: %v", resp.Status)
+	}
 
 	return resp.StatusCode == 200
 }
