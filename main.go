@@ -93,12 +93,7 @@ func defaultAction(ctx *cli.Context) {
 
 	config := LoadConfig()
 
-	var list []*mal.Anime
-	if ctx.Bool("refresh") || cacheNotExist() {
-		list = c.AnimeList(mal.All)
-	} else {
-		list = loadCachedList()
-	}
+	list := loadList(c, ctx)
 	sort.Sort(mal.AnimeSortByLastUpdated(list))
 
 	visibleEntries := config.MaxVisibleEntries
@@ -133,7 +128,7 @@ func incrementEntry(ctx *cli.Context) error {
 		log.Fatalln("No entry selected")
 	}
 
-	list := loadCachedList()
+	list := loadList(c, ctx)
 	var selectedEntry *mal.Anime
 	for i, entry := range list {
 		if entry.ID == cfg.SelectedID {

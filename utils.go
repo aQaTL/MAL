@@ -41,6 +41,16 @@ func checkDataDir() {
 	}
 }
 
+func loadList(c *mal.Client, ctx *cli.Context) []*mal.Anime {
+	var list []*mal.Anime
+	if ctx.Bool("refresh") || cacheNotExist() {
+		list = c.AnimeList(mal.All)
+	} else {
+		list = loadCachedList()
+	}
+	return list
+}
+
 func cacheNotExist() bool {
 	f, err := os.Open(MalCacheFile)
 	defer f.Close()
