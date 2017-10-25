@@ -42,8 +42,8 @@ func main() {
 			Usage: "refreshes cache file",
 		},
 		cli.BoolFlag{
-			Name:  "no-verify",
-			Usage: "don't verify credentials",
+			Name:  "ver, verify",
+			Usage: "verify credentials",
 		},
 	}
 
@@ -81,7 +81,12 @@ func main() {
 }
 
 func defaultAction(ctx *cli.Context) {
-	c := mal.NewClient(credentials(ctx))
+	creds := credentials(ctx)
+	if ctx.Bool("verify") && !mal.VerifyCredentials(creds) {
+		log.Fatalln("Invalid credentials")
+	}
+
+	c := mal.NewClient(creds)
 	if c == nil {
 		os.Exit(1)
 	}
@@ -113,7 +118,12 @@ func defaultAction(ctx *cli.Context) {
 }
 
 func incrementEntry(ctx *cli.Context) error {
-	c := mal.NewClient(credentials(ctx))
+	creds := credentials(ctx)
+	if ctx.Bool("verify") && !mal.VerifyCredentials(creds) {
+		log.Fatalln("Invalid credentials")
+	}
+
+	c := mal.NewClient(creds)
 	if c == nil {
 		os.Exit(1)
 	}

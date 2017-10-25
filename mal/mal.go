@@ -44,10 +44,6 @@ type Client struct {
 func NewClient(credentials string) *Client {
 	c := &Client{}
 
-	if !verifyCredentials(credentials) {
-		return nil
-	}
-
 	credentialsBytes, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(credentials, "Basic "))
 	if err != nil {
 		log.Printf("Decoding credentials failed: %v", err)
@@ -59,7 +55,7 @@ func NewClient(credentials string) *Client {
 	return c
 }
 
-func verifyCredentials(credentials string) bool {
+func VerifyCredentials(credentials string) bool {
 	req := newRequest(VerifyCredentialsEndpoint, credentials, http.MethodGet)
 
 	resp, err := http.DefaultClient.Do(req)
