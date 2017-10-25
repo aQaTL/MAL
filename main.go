@@ -12,9 +12,9 @@ import (
 
 var dataDir = filepath.Join(homeDir(), ".mal")
 var (
-	CredentialsFile = dataDir + "cred.dat"
-	MalCacheFile    = dataDir + "cache.xml"
-	ConfigFile      = dataDir + "config.json"
+	CredentialsFile = filepath.Join(dataDir, "cred.dat")
+	MalCacheFile    = filepath.Join(dataDir, "cache.xml")
+	ConfigFile      = filepath.Join(dataDir, "config.json")
 )
 
 func main() {
