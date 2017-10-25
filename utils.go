@@ -13,12 +13,16 @@ import (
 )
 
 func credentials(ctx *cli.Context) string {
-	credentials, err := ioutil.ReadFile(CredentialsFile)
-	if err != nil {
-		//credentials not found, using given username and password
-		credentials = []byte(basicAuth(ctx.String("username"), ctx.String("password")))
+	username, password := ctx.String("username"), ctx.String("password")
+	if username == "" || password == "" {
+		credentials, err := ioutil.ReadFile(CredentialsFile)
+		if err != nil {
+			log.Printf("Failed to load credentials: %v", err)
+			return ""
+		}
+		return string(credentials)
 	}
-	return string(credentials)
+	return basicAuth(username, password)
 }
 
 func cacheCredentials(username, password string) {
