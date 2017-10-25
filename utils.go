@@ -65,6 +65,7 @@ func loadCachedList() []*mal.Anime {
 	defer f.Close()
 	if err != nil {
 		log.Printf("Error opening %s file: %v", MalCacheFile, err)
+		return nil
 	}
 
 	list := make([]*mal.Anime, 0)

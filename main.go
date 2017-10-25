@@ -135,9 +135,9 @@ func incrementEntry(ctx *cli.Context) error {
 
 	list := loadCachedList()
 	var selectedEntry *mal.Anime
-	for _, entry := range list {
+	for i, entry := range list {
 		if entry.ID == cfg.SelectedID {
-			selectedEntry = entry
+			selectedEntry = list[i]
 			break
 		}
 	}
@@ -154,6 +154,7 @@ func incrementEntry(ctx *cli.Context) error {
 
 	if c.Update(selectedEntry) {
 		log.Printf("Updated successfully")
+		cacheList(list)
 	}
 	return nil
 }
