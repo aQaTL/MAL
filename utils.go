@@ -10,11 +10,30 @@ import (
 	"github.com/urfave/cli"
 	"encoding/base64"
 	"os/user"
+	"bufio"
+	"fmt"
+	"golang.org/x/crypto/ssh/terminal"
+	"syscall"
+	"strings"
 )
 
 func credentials(ctx *cli.Context) string {
-	username, password := ctx.String("username"), ctx.String("password")
-	if username == "" || password == "" {
+	if ctx.GlobalBool("prompt-credentials") { //Read credentials from console
+		reader := bufio.NewReader(os.Stdin)
+
+		fmt.Print("Enter username: ")
+		username, _ := reader.ReadString('\n')
+
+		fmt.Print("Enter password (chars hidden): ")
+		bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+		fmt.Println()
+		if err != nil {
+			log.Printf("Error reading password: %v", err)
+		}
+		password := string(bytePassword)
+
+		return basicAuth(strings.TrimSpace(username), strings.TrimSpace(password))
+	} else { //Read credentials from CredentialsFile
 		credentials, err := ioutil.ReadFile(CredentialsFile)
 		if err != nil {
 			log.Printf("Failed to load credentials: %v", err)
@@ -22,7 +41,6 @@ func credentials(ctx *cli.Context) string {
 		}
 		return string(credentials)
 	}
-	return basicAuth(username, password)
 }
 
 func cacheCredentials(username, password string) {

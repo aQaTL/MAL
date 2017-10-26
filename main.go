@@ -25,13 +25,9 @@ func main() {
 	app.Usage = "App for managing your MAL"
 
 	app.Flags = []cli.Flag{
-		cli.StringFlag{
-			Name:  "u, username",
-			Usage: "specify username",
-		},
-		cli.StringFlag{
-			Name:  "p, password",
-			Usage: "specify password",
+		cli.BoolFlag {
+			Name: "creds, prompt-credentials",
+			Usage: "Prompt for username and password",
 		},
 		cli.BoolFlag{
 			Name:  "sp, save-password",
