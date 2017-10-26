@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strconv"
 	"path/filepath"
+	"github.com/skratchdot/open-golang/open"
 )
 
 var dataDir = filepath.Join(homeDir(), ".mal")
@@ -25,8 +26,8 @@ func main() {
 	app.Usage = "App for managing your MAL"
 
 	app.Flags = []cli.Flag{
-		cli.BoolFlag {
-			Name: "creds, prompt-credentials",
+		cli.BoolFlag{
+			Name:  "creds, prompt-credentials",
 			Usage: "Prompt for username and password",
 		},
 		cli.BoolFlag{
@@ -65,6 +66,24 @@ func main() {
 			Usage:     "Select an entry",
 			UsageText: "mal sel [entry ID]",
 			Action:    selectEntry,
+		},
+		cli.Command{
+			Name:      "web",
+			Aliases:   []string{"website", "open"},
+			Category:  "Action",
+			Usage:     "Open url associated with current entry",
+			UsageText: "mal web",
+			Action:    openWebsite,
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "url",
+					Usage: "Set url for current entry",
+				},
+				cli.BoolFlag{
+					Name:  "clear",
+					Usage: "Clear url for current entry",
+				},
+			},
 		},
 	}
 
@@ -160,5 +179,31 @@ func selectEntry(ctx *cli.Context) error {
 
 	cfg.SelectedID = id
 	cfg.Save()
+	return nil
+}
+
+func openWebsite(ctx *cli.Context) error {
+	cfg := LoadConfig()
+
+	if url := ctx.String("url"); url != "" {
+		cfg.Websites[cfg.SelectedID] = url
+		log.Printf("Set url %s for entry %d", url, cfg.SelectedID)
+		cfg.Save()
+		return nil
+	}
+
+	if ctx.Bool("clear") {
+		delete(cfg.Websites, cfg.SelectedID)
+		log.Printf("Cleared url for entry %d", cfg.SelectedID)
+		cfg.Save()
+		return nil
+	}
+
+	if url, ok := cfg.Websites[cfg.SelectedID]; ok {
+		open.Start(url)
+	} else {
+		log.Println("Nothing to open")
+	}
+
 	return nil
 }

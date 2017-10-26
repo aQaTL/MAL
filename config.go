@@ -9,11 +9,13 @@ import (
 type Config struct {
 	SelectedID        int
 	MaxVisibleEntries int
+	Websites          map[int]string
 }
 
 func LoadConfig() (config *Config) {
 	config = new(Config)
 	config.MaxVisibleEntries = 10
+	config.Websites = make(map[int]string)
 
 	f, err := os.Open(ConfigFile)
 	defer f.Close()
