@@ -27,7 +27,7 @@ func main() {
 
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
-			Name:  "creds, prompt-loadCredentials",
+			Name:  "creds, prompt-credentials",
 			Usage: "Prompt for username and password",
 		},
 		cli.BoolFlag{
@@ -40,7 +40,7 @@ func main() {
 		},
 		cli.BoolFlag{
 			Name:  "ver, verify",
-			Usage: "verify loadCredentials",
+			Usage: "verify credentials",
 		},
 	}
 
@@ -98,7 +98,7 @@ func main() {
 func defaultAction(ctx *cli.Context) {
 	creds := loadCredentials(ctx)
 	if ctx.Bool("verify") && !mal.VerifyCredentials(creds) {
-		log.Fatalln("Invalid loadCredentials")
+		log.Fatalln("Invalid credentials")
 	}
 
 	c := mal.NewClient(creds)
@@ -130,7 +130,7 @@ func defaultAction(ctx *cli.Context) {
 func incrementEntry(ctx *cli.Context) error {
 	creds := loadCredentials(ctx)
 	if ctx.Bool("verify") && !mal.VerifyCredentials(creds) {
-		log.Fatalln("Invalid loadCredentials")
+		log.Fatalln("Invalid credentials")
 	}
 
 	c := mal.NewClient(creds)
