@@ -27,7 +27,7 @@ func main() {
 
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
-			Name:  "creds, prompt-credentials",
+			Name:  "creds, prompt-loadCredentials",
 			Usage: "Prompt for username and password",
 		},
 		cli.BoolFlag{
@@ -40,7 +40,7 @@ func main() {
 		},
 		cli.BoolFlag{
 			Name:  "ver, verify",
-			Usage: "verify credentials",
+			Usage: "verify loadCredentials",
 		},
 	}
 
@@ -96,9 +96,9 @@ func main() {
 }
 
 func defaultAction(ctx *cli.Context) {
-	creds := credentials(ctx)
+	creds := loadCredentials(ctx)
 	if ctx.Bool("verify") && !mal.VerifyCredentials(creds) {
-		log.Fatalln("Invalid credentials")
+		log.Fatalln("Invalid loadCredentials")
 	}
 
 	c := mal.NewClient(creds)
@@ -120,17 +120,17 @@ func defaultAction(ctx *cli.Context) {
 
 	PrettyList.Execute(os.Stdout, PrettyListData{visibleList, config.SelectedID})
 
-	if ctx.Bool("save-password") {
-		cacheCredentials(ctx.String("username"), ctx.String("password"))
+	if ctx.GlobalBool("save-password") {
+		saveCredentials(creds)
 	}
 
 	cacheList(list)
 }
 
 func incrementEntry(ctx *cli.Context) error {
-	creds := credentials(ctx)
+	creds := loadCredentials(ctx)
 	if ctx.Bool("verify") && !mal.VerifyCredentials(creds) {
-		log.Fatalln("Invalid credentials")
+		log.Fatalln("Invalid loadCredentials")
 	}
 
 	c := mal.NewClient(creds)

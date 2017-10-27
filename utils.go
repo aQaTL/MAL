@@ -17,8 +17,8 @@ import (
 	"strings"
 )
 
-func credentials(ctx *cli.Context) string {
-	if ctx.GlobalBool("prompt-credentials") { //Read credentials from console
+func loadCredentials(ctx *cli.Context) string {
+	if ctx.GlobalBool("prompt-loadCredentials") { //Read loadCredentials from console
 		reader := bufio.NewReader(os.Stdin)
 
 		fmt.Print("Enter username: ")
@@ -33,21 +33,20 @@ func credentials(ctx *cli.Context) string {
 		password := string(bytePassword)
 
 		return basicAuth(strings.TrimSpace(username), strings.TrimSpace(password))
-	} else { //Read credentials from CredentialsFile
+	} else { //Read loadCredentials from CredentialsFile
 		credentials, err := ioutil.ReadFile(CredentialsFile)
 		if err != nil {
-			log.Printf("Failed to load credentials: %v", err)
+			log.Printf("Failed to load loadCredentials: %v", err)
 			return ""
 		}
 		return string(credentials)
 	}
 }
 
-func cacheCredentials(username, password string) {
-	credentials := basicAuth(username, password)
+func saveCredentials(credentials string) {
 	err := ioutil.WriteFile(CredentialsFile, []byte(credentials), 400)
 	if err != nil {
-		log.Printf("Caching credentials failed: %v", err)
+		log.Printf("Caching loadCredentials failed: %v", err)
 	}
 }
 
