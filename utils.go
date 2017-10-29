@@ -1,20 +1,20 @@
 package main
 
 import (
-	"os"
-	"github.com/aqatl/mal/mal"
+	"bufio"
+	"encoding/base64"
 	"encoding/xml"
+	"fmt"
+	"github.com/aqatl/mal/mal"
+	"github.com/urfave/cli"
+	"golang.org/x/crypto/ssh/terminal"
 	"io"
 	"io/ioutil"
 	"log"
-	"github.com/urfave/cli"
-	"encoding/base64"
+	"os"
 	"os/user"
-	"bufio"
-	"fmt"
-	"golang.org/x/crypto/ssh/terminal"
-	"syscall"
 	"strings"
+	"syscall"
 )
 
 func loadCredentials(ctx *cli.Context) string {
@@ -51,7 +51,7 @@ func saveCredentials(credentials string) {
 }
 
 func checkDataDir() {
-	if err := os.Mkdir(dataDir, 600); err == nil {
+	if err := os.Mkdir(dataDir, os.ModePerm); err == nil {
 		log.Printf("Created cache directory at %s", dataDir)
 	} else if !os.IsExist(err) {
 		log.Printf("Error creating cache directory (%s): %v", dataDir, err)
