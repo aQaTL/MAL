@@ -70,7 +70,14 @@ func loadList(c *mal.Client, ctx *cli.Context) []*mal.Anime {
 	}
 
 	var list []*mal.Anime
-	status := mal.ParseStatus(ctx.String("status"))
+
+	var status mal.MyStatus
+	if customStatus := ctx.GlobalString("status"); customStatus != "" {
+		status = mal.ParseStatus(customStatus)
+	} else {
+		cfg := LoadConfig()
+		status = cfg.Status
+	}
 
 	if ctx.Bool("refresh") || cacheNotExist() {
 		list = c.AnimeList(status)

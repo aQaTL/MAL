@@ -4,18 +4,21 @@ import (
 	"os"
 	"encoding/json"
 	"log"
+	"github.com/aqatl/mal/mal"
 )
 
 type Config struct {
 	SelectedID        int
 	MaxVisibleEntries int
 	Websites          map[int]string
+	Status            mal.MyStatus
 }
 
 func LoadConfig() (config *Config) {
 	config = new(Config)
 	config.MaxVisibleEntries = 10
 	config.Websites = make(map[int]string)
+	config.Status = mal.All
 
 	f, err := os.Open(ConfigFile)
 	defer f.Close()

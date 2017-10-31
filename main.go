@@ -88,6 +88,12 @@ func main() {
 					UsageText: "mal cfg max [number]",
 					Action:    configChangeMax,
 				},
+				cli.Command{
+					Name:      "status",
+					Usage:     "",
+					UsageText: "mal cfg status [all|watching|completed|onhold|dropped|plantowatch]",
+					Action: configChangeStatus,
+				},
 			},
 		},
 		cli.Command{
@@ -242,6 +248,16 @@ func configChangeMax(ctx *cli.Context) error {
 	}
 
 	cfg.MaxVisibleEntries = max
+	cfg.Save()
+	return nil
+}
+
+func configChangeStatus(ctx *cli.Context) error {
+	cfg := LoadConfig()
+
+	status := mal.ParseStatus(ctx.Args().First())
+
+	cfg.Status = status
 	cfg.Save()
 	return nil
 }
