@@ -90,7 +90,7 @@ func main() {
 				},
 				cli.Command{
 					Name:      "status",
-					Usage:     "",
+					Usage:     "Status value of displayed entries",
 					UsageText: "mal cfg status [all|watching|completed|onhold|dropped|plantowatch]",
 					Action: configChangeStatus,
 				},
