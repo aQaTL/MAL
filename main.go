@@ -42,6 +42,10 @@ func main() {
 			Name:  "ver, verify",
 			Usage: "verify credentials",
 		},
+		cli.IntFlag{
+			Name:  "max",
+			Usage: "visible entries threshold",
+		},
 	}
 
 	app.Commands = []cli.Command{
@@ -66,6 +70,21 @@ func main() {
 			Usage:     "Select an entry",
 			UsageText: "mal sel [entry ID]",
 			Action:    selectEntry,
+		},
+		cli.Command{
+			Name:     "cfg",
+			Aliases:  []string{"config", "configuration"},
+			Category: "Config",
+			Usage:    "Change config values",
+			Subcommands: cli.Commands{
+				cli.Command{
+					Name: "max",
+					Aliases: []string{"visible"},
+					Usage: "Change amount of displayed entries",
+					UsageText: "mal cfg max [number]",
+					Action: configChangeMax,
+				},
+			},
 		},
 		cli.Command{
 			Name:      "web",
@@ -111,9 +130,13 @@ func defaultAction(ctx *cli.Context) {
 	list := loadList(c, ctx)
 	sort.Sort(mal.AnimeSortByLastUpdated(list))
 
-	visibleEntries := config.MaxVisibleEntries
-	if visibleEntries > len(list) {
-		visibleEntries = len(list)
+	var visibleEntries int
+	if visibleEntries = ctx.Int("max"); visibleEntries == 0 {
+		//`Max` flag not specified, get value from config
+		visibleEntries = config.MaxVisibleEntries
+		if visibleEntries > len(list) {
+			visibleEntries = len(list)
+		}
 	}
 	visibleList := list[:visibleEntries]
 	reverseAnimeSlice(visibleList)
@@ -205,5 +228,18 @@ func openWebsite(ctx *cli.Context) error {
 		log.Println("Nothing to open")
 	}
 
+	return nil
+}
+
+func configChangeMax(ctx *cli.Context) error {
+	cfg := LoadConfig()
+
+	max, err := strconv.Atoi(ctx.Args().First())
+	if err != nil || max < 0 {
+		log.Fatalf("Invalid value")
+	}
+
+	cfg.MaxVisibleEntries = max
+	cfg.Save()
 	return nil
 }
