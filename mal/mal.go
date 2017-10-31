@@ -81,7 +81,7 @@ func newRequest(url, credentials, method string) *http.Request {
 	return req
 }
 
-func (c *Client) AnimeList(status myStatus) []*Anime {
+func (c *Client) AnimeList(status MyStatus) []*Anime {
 	url := fmt.Sprintf(UserAnimeListEndpoint, c.Username, "all") //Anything other than `all` doesn't really work
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)

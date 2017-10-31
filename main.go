@@ -46,6 +46,10 @@ func main() {
 			Name:  "max",
 			Usage: "visible entries threshold",
 		},
+		cli.StringFlag{
+			Name:  "status",
+			Usage: "display entries only with given status",
+		},
 	}
 
 	app.Commands = []cli.Command{
@@ -78,11 +82,11 @@ func main() {
 			Usage:    "Change config values",
 			Subcommands: cli.Commands{
 				cli.Command{
-					Name: "max",
-					Aliases: []string{"visible"},
-					Usage: "Change amount of displayed entries",
+					Name:      "max",
+					Aliases:   []string{"visible"},
+					Usage:     "Change amount of displayed entries",
 					UsageText: "mal cfg max [number]",
-					Action: configChangeMax,
+					Action:    configChangeMax,
 				},
 			},
 		},
@@ -134,9 +138,9 @@ func defaultAction(ctx *cli.Context) {
 	if visibleEntries = ctx.Int("max"); visibleEntries == 0 {
 		//`Max` flag not specified, get value from config
 		visibleEntries = config.MaxVisibleEntries
-		if visibleEntries > len(list) {
-			visibleEntries = len(list)
-		}
+	}
+	if visibleEntries > len(list) {
+		visibleEntries = len(list)
 	}
 	visibleList := list[:visibleEntries]
 	reverseAnimeSlice(visibleList)
@@ -146,8 +150,6 @@ func defaultAction(ctx *cli.Context) {
 	if ctx.GlobalBool("save-password") {
 		saveCredentials(creds)
 	}
-
-	cacheList(list)
 }
 
 func incrementEntry(ctx *cli.Context) error {

@@ -37,15 +37,15 @@ const (
 	Masterpiece
 )
 
-type myStatus int
+type MyStatus int
 
 const (
-	All         myStatus = iota
+	All         MyStatus = iota
 	Watching
 	Completed
 	OnHold
 	Dropped
-	PlanToWatch myStatus = 6 //Apparently MAL stores this as 6
+	PlanToWatch MyStatus = 6 //Apparently MAL stores this as 6
 )
 
 type Anime struct {
@@ -64,7 +64,7 @@ type Anime struct {
 	MyStart             string     `xml:"my_start_date"`
 	MyFinish            string     `xml:"my_finish_date"`
 	MyScore             animeScore `xml:"my_score"`
-	MyStatus            myStatus   `xml:"my_status"`
+	MyStatus            MyStatus   `xml:"my_status"`
 	MyRewatching        int        `xml:"my_rewatching"`
 	MyRewatchingEpisode int        `xml:"my_rewatching_ep"`
 	LastUpdated         int        `xml:"my_last_updated"`

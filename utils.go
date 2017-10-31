@@ -59,11 +59,29 @@ func checkDataDir() {
 }
 
 func loadList(c *mal.Client, ctx *cli.Context) []*mal.Anime {
+	filter := func(vs []*mal.Anime, f func(anime *mal.Anime) bool) []*mal.Anime {
+		vsf := make([]*mal.Anime, 0)
+		for _, a := range vs {
+			if f(a) {
+				vsf = append(vsf, a)
+			}
+		}
+		return vsf
+	}
+
 	var list []*mal.Anime
+	status := mal.ParseStatus(ctx.String("status"))
+
 	if ctx.Bool("refresh") || cacheNotExist() {
-		list = c.AnimeList(mal.All)
+		list = c.AnimeList(status)
+		cacheList(list)
 	} else {
 		list = loadCachedList()
+		if status != mal.All {
+			list = filter(list, func(anime *mal.Anime) bool {
+				return anime.MyStatus == status
+			})
+		}
 	}
 	return list
 }
