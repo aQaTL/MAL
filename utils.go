@@ -58,37 +58,14 @@ func checkDataDir() {
 	}
 }
 
-func loadList(c *mal.Client, ctx *cli.Context) []*mal.Anime {
-	filter := func(vs []*mal.Anime, f func(anime *mal.Anime) bool) []*mal.Anime {
-		vsf := make([]*mal.Anime, 0)
-		for _, a := range vs {
-			if f(a) {
-				vsf = append(vsf, a)
-			}
-		}
-		return vsf
-	}
-
+func loadList(c *mal.Client, ctx *cli.Context) mal.AnimeList {
 	var list []*mal.Anime
 
-	var status mal.MyStatus
-	if customStatus := ctx.GlobalString("status"); customStatus != "" {
-		status = mal.ParseStatus(customStatus)
-	} else {
-		cfg := LoadConfig()
-		status = cfg.Status
-	}
-
 	if ctx.Bool("refresh") || cacheNotExist() {
-		list = c.AnimeList(status)
+		list = c.AnimeList(mal.All)
 		cacheList(list)
 	} else {
 		list = loadCachedList()
-		if status != mal.All {
-			list = filter(list, func(anime *mal.Anime) bool {
-				return anime.MyStatus == status
-			})
-		}
 	}
 	return list
 }

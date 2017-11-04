@@ -41,6 +41,7 @@ type Client struct {
 	DaysSpentWatching float64 `xml:"user_days_spent_watching"`
 }
 
+//credentials should be username + password encoded in the basic auth standard
 func NewClient(credentials string) *Client {
 	c := &Client{}
 

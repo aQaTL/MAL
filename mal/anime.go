@@ -21,10 +21,10 @@ const (
 	NotYetAired
 )
 
-type animeScore int
+type AnimeScore int
 
 const (
-	NotRatedYet animeScore = iota
+	NotRatedYet AnimeScore = iota
 	Appalling
 	Horrible
 	VeryBad
@@ -63,7 +63,7 @@ type Anime struct {
 	WatchedEpisodes     int        `xml:"my_watched_episodes"`
 	MyStart             string     `xml:"my_start_date"`
 	MyFinish            string     `xml:"my_finish_date"`
-	MyScore             animeScore `xml:"my_score"`
+	MyScore             AnimeScore `xml:"my_score"`
 	MyStatus            MyStatus   `xml:"my_status"`
 	MyRewatching        int        `xml:"my_rewatching"`
 	MyRewatchingEpisode int        `xml:"my_rewatching_ep"`

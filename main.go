@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"path/filepath"
 	"github.com/skratchdot/open-golang/open"
+	"fmt"
 )
 
 var dataDir = filepath.Join(homeDir(), ".mal")
@@ -68,6 +69,13 @@ func main() {
 			},
 		},
 		cli.Command{
+			Name:      "score",
+			Category:  "Update",
+			Usage:     "Set your rating for selected entry",
+			UsageText: "mal score <0-10>",
+			Action:    setEntryScore,
+		},
+		cli.Command{
 			Name:      "sel",
 			Aliases:   []string{"select"},
 			Category:  "Config",
@@ -92,7 +100,7 @@ func main() {
 					Name:      "status",
 					Usage:     "Status value of displayed entries",
 					UsageText: "mal cfg status [all|watching|completed|onhold|dropped|plantowatch]",
-					Action: configChangeStatus,
+					Action:    configChangeStatus,
 				},
 			},
 		},
@@ -119,8 +127,7 @@ func main() {
 	app.Action = defaultAction
 
 	if err := app.Run(os.Args); err != nil {
-		log.Printf("Arguments error: %v", err)
-		os.Exit(1)
+		log.Fatalf("Error: %v", err)
 	}
 }
 
@@ -137,7 +144,7 @@ func defaultAction(ctx *cli.Context) {
 
 	config := LoadConfig()
 
-	list := loadList(c, ctx)
+	list := loadList(c, ctx).FilterByStatus(statusFlag(ctx))
 	sort.Sort(mal.AnimeSortByLastUpdated(list))
 
 	var visibleEntries int
@@ -175,13 +182,7 @@ func incrementEntry(ctx *cli.Context) error {
 	}
 
 	list := loadList(c, ctx)
-	var selectedEntry *mal.Anime
-	for i, entry := range list {
-		if entry.ID == cfg.SelectedID {
-			selectedEntry = list[i]
-			break
-		}
-	}
+	selectedEntry := list.GetByID(cfg.SelectedID)
 
 	if selectedEntry == nil {
 		log.Fatalln("No entry found")
@@ -193,6 +194,30 @@ func incrementEntry(ctx *cli.Context) error {
 		selectedEntry.WatchedEpisodes++
 	}
 
+	if c.Update(selectedEntry) {
+		log.Printf("Updated successfully")
+		cacheList(list)
+	}
+	return nil
+}
+
+func setEntryScore(ctx *cli.Context) error {
+	c := mal.NewClient(loadCredentials(ctx))
+	cfg := LoadConfig()
+
+	list := loadList(c, ctx)
+	selectedEntry := list.GetByID(cfg.SelectedID)
+
+	score, err := strconv.Atoi(ctx.Args().First())
+	if err != nil {
+		return fmt.Errorf("error parsing score: %v", err)
+	}
+	parsedScore, err := mal.ParseScore(score)
+	if err != nil {
+		return err
+	}
+
+	selectedEntry.MyScore = parsedScore
 	if c.Update(selectedEntry) {
 		log.Printf("Updated successfully")
 		cacheList(list)

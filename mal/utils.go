@@ -1,6 +1,9 @@
 package mal
 
-import "strings"
+import (
+	"strings"
+	"fmt"
+)
 
 func ParseStatus(status string) MyStatus {
 	switch strings.ToLower(status) {
@@ -17,4 +20,12 @@ func ParseStatus(status string) MyStatus {
 	default:
 		 return All
 	}
+}
+
+func ParseScore(score int) (AnimeScore, error) {
+	if score < 0 || score > 10 {
+		return 0, fmt.Errorf("score can not be outside of the 0-10 rage")
+	}
+
+	return AnimeScore(score), nil
 }
