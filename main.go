@@ -76,6 +76,13 @@ func main() {
 			Action:    setEntryScore,
 		},
 		cli.Command{
+			Name: "status",
+			Category: "Update",
+			Usage: "Set your status for selected entry",
+			UsageText: "mal status [watching|completed|onhold|dropped|plantowatch]",
+			Action: setEntryStatus,
+		},
+		cli.Command{
 			Name:      "sel",
 			Aliases:   []string{"select"},
 			Category:  "Config",
@@ -218,6 +225,27 @@ func setEntryScore(ctx *cli.Context) error {
 	}
 
 	selectedEntry.MyScore = parsedScore
+	if c.Update(selectedEntry) {
+		log.Printf("Updated successfully")
+		cacheList(list)
+	}
+	return nil
+}
+
+func setEntryStatus(ctx *cli.Context) error {
+	c := mal.NewClient(loadCredentials(ctx))
+	cfg := LoadConfig()
+
+	list := loadList(c, ctx)
+	selectedEntry := list.GetByID(cfg.SelectedID)
+
+	status := mal.ParseStatus(ctx.Args().First())
+	if status == mal.All {
+		return fmt.Errorf("invalid status; possible values: watching, completed, " +
+			"onhold, dropped, plantowatch")
+	}
+
+	selectedEntry.MyStatus = status
 	if c.Update(selectedEntry) {
 		log.Printf("Updated successfully")
 		cacheList(list)
