@@ -125,7 +125,7 @@ func reverseAnimeSlice(s []*mal.Anime) {
 func homeDir() string {
 	usr, err := user.Current()
 	if err != nil {
-		log.Println("Error getting current user: %v", err)
+		log.Printf("Error getting current user: %v", err)
 		return ""
 	}
 

@@ -175,7 +175,7 @@ func defaultAction(ctx *cli.Context) {
 func incrementEntry(ctx *cli.Context) error {
 	creds := loadCredentials(ctx)
 	if ctx.Bool("verify") && !mal.VerifyCredentials(creds) {
-		log.Fatalln("Invalid credentials")
+		return fmt.Errorf("invalid credentials")
 	}
 
 	c := mal.NewClient(creds)
@@ -185,14 +185,14 @@ func incrementEntry(ctx *cli.Context) error {
 	cfg := LoadConfig()
 
 	if cfg.SelectedID == 0 {
-		log.Fatalln("No entry selected")
+		return fmt.Errorf("no entry selected")
 	}
 
 	list := loadList(c, ctx)
 	selectedEntry := list.GetByID(cfg.SelectedID)
 
 	if selectedEntry == nil {
-		log.Fatalln("No entry found")
+		return fmt.Errorf("no entry found")
 	}
 
 	if ctx.Int("n") > 0 {
@@ -258,7 +258,7 @@ func selectEntry(ctx *cli.Context) error {
 
 	id, err := strconv.Atoi(ctx.Args().First())
 	if err != nil {
-		log.Fatalf("Error parsing id: %v", err)
+		return fmt.Errorf("error parsing id: %v", err)
 	}
 
 	cfg.SelectedID = id
@@ -297,7 +297,7 @@ func configChangeMax(ctx *cli.Context) error {
 
 	max, err := strconv.Atoi(ctx.Args().First())
 	if err != nil || max < 0 {
-		log.Fatalf("Invalid value")
+		return fmt.Errorf("invalid value")
 	}
 
 	cfg.MaxVisibleEntries = max
