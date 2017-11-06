@@ -131,3 +131,20 @@ func homeDir() string {
 
 	return usr.HomeDir
 }
+
+func statusAutoUpdate(cfg *Config, entry *mal.Anime) {
+	if cfg.StatusAutoUpdateMode == Off || entry.Episodes == 0 {
+		return
+	}
+
+	if (cfg.StatusAutoUpdateMode == Normal && entry.WatchedEpisodes >= entry.Episodes) ||
+		(cfg.StatusAutoUpdateMode == AfterThreshold && entry.WatchedEpisodes > entry.Episodes) {
+		entry.MyStatus = mal.Completed
+		return
+	}
+
+	if entry.MyStatus == mal.Completed && entry.WatchedEpisodes < entry.Episodes {
+		entry.MyStatus = mal.Watching
+		return
+	}
+}

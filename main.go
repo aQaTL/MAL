@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"github.com/skratchdot/open-golang/open"
 	"fmt"
+	"strings"
 )
 
 var dataDir = filepath.Join(homeDir(), ".mal")
@@ -76,11 +77,11 @@ func main() {
 			Action:    setEntryScore,
 		},
 		cli.Command{
-			Name: "status",
-			Category: "Update",
-			Usage: "Set your status for selected entry",
+			Name:      "status",
+			Category:  "Update",
+			Usage:     "Set your status for selected entry",
 			UsageText: "mal status [watching|completed|onhold|dropped|plantowatch]",
-			Action: setEntryStatus,
+			Action:    setEntryStatus,
 		},
 		cli.Command{
 			Name:      "sel",
@@ -108,6 +109,12 @@ func main() {
 					Usage:     "Status value of displayed entries",
 					UsageText: "mal cfg status [all|watching|completed|onhold|dropped|plantowatch]",
 					Action:    configChangeStatus,
+				},
+				cli.Command{
+					Name:      "status-auto-update",
+					Usage:     "Allows entry to be automatically set to completed when number of all episodes is reached or exceeded",
+					UsageText: "mal cfg status-auto-update [off|normal|after-threshold]",
+					Action:    configChangeAutoUpdateMode,
 				},
 			},
 		},
@@ -199,6 +206,12 @@ func incrementEntry(ctx *cli.Context) error {
 		selectedEntry.WatchedEpisodes = ctx.Int("n")
 	} else {
 		selectedEntry.WatchedEpisodes++
+	}
+
+	statusAutoUpdate(cfg, selectedEntry)
+
+	if selectedEntry.WatchedEpisodes > selectedEntry.Episodes {
+		selectedEntry.WatchedEpisodes = selectedEntry.Episodes
 	}
 
 	if c.Update(selectedEntry) {
@@ -312,5 +325,26 @@ func configChangeStatus(ctx *cli.Context) error {
 
 	cfg.Status = status
 	cfg.Save()
+	return nil
+}
+
+func configChangeAutoUpdateMode(ctx *cli.Context) error {
+	arg := strings.ToLower(ctx.Args().First())
+	var mode StatusAutoUpdateMode
+
+	if arg == "off" {
+		mode = Off
+	} else if arg == "normal" {
+		mode = Normal
+	} else if arg == "after-threshold" {
+		mode = AfterThreshold
+	} else {
+		return fmt.Errorf("invalid option; possible values: off|normal|after-threshold")
+	}
+
+	cfg := LoadConfig()
+	cfg.StatusAutoUpdateMode = mode
+	cfg.Save()
+
 	return nil
 }

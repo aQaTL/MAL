@@ -8,17 +8,27 @@ import (
 )
 
 type Config struct {
-	SelectedID        int
-	MaxVisibleEntries int
-	Websites          map[int]string
-	Status            mal.MyStatus
+	SelectedID           int
+	MaxVisibleEntries    int
+	Websites             map[int]string
+	Status               mal.MyStatus
+	StatusAutoUpdateMode StatusAutoUpdateMode
 }
 
-func LoadConfig() (config *Config) {
-	config = new(Config)
-	config.MaxVisibleEntries = 10
-	config.Websites = make(map[int]string)
-	config.Status = mal.All
+type StatusAutoUpdateMode byte
+
+const (
+	Off            StatusAutoUpdateMode = iota
+	Normal
+	AfterThreshold
+)
+
+func LoadConfig() (c *Config) {
+	c = new(Config)
+	c.MaxVisibleEntries = 10
+	c.Websites = make(map[int]string)
+	c.Status = mal.All
+	c.StatusAutoUpdateMode = Off
 
 	f, err := os.Open(ConfigFile)
 	defer f.Close()
@@ -29,7 +39,7 @@ func LoadConfig() (config *Config) {
 	}
 
 	decoder := json.NewDecoder(f)
-	decoder.Decode(config)
+	decoder.Decode(c)
 
 	return
 }
