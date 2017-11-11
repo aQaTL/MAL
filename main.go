@@ -26,6 +26,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "mal"
 	app.Usage = "App for managing your MAL"
+	app.Version = "0.1"
 
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
@@ -133,6 +134,14 @@ func main() {
 				cli.BoolFlag{
 					Name:  "clear",
 					Usage: "Clear url for current entry",
+				},
+			},
+			Subcommands: []cli.Command {
+				cli.Command{
+					Name: "get-all",
+					Usage: "Print all set urls",
+					UsageText: "mal web get-all",
+					Action: printWebsites,
 				},
 			},
 		},
@@ -300,6 +309,24 @@ func openWebsite(ctx *cli.Context) error {
 		open.Start(url)
 	} else {
 		log.Println("Nothing to open")
+	}
+
+	return nil
+}
+
+func printWebsites(ctx *cli.Context) error {
+	cfg := LoadConfig()
+	list := loadCachedList()
+
+	for k, v := range cfg.Websites {
+		url := fmt.Sprintf("\033[3%d;%dm%s\033[0m ", 3, 1, v)
+
+		var title string
+		if entry := list.GetByID(k); entry != nil {
+			title = entry.Title
+		}
+
+		fmt.Printf("%6d (%s): %s\n", k, title, url)
 	}
 
 	return nil

@@ -89,7 +89,7 @@ func cacheList(list []*mal.Anime) {
 	}
 }
 
-func loadCachedList() []*mal.Anime {
+func loadCachedList() mal.AnimeList {
 	f, err := os.Open(MalCacheFile)
 	defer f.Close()
 	if err != nil {
