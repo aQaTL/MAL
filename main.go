@@ -162,7 +162,7 @@ func main() {
 
 func defaultAction(ctx *cli.Context) {
 	creds := loadCredentials(ctx)
-	if ctx.Bool("verify") && !mal.VerifyCredentials(creds) {
+	if ctx.GlobalBool("verify") && !mal.VerifyCredentials(creds) {
 		log.Fatalln("Invalid credentials")
 	}
 
@@ -366,7 +366,7 @@ func openWebsite(ctx *cli.Context) error {
 
 func printWebsites(ctx *cli.Context) error {
 	cfg := LoadConfig()
-	list := loadCachedList()
+	list := loadList(mal.NewClient(loadCredentials(ctx)), ctx)
 
 	for k, v := range cfg.Websites {
 		url := fmt.Sprintf("\033[3%d;%dm%s\033[0m ", 3, 1, v)

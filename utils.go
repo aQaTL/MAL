@@ -61,7 +61,7 @@ func checkDataDir() {
 func loadList(c *mal.Client, ctx *cli.Context) mal.AnimeList {
 	var list []*mal.Anime
 
-	if ctx.Bool("refresh") || cacheNotExist() {
+	if ctx.GlobalBool("refresh") || cacheNotExist() {
 		list = c.AnimeList(mal.All)
 		cacheList(list)
 	} else {
