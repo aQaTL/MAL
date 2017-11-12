@@ -91,6 +91,12 @@ func main() {
 			Usage:     "Select an entry",
 			UsageText: "mal sel [entry ID]",
 			Action:    selectEntry,
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "by-title",
+					Usage: "Select entry by name instead of by ID",
+				},
+			},
 		},
 		cli.Command{
 			Name:     "cfg",
@@ -136,12 +142,12 @@ func main() {
 					Usage: "Clear url for current entry",
 				},
 			},
-			Subcommands: []cli.Command {
+			Subcommands: []cli.Command{
 				cli.Command{
-					Name: "get-all",
-					Usage: "Print all set urls",
+					Name:      "get-all",
+					Usage:     "Print all set urls",
 					UsageText: "mal web get-all",
-					Action: printWebsites,
+					Action:    printWebsites,
 				},
 			},
 		},
@@ -276,13 +282,57 @@ func setEntryStatus(ctx *cli.Context) error {
 }
 
 func selectEntry(ctx *cli.Context) error {
-	cfg := LoadConfig()
+	if ctx.Bool("by-title") {
+		return selectByTitle(ctx)
+	}
 
 	id, err := strconv.Atoi(ctx.Args().First())
 	if err != nil {
 		return fmt.Errorf("error parsing id: %v", err)
 	}
 
+	cfg := LoadConfig()
+	cfg.SelectedID = id
+	cfg.Save()
+	return nil
+}
+
+func selectByTitle(ctx *cli.Context) error {
+	title := strings.ToLower(ctx.Args().First())
+	list := loadList(mal.NewClient(loadCredentials(ctx)), ctx)
+
+	found := make(mal.AnimeList, 0)
+	for _, entry := range list {
+		if strings.Contains(strings.ToLower(entry.Title), title) {
+			found = append(found, entry)
+		}
+	}
+
+	var id int
+
+	if len(found) > 1 {
+		fmt.Printf("Found more than 1 matching entry:\n")
+		fmt.Printf("%3s%8s%7s\n", "No.", "ID", "Title")
+		fmt.Println(strings.Repeat("=", 80))
+		for i, entry := range found {
+			fmt.Printf("%3d. %6d: %s\n", i, entry.ID, entry.Title)
+		}
+
+		fmt.Printf("Enter index of the selected entry: ")
+		idx := 0
+		_, err := fmt.Scanln(&idx)
+		if err != nil || idx < 0 || idx > len(found)-1 {
+			return fmt.Errorf("invalid input %v", err)
+		}
+
+		id = found[idx].ID
+	} else if len(found) == 0 {
+		return fmt.Errorf("no matches")
+	} else {
+		id = found[0].ID
+	}
+
+	cfg := LoadConfig()
 	cfg.SelectedID = id
 	cfg.Save()
 	return nil
