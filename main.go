@@ -153,17 +153,17 @@ func main() {
 		},
 	}
 
-	app.Action = defaultAction
+	app.Action = cli.ActionFunc(defaultAction)
 
 	if err := app.Run(os.Args); err != nil {
 		log.Fatalf("Error: %v", err)
 	}
 }
 
-func defaultAction(ctx *cli.Context) {
+func defaultAction(ctx *cli.Context) error {
 	creds := loadCredentials(ctx)
 	if ctx.GlobalBool("verify") && !mal.VerifyCredentials(creds) {
-		log.Fatalln("Invalid credentials")
+		return fmt.Errorf("invalid credentials")
 	}
 
 	c := mal.NewClient(creds)
@@ -192,6 +192,7 @@ func defaultAction(ctx *cli.Context) {
 	if ctx.GlobalBool("save-password") {
 		saveCredentials(creds)
 	}
+	return nil
 }
 
 func incrementEntry(ctx *cli.Context) error {
