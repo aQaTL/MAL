@@ -15,6 +15,7 @@ import (
 	"os/user"
 	"strings"
 	"syscall"
+	"github.com/fatih/color"
 )
 
 func loadCredentials(ctx *cli.Context) string {
@@ -147,4 +148,23 @@ func statusAutoUpdate(cfg *Config, entry *mal.Anime) {
 		entry.MyStatus = mal.Watching
 		return
 	}
+}
+
+func printEntryDetails(entry *mal.Anime) {
+	title := color.HiYellowString("%s", entry.Title)
+	episodes := color.HiRedString("%d/%d", entry.WatchedEpisodes,
+		entry.Episodes)
+	score := color.HiRedString("%d", entry.MyScore)
+	status := color.HiRedString("%v", entry.MyStatus)
+
+	fmt.Printf(
+			"Title: %s\n"+
+			"Episodes: %s\n"+
+			"Score: %s\n"+
+			"Status: %v\n",
+		title,
+		episodes,
+		score,
+		status,
+	)
 }

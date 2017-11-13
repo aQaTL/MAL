@@ -11,7 +11,6 @@ import (
 	"github.com/skratchdot/open-golang/open"
 	"fmt"
 	"strings"
-	"github.com/fatih/color"
 )
 
 var dataDir = filepath.Join(homeDir(), ".mal")
@@ -232,20 +231,8 @@ func incrementEntry(ctx *cli.Context) error {
 	}
 
 	if c.Update(selectedEntry) {
-		title := color.HiYellowString("%s", selectedEntry.Title)
-		episodes := color.HiRedString("%d/%d", selectedEntry.WatchedEpisodes,
-			selectedEntry.Episodes)
-		status := color.HiRedString("%v", selectedEntry.MyStatus)
-
-		fmt.Printf(
-			"Updated successfully\n"+
-				"Title: %s\n"+
-				"Episodes: %s\n"+
-				"Status: %v\n",
-			title,
-			episodes,
-			status,
-		)
+		fmt.Println("Updated successfully")
+		printEntryDetails(selectedEntry)
 
 		cacheList(list)
 	}
@@ -270,7 +257,9 @@ func setEntryScore(ctx *cli.Context) error {
 
 	selectedEntry.MyScore = parsedScore
 	if c.Update(selectedEntry) {
-		log.Printf("Updated successfully")
+		fmt.Println("Updated successfully")
+		printEntryDetails(selectedEntry)
+
 		cacheList(list)
 	}
 	return nil
@@ -291,7 +280,9 @@ func setEntryStatus(ctx *cli.Context) error {
 
 	selectedEntry.MyStatus = status
 	if c.Update(selectedEntry) {
-		log.Printf("Updated successfully")
+		fmt.Println("Updated successfully")
+		printEntryDetails(selectedEntry)
+
 		cacheList(list)
 	}
 	return nil
@@ -310,6 +301,10 @@ func selectEntry(ctx *cli.Context) error {
 	cfg := LoadConfig()
 	cfg.SelectedID = id
 	cfg.Save()
+
+	fmt.Println("Selected entry:")
+	printEntryDetails(loadList(mal.NewClient(loadCredentials(ctx)), ctx).GetByID(id))
+
 	return nil
 }
 
@@ -324,7 +319,7 @@ func selectByTitle(ctx *cli.Context) error {
 		}
 	}
 
-	var id int
+	var selectedEntry *mal.Anime
 
 	if len(found) > 1 {
 		fmt.Printf("Found more than 1 matching entry:\n")
@@ -341,16 +336,20 @@ func selectByTitle(ctx *cli.Context) error {
 			return fmt.Errorf("invalid input %v", err)
 		}
 
-		id = found[idx].ID
+		selectedEntry = found[idx]
 	} else if len(found) == 0 {
 		return fmt.Errorf("no matches")
 	} else {
-		id = found[0].ID
+		selectedEntry = found[0]
 	}
 
 	cfg := LoadConfig()
-	cfg.SelectedID = id
+	cfg.SelectedID = selectedEntry.ID
 	cfg.Save()
+
+	fmt.Println("Selected entry:")
+	printEntryDetails(selectedEntry)
+
 	return nil
 }
 
@@ -373,6 +372,11 @@ func openWebsite(ctx *cli.Context) error {
 
 	if url, ok := cfg.Websites[cfg.SelectedID]; ok {
 		open.Start(url)
+		fmt.Println("Opened website for:")
+		printEntryDetails(
+			loadList(mal.NewClient(loadCredentials(ctx)), ctx).
+				GetByID(cfg.SelectedID),
+		)
 	} else {
 		log.Println("Nothing to open")
 	}
