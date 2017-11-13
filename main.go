@@ -226,10 +226,6 @@ func incrementEntry(ctx *cli.Context) error {
 
 	statusAutoUpdate(cfg, selectedEntry)
 
-	if selectedEntry.WatchedEpisodes > selectedEntry.Episodes {
-		selectedEntry.WatchedEpisodes = selectedEntry.Episodes
-	}
-
 	if c.Update(selectedEntry) {
 		fmt.Println("Updated successfully")
 		printEntryDetails(selectedEntry)

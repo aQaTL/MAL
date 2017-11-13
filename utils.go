@@ -141,6 +141,7 @@ func statusAutoUpdate(cfg *Config, entry *mal.Anime) {
 	if (cfg.StatusAutoUpdateMode == Normal && entry.WatchedEpisodes >= entry.Episodes) ||
 		(cfg.StatusAutoUpdateMode == AfterThreshold && entry.WatchedEpisodes > entry.Episodes) {
 		entry.MyStatus = mal.Completed
+		entry.WatchedEpisodes = entry.Episodes
 		return
 	}
 
