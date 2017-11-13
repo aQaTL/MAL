@@ -48,6 +48,22 @@ const (
 	PlanToWatch MyStatus = 6 //Apparently MAL stores this as 6
 )
 
+func (status MyStatus) String() string {
+	names := [...]string {
+		All: "All",
+		Watching: "Watching",
+		Completed: "Completed",
+		OnHold: "OnHold",
+		Dropped: "Dropped",
+		5: "",
+		PlanToWatch: "PlanToWatch",
+	}
+	if status < 0 || int(status) >= len(names) {
+		return ""
+	}
+	return names[status]
+}
+
 type Anime struct {
 	ID          int         `xml:"series_animedb_id"`
 	Title       string      `xml:"series_title"`
