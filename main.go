@@ -11,6 +11,7 @@ import (
 	"github.com/skratchdot/open-golang/open"
 	"fmt"
 	"strings"
+	"github.com/fatih/color"
 )
 
 var dataDir = filepath.Join(homeDir(), ".mal")
@@ -231,7 +232,21 @@ func incrementEntry(ctx *cli.Context) error {
 	}
 
 	if c.Update(selectedEntry) {
-		log.Printf("Updated successfully")
+		title := color.HiYellowString("%s", selectedEntry.Title)
+		episodes := color.HiRedString("%d/%d", selectedEntry.WatchedEpisodes,
+			selectedEntry.Episodes)
+		status := color.HiRedString("%v", selectedEntry.MyStatus)
+
+		fmt.Printf(
+			"Updated successfully\n"+
+				"Title: %s\n"+
+				"Episodes: %s\n"+
+				"Status: %v\n",
+			title,
+			episodes,
+			status,
+		)
+
 		cacheList(list)
 	}
 	return nil
