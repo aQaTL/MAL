@@ -129,7 +129,7 @@ func main() {
 			Name:      "web",
 			Aliases:   []string{"website", "open"},
 			Category:  "Action",
-			Usage:     "Open url associated with current entry",
+			Usage:     "Open url associated with selected entry",
 			UsageText: "mal web",
 			Action:    openWebsite,
 			Flags: []cli.Flag{
@@ -150,6 +150,13 @@ func main() {
 					Action:    printWebsites,
 				},
 			},
+		},
+		cli.Command{
+			Name: "details",
+			Category: "Action",
+			Usage: "Print details about selected entry",
+			UsageText: "mal details",
+			Action: detailsCommand,
 		},
 	}
 
@@ -393,6 +400,17 @@ func printWebsites(ctx *cli.Context) error {
 		}
 
 		fmt.Printf("%6d (%s): %s\n", k, title, url)
+	}
+
+	return nil
+}
+
+func detailsCommand(ctx *cli.Context) error {
+	cfg := LoadConfig()
+	list := loadList(mal.NewClient(loadCredentials(ctx)), ctx)
+
+	if entry := list.GetByID(cfg.SelectedID); entry != nil {
+		printEntryDetails(entry)
 	}
 
 	return nil
