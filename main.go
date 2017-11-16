@@ -167,20 +167,34 @@ func main() {
 	}
 }
 
-func defaultAction(ctx *cli.Context) error {
+func loadMAL(ctx *cli.Context) (*mal.Client, mal.AnimeList, error) {
 	creds := loadCredentials(ctx)
 	if ctx.GlobalBool("verify") && !mal.VerifyCredentials(creds) {
-		return fmt.Errorf("invalid credentials")
+		return nil, nil, fmt.Errorf("invalid credentials")
+	}
+	if ctx.GlobalBool("save-password") {
+		saveCredentials(creds)
 	}
 
 	c := mal.NewClient(creds)
 	if c == nil {
-		os.Exit(1)
+		return nil, nil, fmt.Errorf("error creating mal.Client")
+	}
+
+	list := loadList(c, ctx)
+
+	return c, list, nil
+}
+
+func defaultAction(ctx *cli.Context) error {
+	_, list, err := loadMAL(ctx)
+	if err != nil {
+		return err
 	}
 
 	config := LoadConfig()
 
-	list := loadList(c, ctx).FilterByStatus(statusFlag(ctx))
+	list = list.FilterByStatus(statusFlag(ctx))
 	sort.Sort(mal.AnimeSortByLastUpdated(list))
 
 	var visibleEntries int
@@ -196,29 +210,21 @@ func defaultAction(ctx *cli.Context) error {
 
 	PrettyList.Execute(os.Stdout, PrettyListData{visibleList, config.SelectedID})
 
-	if ctx.GlobalBool("save-password") {
-		saveCredentials(creds)
-	}
 	return nil
 }
 
 func incrementEntry(ctx *cli.Context) error {
-	creds := loadCredentials(ctx)
-	if ctx.Bool("verify") && !mal.VerifyCredentials(creds) {
-		return fmt.Errorf("invalid credentials")
+	c, list, err := loadMAL(ctx)
+	if err != nil {
+		return err
 	}
 
-	c := mal.NewClient(creds)
-	if c == nil {
-		os.Exit(1)
-	}
 	cfg := LoadConfig()
 
 	if cfg.SelectedID == 0 {
 		return fmt.Errorf("no entry selected")
 	}
 
-	list := loadList(c, ctx)
 	selectedEntry := list.GetByID(cfg.SelectedID)
 
 	if selectedEntry == nil {
@@ -243,10 +249,12 @@ func incrementEntry(ctx *cli.Context) error {
 }
 
 func setEntryScore(ctx *cli.Context) error {
-	c := mal.NewClient(loadCredentials(ctx))
+	c, list, err := loadMAL(ctx)
+	if err != nil {
+		return err
+	}
 	cfg := LoadConfig()
 
-	list := loadList(c, ctx)
 	selectedEntry := list.GetByID(cfg.SelectedID)
 
 	score, err := strconv.Atoi(ctx.Args().First())
@@ -269,10 +277,12 @@ func setEntryScore(ctx *cli.Context) error {
 }
 
 func setEntryStatus(ctx *cli.Context) error {
-	c := mal.NewClient(loadCredentials(ctx))
+	c, list, err := loadMAL(ctx)
+	if err != nil {
+		return err
+	}
 	cfg := LoadConfig()
 
-	list := loadList(c, ctx)
 	selectedEntry := list.GetByID(cfg.SelectedID)
 
 	status := mal.ParseStatus(ctx.Args().First())
@@ -305,15 +315,24 @@ func selectEntry(ctx *cli.Context) error {
 	cfg.SelectedID = id
 	cfg.Save()
 
+	_, list, err := loadMAL(ctx)
+	if err != nil {
+		return err
+	}
+
 	fmt.Println("Selected entry:")
-	printEntryDetails(loadList(mal.NewClient(loadCredentials(ctx)), ctx).GetByID(id))
+	printEntryDetails(list.GetByID(id))
 
 	return nil
 }
 
 func selectByTitle(ctx *cli.Context) error {
+	_, list, err := loadMAL(ctx)
+	if err != nil {
+		return err
+	}
+
 	title := strings.ToLower(ctx.Args().First())
-	list := loadList(mal.NewClient(loadCredentials(ctx)), ctx)
 
 	found := make(mal.AnimeList, 0)
 	for _, entry := range list {
@@ -357,6 +376,11 @@ func selectByTitle(ctx *cli.Context) error {
 }
 
 func openWebsite(ctx *cli.Context) error {
+	_, list, err := loadMAL(ctx)
+	if err != nil {
+		return nil
+	}
+
 	cfg := LoadConfig()
 
 	if url := ctx.String("url"); url != "" {
@@ -376,10 +400,7 @@ func openWebsite(ctx *cli.Context) error {
 	if url, ok := cfg.Websites[cfg.SelectedID]; ok {
 		open.Start(url)
 		fmt.Println("Opened website for:")
-		printEntryDetails(
-			loadList(mal.NewClient(loadCredentials(ctx)), ctx).
-				GetByID(cfg.SelectedID),
-		)
+		printEntryDetails(list.GetByID(cfg.SelectedID))
 	} else {
 		log.Println("Nothing to open")
 	}
@@ -388,8 +409,12 @@ func openWebsite(ctx *cli.Context) error {
 }
 
 func printWebsites(ctx *cli.Context) error {
+	_, list, err := loadMAL(ctx)
+	if err != nil {
+		return err
+	}
+
 	cfg := LoadConfig()
-	list := loadList(mal.NewClient(loadCredentials(ctx)), ctx)
 
 	for k, v := range cfg.Websites {
 		url := fmt.Sprintf("\033[3%d;%dm%s\033[0m ", 3, 1, v)
@@ -406,8 +431,12 @@ func printWebsites(ctx *cli.Context) error {
 }
 
 func detailsCommand(ctx *cli.Context) error {
+	_, list, err := loadMAL(ctx)
+	if err != nil {
+		return err
+	}
+
 	cfg := LoadConfig()
-	list := loadList(mal.NewClient(loadCredentials(ctx)), ctx)
 
 	if entry := list.GetByID(cfg.SelectedID); entry != nil {
 		printEntryDetails(entry)
