@@ -90,7 +90,7 @@ type Anime struct {
 const AnimeXMLTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 <entry>
 	<episode>{{.WatchedEpisodes}}</episode>
-	<status>{{.MyStatus}}</status>
+	<status>{{ printf "%d" .MyStatus }}</status>
 	<score>{{.MyScore}}</score>
 	<times_rewatched>{{.MyRewatching}}</times_rewatched>
 	<rewatch_value>{{.MyRewatchingEpisode}}</rewatch_value>
