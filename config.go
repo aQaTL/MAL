@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"github.com/aqatl/mal/mal"
+	"time"
 )
 
 type Config struct {
@@ -13,6 +14,7 @@ type Config struct {
 	Websites             map[int]string
 	Status               mal.MyStatus
 	StatusAutoUpdateMode StatusAutoUpdateMode
+	LastUpdate           time.Time
 }
 
 type StatusAutoUpdateMode byte

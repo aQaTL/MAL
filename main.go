@@ -11,6 +11,7 @@ import (
 	"github.com/skratchdot/open-golang/open"
 	"fmt"
 	"strings"
+	"time"
 )
 
 var dataDir = filepath.Join(homeDir(), ".mal")
@@ -57,10 +58,10 @@ func main() {
 
 	app.Commands = []cli.Command{
 		cli.Command{
-			Name:      "eps",
-			Aliases:   []string{"episodes"},
-			Category:  "Update",
-			Usage:     "Set the watched episodes value. " +
+			Name:     "eps",
+			Aliases:  []string{"episodes"},
+			Category: "Update",
+			Usage: "Set the watched episodes value. " +
 				"If n not specified, the number will be increased by one",
 			UsageText: "mal eps <n>",
 			Action:    setEntryEpisodes,
@@ -147,11 +148,11 @@ func main() {
 			},
 		},
 		cli.Command{
-			Name: "details",
-			Category: "Action",
-			Usage: "Print details about selected entry",
+			Name:      "details",
+			Category:  "Action",
+			Usage:     "Print details about selected entry",
 			UsageText: "mal details",
-			Action: detailsCommand,
+			Action:    detailsCommand,
 		},
 	}
 
@@ -187,7 +188,7 @@ func defaultAction(ctx *cli.Context) error {
 		return err
 	}
 
-	config := LoadConfig()
+	cfg := LoadConfig()
 
 	list = list.FilterByStatus(statusFlag(ctx))
 	sort.Sort(mal.AnimeSortByLastUpdated(list))
@@ -195,7 +196,7 @@ func defaultAction(ctx *cli.Context) error {
 	var visibleEntries int
 	if visibleEntries = ctx.Int("max"); visibleEntries == 0 {
 		//`Max` flag not specified, get value from config
-		visibleEntries = config.MaxVisibleEntries
+		visibleEntries = cfg.MaxVisibleEntries
 	}
 	if visibleEntries > len(list) {
 		visibleEntries = len(list)
@@ -203,7 +204,14 @@ func defaultAction(ctx *cli.Context) error {
 	visibleList := list[:visibleEntries]
 	reverseAnimeSlice(visibleList)
 
-	PrettyList.Execute(os.Stdout, PrettyListData{visibleList, config.SelectedID})
+	PrettyList.Execute(os.Stdout, PrettyListData{visibleList, cfg.SelectedID})
+
+	if cfg.LastUpdate != *new(time.Time) {
+		fmt.Printf("\nList last updated: %v (%d days ago)\n",
+			cfg.LastUpdate,
+			int(time.Since(cfg.LastUpdate).Hours()/24),
+		)
+	}
 
 	return nil
 }

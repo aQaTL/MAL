@@ -16,6 +16,7 @@ import (
 	"strings"
 	"syscall"
 	"github.com/fatih/color"
+	"time"
 )
 
 func loadCredentials(ctx *cli.Context) string {
@@ -65,6 +66,10 @@ func loadList(c *mal.Client, ctx *cli.Context) mal.AnimeList {
 	if ctx.GlobalBool("refresh") || cacheNotExist() {
 		list = c.AnimeList(mal.All)
 		cacheList(list)
+
+		cfg := LoadConfig()
+		cfg.LastUpdate = time.Now()
+		cfg.Save()
 	} else {
 		list = loadCachedList()
 	}
