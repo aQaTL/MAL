@@ -57,18 +57,13 @@ func main() {
 
 	app.Commands = []cli.Command{
 		cli.Command{
-			Name:      "inc",
-			Aliases:   []string{"+1"},
+			Name:      "eps",
+			Aliases:   []string{"episodes"},
 			Category:  "Update",
-			Usage:     "Increment selected entry by one",
-			UsageText: "mal inc",
-			Action:    incrementEntry,
-			Flags: []cli.Flag{
-				cli.IntFlag{
-					Name:  "n",
-					Usage: "Specify exact episode to set the entry to",
-				},
-			},
+			Usage:     "Set the watched episodes value. " +
+				"If n not specified, the number will be increased by one",
+			UsageText: "mal eps <n>",
+			Action:    setEntryEpisodes,
 		},
 		cli.Command{
 			Name:      "score",
@@ -213,7 +208,7 @@ func defaultAction(ctx *cli.Context) error {
 	return nil
 }
 
-func incrementEntry(ctx *cli.Context) error {
+func setEntryEpisodes(ctx *cli.Context) error {
 	c, list, err := loadMAL(ctx)
 	if err != nil {
 		return err
@@ -231,8 +226,15 @@ func incrementEntry(ctx *cli.Context) error {
 		return fmt.Errorf("no entry found")
 	}
 
-	if ctx.Int("n") > 0 {
-		selectedEntry.WatchedEpisodes = ctx.Int("n")
+	if arg := ctx.Args().First(); arg != "" {
+		n, err := strconv.Atoi(arg)
+		if err != nil {
+			return fmt.Errorf("n must be a non-negative integer")
+		}
+		if n < 0 {
+			return fmt.Errorf("n can't be lower than 0")
+		}
+		selectedEntry.WatchedEpisodes = n
 	} else {
 		selectedEntry.WatchedEpisodes++
 	}
