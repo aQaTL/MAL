@@ -12,6 +12,7 @@ import (
 	"bytes"
 	"io/ioutil"
 	"net/url"
+	"github.com/PuerkitoBio/goquery"
 )
 
 const (
@@ -25,6 +26,8 @@ const (
 	UpdateEndpoint = ApiEndpoint + "/animelist/update/%d.xml" //%d - anime database ID
 
 	UserAnimeListEndpoint = BaseMALAddress + "/malappinfo.php?u=%s&status=%s&type=anime" //%s - username %s - status
+
+	AnimePage = BaseMALAddress + "/anime/%d" //%d - anime database ID
 )
 
 type Client struct {
@@ -160,4 +163,35 @@ func (c *Client) Update(entry *Anime) bool {
 		return false
 	}
 	return true
+}
+
+func (c *Client) FetchRelated(entry *Anime) ([]Related, error) {
+	url := fmt.Sprintf(AnimePage, entry.ID)
+
+	resp, err := http.DefaultClient.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("error getting response: %v", err)
+	}
+
+	reader, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing response: %v", err)
+	}
+
+	relateds := make([]Related, 0)
+
+	reader.Find(".anime_detail_related_anime tr").Each(func(i int, s *goquery.Selection) {
+		relation := s.Find("td").First().Text()
+		relation = relation[:len(relation)-1]
+
+		link := s.Find("a")
+		title := link.Text()
+		url, _ := link.Attr("href")
+		url = BaseMALAddress + url
+
+		related := Related{relation, title, url}
+		relateds = append(relateds, related)
+	})
+
+	return relateds, nil
 }

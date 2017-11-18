@@ -87,6 +87,12 @@ type Anime struct {
 	MyTags              string     `xml:"my_tags"`
 }
 
+type Related struct {
+	Relation string
+	Title    string
+	Url      string
+}
+
 const AnimeXMLTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 <entry>
 	<episode>{{.WatchedEpisodes}}</episode>

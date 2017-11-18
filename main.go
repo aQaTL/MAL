@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"github.com/fatih/color"
 )
 
 var dataDir = filepath.Join(homeDir(), ".mal")
@@ -153,6 +154,13 @@ func main() {
 			Usage:     "Print details about selected entry",
 			UsageText: "mal details",
 			Action:    detailsCommand,
+		},
+		cli.Command{
+			Name: "related",
+			Category: "Action",
+			Usage: "Fetch entries related to the selected one",
+			UsageText: "mal related",
+			Action: fetchRelated,
 		},
 	}
 
@@ -450,6 +458,27 @@ func detailsCommand(ctx *cli.Context) error {
 
 	if entry := list.GetByID(cfg.SelectedID); entry != nil {
 		printEntryDetails(entry)
+	}
+
+	return nil
+}
+
+func fetchRelated(ctx *cli.Context) error {
+	cfg := LoadConfig()
+	c, list, err := loadMAL(ctx)
+	if err != nil {
+		return err
+	}
+
+	selEntry := list.GetByID(cfg.SelectedID)
+	relateds, err := c.FetchRelated(selEntry)
+	if err != nil {
+		return err
+	}
+
+	for _, related := range relateds {
+		title := color.HiYellowString("%s", related.Title)
+		fmt.Printf("%s: %s (%s)\n", related.Relation, title, related.Url)
 	}
 
 	return nil
