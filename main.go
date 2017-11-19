@@ -149,6 +149,13 @@ func main() {
 			},
 		},
 		cli.Command{
+			Name: "mal-page",
+			Category: "Action",
+			Usage: "Open MyAnimeList page of selected entry",
+			UsageText: "mal mal-page",
+			Action: openMalPage,
+		},
+		cli.Command{
 			Name:      "details",
 			Category:  "Action",
 			Usage:     "Print details about selected entry",
@@ -422,6 +429,25 @@ func openWebsite(ctx *cli.Context) error {
 	} else {
 		log.Println("Nothing to open")
 	}
+
+	return nil
+}
+
+func openMalPage(ctx *cli.Context) error {
+	_, list, err := loadMAL(ctx)
+	if err != nil {
+		return nil
+	}
+
+	cfg := LoadConfig()
+	id := cfg.SelectedID
+	if id <= 0 {
+		return fmt.Errorf("no entry selected")
+	}
+
+	open.Start(fmt.Sprintf(mal.AnimePage, cfg.SelectedID))
+	fmt.Println("Opened website for:")
+	printEntryDetails(list.GetByID(cfg.SelectedID))
 
 	return nil
 }
