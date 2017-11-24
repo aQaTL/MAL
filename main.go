@@ -428,6 +428,7 @@ func openWebsite(ctx *cli.Context) error {
 		open.Start(url)
 		fmt.Println("Opened website for:")
 		printEntryDetails(list.GetByID(cfg.SelectedID))
+		fmt.Printf("URL: %v\n", color.CyanString("%v", url))
 	} else {
 		log.Println("Nothing to open")
 	}
