@@ -124,16 +124,12 @@ func main() {
 		},
 		cli.Command{
 			Name:      "web",
-			Aliases:   []string{"website", "open"},
+			Aliases:   []string{"website", "open", "url"},
 			Category:  "Action",
-			Usage:     "Open url associated with selected entry",
-			UsageText: "mal web",
+			Usage:     "Open url associated with selected entry or change url if provided",
+			UsageText: "mal web <url>",
 			Action:    openWebsite,
 			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "url",
-					Usage: "Set url for current entry",
-				},
 				cli.BoolFlag{
 					Name:  "clear",
 					Usage: "Clear url for current entry",
@@ -408,17 +404,23 @@ func openWebsite(ctx *cli.Context) error {
 
 	cfg := LoadConfig()
 
-	if url := ctx.String("url"); url != "" {
+	if url := ctx.Args().First(); url != "" {
 		cfg.Websites[cfg.SelectedID] = url
-		log.Printf("Set url %s for entry %d", url, cfg.SelectedID)
 		cfg.Save()
+
+		fmt.Print("Entry: ")
+		color.HiYellow("%v", list.GetByID(cfg.SelectedID).Title)
+		fmt.Print("URL: ")
+		color.HiRed("%v", cfg.Websites[cfg.SelectedID])
+
 		return nil
 	}
 
 	if ctx.Bool("clear") {
 		delete(cfg.Websites, cfg.SelectedID)
-		log.Printf("Cleared url for entry %d", cfg.SelectedID)
 		cfg.Save()
+
+		log.Println("Entry cleared")
 		return nil
 	}
 
