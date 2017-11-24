@@ -6,6 +6,7 @@ import (
 	"log"
 	"github.com/aqatl/mal/mal"
 	"time"
+	"fmt"
 )
 
 type Config struct {
@@ -14,6 +15,7 @@ type Config struct {
 	Websites             map[int]string
 	Status               mal.MyStatus
 	StatusAutoUpdateMode StatusAutoUpdateMode
+	Sorting              Sorting
 	LastUpdate           time.Time
 }
 
@@ -25,12 +27,42 @@ const (
 	AfterThreshold
 )
 
+type Sorting byte
+
+const (
+	ByLastUpdated     Sorting = iota
+	ByTitle
+	ByWatchedEpisodes
+	ByScore
+)
+
+func ParseSorting(sort string) (Sorting, error) {
+	var sorting Sorting
+
+	switch sort {
+	case "last-updated":
+		sorting = ByLastUpdated
+	case "title":
+		sorting = ByTitle
+	case "episodes":
+		sorting = ByWatchedEpisodes
+	case "score":
+		sorting = ByScore
+	default:
+		return 0, fmt.Errorf("invalid option; possible values: " +
+			"last-updated|title|episodes|score")
+	}
+
+	return sorting, nil
+}
+
 func LoadConfig() (c *Config) {
 	c = new(Config)
 	c.MaxVisibleEntries = 10
 	c.Websites = make(map[int]string)
 	c.Status = mal.All
 	c.StatusAutoUpdateMode = Off
+	c.Sorting = ByLastUpdated
 
 	f, err := os.Open(ConfigFile)
 	defer f.Close()

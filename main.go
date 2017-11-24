@@ -55,6 +55,14 @@ func main() {
 			Name:  "status",
 			Usage: "display entries only with given status",
 		},
+		cli.StringFlag{
+			Name:  "sort",
+			Usage: "display entries sorted by: [last-updated|title|episodes|score]",
+		},
+		cli.BoolFlag{
+			Name: "reversed",
+			Usage: "reversed list order",
+		},
 	}
 
 	app.Commands = []cli.Command{
@@ -120,6 +128,12 @@ func main() {
 					UsageText: "mal cfg status-auto-update [off|normal|after-threshold]",
 					Action:    configChangeAutoUpdateMode,
 				},
+				cli.Command{
+					Name:      "sort",
+					Usage:     "Specifies sorting mode for the displayed table",
+					UsageText: "mal cfg sort [last-updated|title|progress|score]",
+					Action:    configChangeSorting,
+				},
 			},
 		},
 		cli.Command{
@@ -145,11 +159,11 @@ func main() {
 			},
 		},
 		cli.Command{
-			Name: "mal-page",
-			Category: "Action",
-			Usage: "Open MyAnimeList page of selected entry",
+			Name:      "mal-page",
+			Category:  "Action",
+			Usage:     "Open MyAnimeList page of selected entry",
 			UsageText: "mal mal-page",
-			Action: openMalPage,
+			Action:    openMalPage,
 		},
 		cli.Command{
 			Name:      "details",
@@ -159,11 +173,11 @@ func main() {
 			Action:    detailsCommand,
 		},
 		cli.Command{
-			Name: "related",
-			Category: "Action",
-			Usage: "Fetch entries related to the selected one",
+			Name:      "related",
+			Category:  "Action",
+			Usage:     "Fetch entries related to the selected one",
 			UsageText: "mal related",
-			Action: fetchRelated,
+			Action:    fetchRelated,
 		},
 	}
 
@@ -202,8 +216,30 @@ func defaultAction(ctx *cli.Context) error {
 	cfg := LoadConfig()
 
 	list = list.FilterByStatus(statusFlag(ctx))
-	sort.Sort(mal.AnimeSortByLastUpdated(list))
 
+	sorting := cfg.Sorting
+	if ctx.String("sort") != "" {
+		if sorting, err = ParseSorting(ctx.String("sort")); err != nil {
+			return fmt.Errorf("error parsing 'sort' option: %v", err)
+		}
+	}
+
+	switch sorting {
+	case ByLastUpdated:
+		sort.Sort(mal.AnimeSortByLastUpdated(list))
+	case ByTitle:
+		sort.Sort(mal.AnimeSortByTitle(list))
+	case ByWatchedEpisodes:
+		sort.Sort(sort.Reverse(mal.AnimeSortByWatchedEpisodes(list)))
+	case ByScore:
+		sort.Sort(sort.Reverse(mal.AnimeSortByScore(list)))
+	default:
+		sort.Sort(mal.AnimeSortByLastUpdated(list))
+	}
+
+	if ctx.Bool("reversed") {
+		reverseAnimeSlice(list)
+	}
 	var visibleEntries int
 	if visibleEntries = ctx.Int("max"); visibleEntries == 0 {
 		//`Max` flag not specified, get value from config
@@ -552,6 +588,19 @@ func configChangeAutoUpdateMode(ctx *cli.Context) error {
 
 	cfg := LoadConfig()
 	cfg.StatusAutoUpdateMode = mode
+	cfg.Save()
+
+	return nil
+}
+
+func configChangeSorting(ctx *cli.Context) error {
+	sorting, err := ParseSorting(strings.ToLower(ctx.Args().First()))
+	if err != nil {
+		return fmt.Errorf("error parsing flags: %v", err)
+	}
+
+	cfg := LoadConfig()
+	cfg.Sorting = sorting
 	cfg.Save()
 
 	return nil

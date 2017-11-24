@@ -1,6 +1,8 @@
 package mal
 
-import "sort"
+import (
+	"sort"
+)
 
 type animeType int
 
@@ -125,5 +127,23 @@ func (acs AnimeCustomSort) Swap(i, j int) {
 func AnimeSortByLastUpdated(list []*Anime) sort.Interface {
 	return AnimeCustomSort{list, func(x, y *Anime) bool {
 		return x.LastUpdated > y.LastUpdated
+	}}
+}
+
+func AnimeSortByTitle(list []*Anime) sort.Interface {
+	return AnimeCustomSort{list, func(x, y *Anime) bool {
+		return x.Title < y.Title
+	}}
+}
+
+func AnimeSortByWatchedEpisodes(list []*Anime) sort.Interface {
+	return AnimeCustomSort{list, func(x, y *Anime) bool {
+		return x.WatchedEpisodes < y.WatchedEpisodes
+	}}
+}
+
+func AnimeSortByScore(list []*Anime) sort.Interface {
+	return AnimeCustomSort{list, func(x, y *Anime) bool {
+		return x.MyScore < y.MyScore
 	}}
 }
