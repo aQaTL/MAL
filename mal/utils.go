@@ -3,6 +3,7 @@ package mal
 import (
 	"strings"
 	"fmt"
+	"github.com/PuerkitoBio/goquery"
 )
 
 func ParseStatus(status string) MyStatus {
@@ -28,4 +29,10 @@ func ParseScore(score int) (AnimeScore, error) {
 	}
 
 	return AnimeScore(score), nil
+}
+
+func isTextEqualFilterFunc(text string) func(i int, s *goquery.Selection) bool {
+	return func(i int, s *goquery.Selection) bool {
+		return s.Text() == text
+	}
 }

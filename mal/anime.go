@@ -51,13 +51,13 @@ const (
 )
 
 func (status MyStatus) String() string {
-	names := [...]string {
-		All: "All",
-		Watching: "Watching",
-		Completed: "Completed",
-		OnHold: "OnHold",
-		Dropped: "Dropped",
-		5: "",
+	names := [...]string{
+		All:         "All",
+		Watching:    "Watching",
+		Completed:   "Completed",
+		OnHold:      "OnHold",
+		Dropped:     "Dropped",
+		5:           "",
 		PlanToWatch: "PlanToWatch",
 	}
 	if status < 0 || int(status) >= len(names) {
@@ -87,6 +87,39 @@ type Anime struct {
 	MyRewatchingEpisode int        `xml:"my_rewatching_ep"`
 	LastUpdated         int        `xml:"my_last_updated"`
 	MyTags              string     `xml:"my_tags"`
+}
+
+type AnimeDetails struct {
+	JapaneseTitle string
+	Related       []Related
+	Synopsis      string
+	Background    string
+	Characters    []Character
+	Staff         [][]string
+	OpeningThemes []string
+	EndingThemes  []string
+	Premiered     string
+	Broadcast     string
+	Producers     []string
+	Licensors     []string
+	Studios       []string
+	Source        string
+	Genres        []string
+	Duration      string
+	Rating        string
+	Score         float64
+	ScoreVoters   int
+	Ranked        int
+	Popularity    int
+	Members       int
+	Favorites     int
+}
+
+type Character struct {
+	Name             string
+	Role             string
+	VoiceActor       string
+	VoiceActorOrigin string
 }
 
 type Related struct {

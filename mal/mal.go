@@ -1,18 +1,18 @@
 package mal
 
 import (
-	"net/http"
-	"log"
-	"fmt"
-	"encoding/base64"
-	"strings"
-	"encoding/xml"
-	"io"
-	"text/template"
 	"bytes"
-	"io/ioutil"
-	"net/url"
+	"encoding/base64"
+	"encoding/xml"
+	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"io"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"net/url"
+	"strings"
+	"text/template"
 )
 
 const (
@@ -165,7 +165,9 @@ func (c *Client) Update(entry *Anime) bool {
 	return true
 }
 
-func (c *Client) FetchRelated(entry *Anime) ([]Related, error) {
+//This works by scrapping the normal MAL website for given entry. It means that this method
+//will stop working when they change something
+func (c *Client) FetchDetails(entry *Anime) (*AnimeDetails, error) {
 	url := fmt.Sprintf(AnimePage, entry.ID)
 
 	resp, err := http.DefaultClient.Get(url)
@@ -178,20 +180,36 @@ func (c *Client) FetchRelated(entry *Anime) ([]Related, error) {
 		return nil, fmt.Errorf("error parsing response: %v", err)
 	}
 
-	relateds := make([]Related, 0)
+	details := AnimeDetails{}
 
-	reader.Find(".anime_detail_related_anime tr").Each(func(i int, s *goquery.Selection) {
-		relation := s.Find("td").First().Text()
-		relation = relation[:len(relation)-1]
+	details.JapaneseTitle = parseJapaneseTitle(reader)
+	details.Related = parseRelated(reader)
+	details.Characters = *parseCharacters(reader)
+	details.ScoreVoters = parseScoreVoters(reader)
 
-		link := s.Find("a")
-		title := link.Text()
-		url, _ := link.Attr("href")
-		url = BaseMALAddress + url
+	synopsisNode := reader.Find("span[itemprop=description]")
 
-		related := Related{relation, title, url}
-		relateds = append(relateds, related)
-	})
+	details.Synopsis = parseSynopsis(synopsisNode)
+	details.Background = parseBackground(synopsisNode) //not working correctly
 
-	return relateds, nil
+	spanDarkText := reader.Selection.Find("span[class=dark_text]")
+
+	details.Premiered = parsePremiered(spanDarkText)
+	details.Broadcast = parseBroadcast(spanDarkText)
+	details.Producers = *parseProducers(spanDarkText)
+	details.Licensors = *parseLicensors(spanDarkText)
+	details.Studios = *parseStudios(spanDarkText)
+	details.Source = parseSource(spanDarkText)
+	details.Genres = *parseGenres(spanDarkText)
+	details.Duration = parseDuration(spanDarkText)
+	details.Rating = parseRating(spanDarkText)
+	details.Score = parseScore(spanDarkText)
+	details.Ranked = parseRanked(spanDarkText)
+	details.Popularity = parsePopularity(spanDarkText)
+	details.Members = parseMembers(spanDarkText)
+	details.Favorites = parseFavorites(spanDarkText)
+
+	//TODO parse Staff, OpeningThemes, EndingThemes
+
+	return &details, nil
 }

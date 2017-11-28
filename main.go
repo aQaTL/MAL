@@ -514,16 +514,19 @@ func printWebsites(ctx *cli.Context) error {
 }
 
 func detailsCommand(ctx *cli.Context) error {
-	_, list, err := loadMAL(ctx)
+	c, list, err := loadMAL(ctx)
 	if err != nil {
 		return err
 	}
 
 	cfg := LoadConfig()
 
-	if entry := list.GetByID(cfg.SelectedID); entry != nil {
-		printEntryDetails(entry)
+	_, err = c.FetchDetails(list.GetByID(cfg.SelectedID))
+	if err != nil {
+		return err
 	}
+
+	//TODO print nicely all these fields
 
 	return nil
 }
@@ -536,12 +539,12 @@ func fetchRelated(ctx *cli.Context) error {
 	}
 
 	selEntry := list.GetByID(cfg.SelectedID)
-	relateds, err := c.FetchRelated(selEntry)
+	details, err := c.FetchDetails(selEntry)
 	if err != nil {
 		return err
 	}
 
-	for _, related := range relateds {
+	for _, related := range details.Related {
 		title := color.HiYellowString("%s", related.Title)
 		fmt.Printf("%s: %s (%s)\n", related.Relation, title, related.Url)
 	}
