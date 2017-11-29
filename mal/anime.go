@@ -95,7 +95,7 @@ type AnimeDetails struct {
 	Synopsis      string
 	Background    string
 	Characters    []Character
-	Staff         [][]string
+	Staff         []Staff
 	OpeningThemes []string
 	EndingThemes  []string
 	Premiered     string
@@ -120,6 +120,11 @@ type Character struct {
 	Role             string
 	VoiceActor       string
 	VoiceActorOrigin string
+}
+
+type Staff struct {
+	Name string
+	Position string
 }
 
 type Related struct {

@@ -182,9 +182,13 @@ func (c *Client) FetchDetails(entry *Anime) (*AnimeDetails, error) {
 
 	details := AnimeDetails{}
 
+	//All functions used below are in the animeparser.go file
 	details.JapaneseTitle = parseJapaneseTitle(reader)
 	details.Related = parseRelated(reader)
 	details.Characters = *parseCharacters(reader)
+	details.Staff = *parseStaff(reader)
+	details.OpeningThemes = *parseOpeningThemes(reader)
+	details.EndingThemes = *parseEndingThemes(reader)
 	details.ScoreVoters = parseScoreVoters(reader)
 
 	synopsisNode := reader.Find("span[itemprop=description]")
@@ -208,8 +212,6 @@ func (c *Client) FetchDetails(entry *Anime) (*AnimeDetails, error) {
 	details.Popularity = parsePopularity(spanDarkText)
 	details.Members = parseMembers(spanDarkText)
 	details.Favorites = parseFavorites(spanDarkText)
-
-	//TODO parse Staff, OpeningThemes, EndingThemes
 
 	return &details, nil
 }

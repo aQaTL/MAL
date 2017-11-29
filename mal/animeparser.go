@@ -270,3 +270,45 @@ func parseFavorites(spanDarkText *goquery.Selection) int {
 
 	return favorites
 }
+
+func parseStaff(reader *goquery.Document) *[]Staff {
+	staff := make([]Staff, 0)
+
+	reader.Selection.
+		Find("div .detail-characters-list").
+		Eq(1).
+		Find("table").
+		Each(func(i int, s *goquery.Selection) {
+			name := strings.TrimSpace(s.Find("a").Last().Text())
+			position := strings.TrimSpace(s.Find("small").Text())
+			staff = append(staff, Staff{name, position})
+		})
+
+	return &staff
+}
+
+func parseOpeningThemes(reader *goquery.Document) *[]string {
+	openingThemes := make([]string, 0)
+
+	reader.Selection.
+		Find(".opnening span").
+		Each(func(i int, s *goquery.Selection) {
+			song := strings.TrimSpace(s.Text())
+			openingThemes = append(openingThemes, song)
+		})
+
+	return &openingThemes
+}
+
+func parseEndingThemes(reader *goquery.Document) *[]string {
+	endingThemes := make([]string, 0)
+
+	reader.Selection.
+		Find(".ending span").
+		Each(func(i int, s *goquery.Selection) {
+			song := strings.TrimSpace(s.Text())
+			endingThemes = append(endingThemes, song)
+		})
+
+	return &endingThemes
+}
