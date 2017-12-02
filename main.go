@@ -389,7 +389,7 @@ func selectByTitle(ctx *cli.Context) error {
 		return err
 	}
 
-	title := strings.ToLower(ctx.Args().First())
+	title := strings.ToLower(strings.Join(ctx.Args(), " "))
 
 	found := make(mal.AnimeList, 0)
 	for _, entry := range list {
@@ -520,6 +520,8 @@ func detailsCommand(ctx *cli.Context) error {
 	}
 
 	cfg := LoadConfig()
+
+	printEntryDetails(list.GetByID(cfg.SelectedID))
 
 	_, err = c.FetchDetails(list.GetByID(cfg.SelectedID))
 	if err != nil {
