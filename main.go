@@ -159,10 +159,10 @@ func main() {
 			},
 		},
 		cli.Command{
-			Name:      "mal-page",
+			Name:      "mal",
 			Category:  "Action",
 			Usage:     "Open MyAnimeList page of selected entry",
-			UsageText: "mal mal-page",
+			UsageText: "mal mal",
 			Action:    openMalPage,
 		},
 		cli.Command{
