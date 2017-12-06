@@ -17,6 +17,7 @@ type Config struct {
 	StatusAutoUpdateMode StatusAutoUpdateMode
 	Sorting              Sorting
 	LastUpdate           time.Time
+	BrowserPath          string
 }
 
 type StatusAutoUpdateMode byte

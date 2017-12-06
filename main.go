@@ -1,18 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"github.com/aqatl/mal/mal"
+	"github.com/fatih/color"
+	"github.com/skratchdot/open-golang/open"
 	"github.com/urfave/cli"
-	"os"
 	"log"
+	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
-	"path/filepath"
-	"github.com/skratchdot/open-golang/open"
-	"fmt"
 	"strings"
 	"time"
-	"github.com/fatih/color"
 )
 
 var dataDir = filepath.Join(homeDir(), ".mal")
@@ -60,7 +60,7 @@ func main() {
 			Usage: "display entries sorted by: [last-updated|title|episodes|score]",
 		},
 		cli.BoolFlag{
-			Name: "reversed",
+			Name:  "reversed",
 			Usage: "reversed list order",
 		},
 	}
@@ -133,6 +133,18 @@ func main() {
 					Usage:     "Specifies sorting mode for the displayed table",
 					UsageText: "mal cfg sort [last-updated|title|progress|score]",
 					Action:    configChangeSorting,
+				},
+				cli.Command{
+					Name:      "browser",
+					Usage:     "Specifies a browser to use",
+					UsageText: "mal cfg browser <browser_path>",
+					Action:    configChangeBrowser,
+					Flags: []cli.Flag{
+						cli.BoolFlag{
+							Name:  "clear",
+							Usage: "Clear browser path (return to default)",
+						},
+					},
 				},
 			},
 		},
@@ -461,7 +473,12 @@ func openWebsite(ctx *cli.Context) error {
 	}
 
 	if url, ok := cfg.Websites[cfg.SelectedID]; ok {
-		open.Start(url)
+		if path := cfg.BrowserPath; path == "" {
+			open.Start(url)
+		} else {
+			open.StartWith(url, path)
+		}
+
 		fmt.Println("Opened website for:")
 		printEntryDetails(list.GetByID(cfg.SelectedID))
 		fmt.Printf("URL: %v\n", color.CyanString("%v", url))
@@ -484,7 +501,11 @@ func openMalPage(ctx *cli.Context) error {
 		return fmt.Errorf("no entry selected")
 	}
 
-	open.Start(fmt.Sprintf(mal.AnimePage, cfg.SelectedID))
+	if path, args := cfg.BrowserPath, fmt.Sprintf(mal.AnimePage, cfg.SelectedID); path == "" {
+		open.Start(args)
+	} else {
+		open.StartWith(args, path)
+	}
 	fmt.Println("Opened website for:")
 	printEntryDetails(list.GetByID(cfg.SelectedID))
 
@@ -607,6 +628,30 @@ func configChangeSorting(ctx *cli.Context) error {
 	cfg := LoadConfig()
 	cfg.Sorting = sorting
 	cfg.Save()
+
+	return nil
+}
+
+func configChangeBrowser(ctx *cli.Context) error {
+	cfg := LoadConfig()
+
+	if ctx.Bool("clear") {
+		cfg.BrowserPath = ""
+		cfg.Save()
+
+		fmt.Printf("Browser path cleared\n")
+		return nil
+	}
+
+	browserPath, err := filepath.Abs(strings.Join(ctx.Args(), " "))
+	if err != nil {
+		return fmt.Errorf("path error: %v", err)
+	}
+
+	cfg.BrowserPath = browserPath
+	cfg.Save()
+
+	fmt.Printf("New browser path: %v\n", color.HiYellowString("%v", browserPath))
 
 	return nil
 }
