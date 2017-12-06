@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"github.com/atotto/clipboard"
 )
 
 var dataDir = filepath.Join(homeDir(), ".mal")
@@ -190,6 +191,13 @@ func main() {
 			Usage:     "Fetch entries related to the selected one",
 			UsageText: "mal related",
 			Action:    fetchRelated,
+		},
+		cli.Command{
+			Name: "copy",
+			Category: "Action",
+			Usage: "Copy title of selected entry into system clipboard",
+			UsageText: "mal copy",
+			Action: copyTitleIntoClipboard,
 		},
 	}
 
@@ -573,6 +581,14 @@ func fetchRelated(ctx *cli.Context) error {
 	}
 
 	return nil
+}
+
+func copyTitleIntoClipboard(ctx *cli.Context) error {
+	_, list, err := loadMAL(ctx)
+	if err != nil {
+		return err
+	}
+	return clipboard.WriteAll(list.GetByID(LoadConfig().SelectedID).Title)
 }
 
 func configChangeMax(ctx *cli.Context) error {
