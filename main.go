@@ -183,7 +183,7 @@ func main() {
 			Category:  "Action",
 			Usage:     "Print details about selected entry",
 			UsageText: "mal details",
-			Action:    detailsCommand,
+			Action:    fetchDetails,
 		},
 		cli.Command{
 			Name:      "related",
@@ -542,22 +542,49 @@ func printWebsites(ctx *cli.Context) error {
 	return nil
 }
 
-func detailsCommand(ctx *cli.Context) error {
+func fetchDetails(ctx *cli.Context) error {
+	cfg := LoadConfig()
 	c, list, err := loadMAL(ctx)
 	if err != nil {
 		return err
 	}
 
-	cfg := LoadConfig()
-
-	printEntryDetails(list.GetByID(cfg.SelectedID))
-
-	_, err = c.FetchDetails(list.GetByID(cfg.SelectedID))
+	entry := list.GetByID(cfg.SelectedID)
+	details, err := c.FetchDetails(entry)
 	if err != nil {
 		return err
 	}
 
-	//TODO print nicely all these fields
+	yellow := color.New(color.FgHiYellow).SprintFunc()
+	red := color.New(color.FgHiRed).SprintFunc()
+	cyan := color.New(color.FgHiCyan).SprintFunc()
+	green := color.New(color.FgHiGreen).SprintFunc()
+
+	fmt.Println("Title:", yellow(entry.Title))
+	fmt.Println("Japanese title:", yellow(details.JapaneseTitle))
+	fmt.Println("Series synonyms:", yellow(entry.Synonyms))
+	fmt.Println("Series status:", yellow(entry.Status))
+	fmt.Println("Series premiered:", yellow(details.Premiered))
+	fmt.Println("Series start:", yellow(entry.SeriesStart))
+	fmt.Println("Series end:", yellow(entry.SeriesEnd))
+	fmt.Println("Series score:", red(details.Score),
+		"(by", red(details.ScoreVoters), "voters)")
+	fmt.Println("Series popularity:", "#" + red(details.Popularity))
+	fmt.Println("Series rating:", "#" + yellow(details.Rating))
+	fmt.Println("Genres:", yellow(details.Genres))
+	fmt.Println("Duration:", yellow(details.Duration))
+
+	fmt.Println()
+
+	fmt.Println("Episodes:", red(entry.WatchedEpisodes), "/", red(entry.Episodes))
+	fmt.Println("Score:", red(entry.MyScore))
+	fmt.Println("Status:", yellow(entry.MyStatus))
+	fmt.Println("Last updated:", red(time.Unix(entry.LastUpdated, 0)))
+	fmt.Println("Website url:", cyan(cfg.Websites[entry.ID]))
+
+	fmt.Println()
+
+	fmt.Println("Synposis:", green(details.Synopsis))
 
 	return nil
 }

@@ -1,9 +1,7 @@
 package mal
 
 import (
-	"bytes"
 	"github.com/PuerkitoBio/goquery"
-	"golang.org/x/net/html"
 	"log"
 	"strconv"
 	"strings"
@@ -95,15 +93,7 @@ func parsePremiered(spanDarkText *goquery.Selection) string {
 }
 
 func parseBackground(synopsisNode *goquery.Selection) string {
-	buf := bytes.Buffer{}
-	for _, a := range synopsisNode.NextAll().Nodes {
-		for sib := a.NextSibling; sib != nil; sib = sib.NextSibling {
-			if sib.Type == html.TextNode {
-				buf.WriteString(sib.Data)
-			}
-		}
-	}
-	return buf.String()
+	return "Not implemented yet"
 }
 
 func parseSynopsis(synopsisNode *goquery.Selection) string {

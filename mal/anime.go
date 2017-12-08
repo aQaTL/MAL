@@ -15,13 +15,25 @@ const (
 	Music
 )
 
-type animeStatus int
+type AnimeStatus int
 
 const (
-	CurrentlyAiring animeStatus = iota + 1
+	CurrentlyAiring AnimeStatus = iota + 1
 	FinishedAiring
 	NotYetAired
 )
+
+func (status AnimeStatus) String() string {
+	names := [...]string{
+		CurrentlyAiring: "CurrentlyAiring",
+		FinishedAiring: "FinishedAiring",
+		NotYetAired: "NotYetAired",
+	}
+	if status < 1 || int(status) >= len(names) {
+		return ""
+	}
+	return names[status]
+}
 
 type AnimeScore int
 
@@ -72,7 +84,7 @@ type Anime struct {
 	Synonyms    string      `xml:"series_synonyms"`
 	Type        animeType   `xml:"series_type"`
 	Episodes    int         `xml:"series_episodes"`
-	Status      animeStatus `xml:"series_status"`
+	Status      AnimeStatus `xml:"series_status"`
 	SeriesStart string      `xml:"series_start"`
 	SeriesEnd   string      `xml:"series_end"`
 	ImageURL    string      `xml:"series_image"`
@@ -85,7 +97,7 @@ type Anime struct {
 	MyStatus            MyStatus   `xml:"my_status"`
 	MyRewatching        int        `xml:"my_rewatching"`
 	MyRewatchingEpisode int        `xml:"my_rewatching_ep"`
-	LastUpdated         int        `xml:"my_last_updated"`
+	LastUpdated         int64        `xml:"my_last_updated"`
 	MyTags              string     `xml:"my_tags"`
 }
 
