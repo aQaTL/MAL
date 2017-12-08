@@ -380,7 +380,7 @@ func setEntryStatus(ctx *cli.Context) error {
 }
 
 func selectEntry(ctx *cli.Context) error {
-	if ctx.Bool("by-title") {
+	if ctx.Bool("t") {
 		return selectByTitle(ctx)
 	}
 
