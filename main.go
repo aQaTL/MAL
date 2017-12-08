@@ -193,11 +193,11 @@ func main() {
 			Action:    fetchRelated,
 		},
 		cli.Command{
-			Name: "copy",
-			Category: "Action",
-			Usage: "Copy title of selected entry into system clipboard",
-			UsageText: "mal copy",
-			Action: copyTitleIntoClipboard,
+			Name:      "copy",
+			Category:  "Action",
+			Usage:     "Copy selected value into system clipboard",
+			UsageText: "mal copy [title|url]",
+			Action:    copyIntoClipboard,
 		},
 	}
 
@@ -570,8 +570,8 @@ func fetchDetails(ctx *cli.Context) error {
 	fmt.Println("Series end:", yellow(entry.SeriesEnd))
 	fmt.Println("Series score:", red(details.Score),
 		"(by", red(details.ScoreVoters), "voters)")
-	fmt.Println("Series popularity:", "#" + red(details.Popularity))
-	fmt.Println("Series rating:", "#" + yellow(details.Rating))
+	fmt.Println("Series popularity:", "#"+red(details.Popularity))
+	fmt.Println("Series rating:", "#"+yellow(details.Rating))
 	fmt.Println("Genres:", yellow(details.Genres))
 	fmt.Println("Duration:", yellow(details.Duration))
 
@@ -611,12 +611,29 @@ func fetchRelated(ctx *cli.Context) error {
 	return nil
 }
 
-func copyTitleIntoClipboard(ctx *cli.Context) error {
+func copyIntoClipboard(ctx *cli.Context) error {
+	cfg := LoadConfig()
 	_, list, err := loadMAL(ctx)
 	if err != nil {
 		return err
 	}
-	return clipboard.WriteAll(list.GetByID(LoadConfig().SelectedID).Title)
+	entry := list.GetByID(cfg.SelectedID)
+	var text string
+
+	switch strings.ToLower(ctx.Args().First()) {
+	case "title":
+		text = entry.Title
+	case "url":
+		text = cfg.Websites[cfg.SelectedID]
+	default:
+		return fmt.Errorf("usage: mal copy [title|url]")
+	}
+
+	if err = clipboard.WriteAll(text); err == nil {
+		fmt.Println("Text", color.HiYellowString("%s", text), "copied into clipboard")
+	}
+
+	return err
 }
 
 func configChangeMax(ctx *cli.Context) error {
