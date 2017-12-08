@@ -99,8 +99,8 @@ func main() {
 			Action:    selectEntry,
 			Flags: []cli.Flag{
 				cli.BoolFlag{
-					Name:  "by-title",
-					Usage: "Select entry by name instead of by ID",
+					Name:  "t",
+					Usage: "Select entry by title instead of by ID",
 				},
 			},
 		},
@@ -204,7 +204,8 @@ func main() {
 	app.Action = cli.ActionFunc(defaultAction)
 
 	if err := app.Run(os.Args); err != nil {
-		log.Fatalf("Error: %v", err)
+		fmt.Fprintf(os.Stderr, "Error: %v", err)
+		os.Exit(1)
 	}
 }
 
@@ -385,7 +386,7 @@ func selectEntry(ctx *cli.Context) error {
 
 	id, err := strconv.Atoi(ctx.Args().First())
 	if err != nil {
-		return fmt.Errorf("error parsing id: %v", err)
+		return fmt.Errorf("invalid id (use with -t to select by title)")
 	}
 
 	cfg := LoadConfig()
