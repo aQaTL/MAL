@@ -54,7 +54,8 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "status",
-			Usage: "display entries only with given status",
+			Usage: "display entries only with given status " +
+				"[watching|completed|onhold|dropped|plantowatch]",
 		},
 		cli.StringFlag{
 			Name:  "sort",
