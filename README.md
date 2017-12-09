@@ -12,6 +12,9 @@ In order to have `mal copy` command working, you need to have either `xsel` or `
 
 ## Quick start
 
+If you have a working Go environment, you can download the app via `go get -u github.com/aqatl/mal`. 
+Otherwise, download binaries from the [release](https://github.com/aQaTL/MAL/releases) page.
+
 First, you need to give the app your credentials - username and password (everything is 
 stored in `$HOME/.mal` or `%userprofile%\.mal` (Windows)). To do that, execute 
 `mal --prompt-credentials --verify --save-password`. If everything went good, you should see 
