@@ -78,11 +78,13 @@ func parseProducers(spanDarkText *goquery.Selection) *[]string {
 }
 
 func parseBroadcast(spanDarkText *goquery.Selection) string {
-	return strings.TrimSpace(spanDarkText.
+	nodes := spanDarkText.
 		FilterFunction(isTextEqualFilterFunc("Broadcast:")).
-		Nodes[0].
-		NextSibling.
-		Data)
+		Nodes
+	if len(nodes) == 0 {
+		return ""
+	}
+	return strings.TrimSpace(nodes[0].NextSibling.Data)
 }
 
 func parsePremiered(spanDarkText *goquery.Selection) string {
