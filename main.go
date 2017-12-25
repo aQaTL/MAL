@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/aqatl/mal/mal"
+	"github.com/atotto/clipboard"
 	"github.com/fatih/color"
 	"github.com/skratchdot/open-golang/open"
 	"github.com/urfave/cli"
@@ -13,7 +14,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"github.com/atotto/clipboard"
 )
 
 var dataDir = filepath.Join(homeDir(), ".mal")
@@ -415,7 +415,8 @@ func selectByTitle(ctx *cli.Context) error {
 
 	found := make(mal.AnimeList, 0)
 	for _, entry := range list {
-		if strings.Contains(strings.ToLower(entry.Title), title) {
+		if strings.Contains(strings.ToLower(entry.Title), title) ||
+			strings.Contains(strings.ToLower(entry.Synonyms), title) {
 			found = append(found, entry)
 		}
 	}
