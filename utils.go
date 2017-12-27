@@ -49,3 +49,25 @@ func printEntryDetails(entry *mal.Anime) {
 		status,
 	)
 }
+
+func printEntryDetailsAfterUpdatedEpisodes(entry *mal.Anime, epsBefore int) {
+	title := color.HiYellowString("%s", entry.Title)
+	episodesBefore := color.HiRedString("%d/%d", epsBefore,
+		entry.Episodes)
+	episodesAfter := color.HiRedString("%d/%d", entry.WatchedEpisodes,
+		entry.Episodes)
+	score := color.HiRedString("%d", entry.MyScore)
+	status := color.HiRedString("%v", entry.MyStatus)
+
+	fmt.Printf(
+		"Title: %s\n"+
+			"Episodes: %s -> %s\n"+
+			"Score: %s\n"+
+			"Status: %v\n",
+		title,
+		episodesBefore,
+		episodesAfter,
+		score,
+		status,
+	)
+}

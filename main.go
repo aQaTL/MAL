@@ -310,6 +310,8 @@ func setEntryEpisodes(ctx *cli.Context) error {
 		return fmt.Errorf("no entry found")
 	}
 
+	epsBefore := selectedEntry.WatchedEpisodes
+
 	if arg := ctx.Args().First(); arg != "" {
 		n, err := strconv.Atoi(arg)
 		if err != nil {
@@ -327,7 +329,7 @@ func setEntryEpisodes(ctx *cli.Context) error {
 
 	if c.Update(selectedEntry) {
 		fmt.Println("Updated successfully")
-		printEntryDetails(selectedEntry)
+		printEntryDetailsAfterUpdatedEpisodes(selectedEntry, epsBefore)
 
 		cacheList(list)
 	}
