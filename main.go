@@ -53,7 +53,7 @@ func main() {
 			Usage: "visible entries threshold",
 		},
 		cli.StringFlag{
-			Name:  "status",
+			Name: "status",
 			Usage: "display entries only with given status " +
 				"[watching|completed|onhold|dropped|plantowatch]",
 		},
@@ -184,14 +184,21 @@ func main() {
 			Category:  "Action",
 			Usage:     "Print details about selected entry",
 			UsageText: "mal details",
-			Action:    fetchDetails,
+			Action:    printDetails,
 		},
 		cli.Command{
 			Name:      "related",
 			Category:  "Action",
 			Usage:     "Fetch entries related to the selected one",
 			UsageText: "mal related",
-			Action:    fetchRelated,
+			Action:    printRelated,
+		},
+		cli.Command{
+			Name:      "music",
+			Category:  "Action",
+			Usage:     "Print opening and ending themes",
+			UsageText: "mal music",
+			Action:    printMusic,
 		},
 		cli.Command{
 			Name:      "copy",
@@ -545,7 +552,7 @@ func printWebsites(ctx *cli.Context) error {
 	return nil
 }
 
-func fetchDetails(ctx *cli.Context) error {
+func printDetails(ctx *cli.Context) error {
 	cfg := LoadConfig()
 	c, list, err := loadMAL(ctx)
 	if err != nil {
@@ -592,7 +599,7 @@ func fetchDetails(ctx *cli.Context) error {
 	return nil
 }
 
-func fetchRelated(ctx *cli.Context) error {
+func printRelated(ctx *cli.Context) error {
 	cfg := LoadConfig()
 	c, list, err := loadMAL(ctx)
 	if err != nil {
@@ -609,6 +616,33 @@ func fetchRelated(ctx *cli.Context) error {
 		title := color.HiYellowString("%s", related.Title)
 		fmt.Printf("%s: %s (%s)\n", related.Relation, title, related.Url)
 	}
+
+	return nil
+}
+
+func printMusic(ctx *cli.Context) error {
+	cfg := LoadConfig()
+	c, list, err := loadMAL(ctx)
+	if err != nil {
+		return err
+	}
+
+	entry := list.GetByID(cfg.SelectedID)
+	details, err := c.FetchDetails(entry)
+
+	printThemes := func(themes []string) {
+		for i, theme := range themes {
+			fmt.Printf("  %d. %s\n",
+				i+1,
+				color.HiYellowString("%s", theme))
+		}
+	}
+
+	fmt.Println("Openings:")
+	printThemes(details.OpeningThemes)
+
+	fmt.Println("\nEndings:")
+	printThemes(details.EndingThemes)
 
 	return nil
 }
