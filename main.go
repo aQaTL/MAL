@@ -274,7 +274,7 @@ func defaultAction(ctx *cli.Context) error {
 		//`Max` flag not specified, get value from config
 		visibleEntries = cfg.MaxVisibleEntries
 	}
-	if visibleEntries > len(list) {
+	if visibleEntries > len(list) || visibleEntries < 0 {
 		visibleEntries = len(list)
 	}
 	visibleList := list[:visibleEntries]
