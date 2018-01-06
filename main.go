@@ -567,6 +567,12 @@ func printDetails(ctx *cli.Context) error {
 		return err
 	}
 
+	printSlice := func(slice []string) {
+		for _, str := range slice {
+			fmt.Printf("\t%s\n", str)
+		}
+	}
+
 	yellow := color.New(color.FgHiYellow).SprintFunc()
 	red := color.New(color.FgHiRed).SprintFunc()
 	cyan := color.New(color.FgHiCyan).SprintFunc()
@@ -574,7 +580,8 @@ func printDetails(ctx *cli.Context) error {
 
 	fmt.Println("Title:", yellow(entry.Title))
 	fmt.Println("Japanese title:", yellow(details.JapaneseTitle))
-	fmt.Println("Series synonyms:", yellow(entry.Synonyms))
+	fmt.Println("Series synonyms:")
+	printSlice(formatSynonyms(entry.Synonyms, yellow))
 	fmt.Println("Series status:", yellow(entry.Status))
 	fmt.Println("Series premiered:", yellow(details.Premiered))
 	fmt.Println("Series start:", yellow(entry.SeriesStart))
@@ -583,8 +590,9 @@ func printDetails(ctx *cli.Context) error {
 		"(by", red(details.ScoreVoters), "voters)")
 	fmt.Println("Series popularity:", "#"+red(details.Popularity))
 	fmt.Println("Series rating:", "#"+yellow(details.Rating))
-	fmt.Println("Genres:", yellow(details.Genres))
 	fmt.Println("Duration:", yellow(details.Duration))
+	fmt.Println("Genres:")
+	printSlice(formatGenres(details.Genres, yellow))
 
 	fmt.Println()
 
@@ -599,6 +607,37 @@ func printDetails(ctx *cli.Context) error {
 	fmt.Println("Synposis:", green(details.Synopsis))
 
 	return nil
+}
+
+type sPrintFunc func(a ...interface{}) string
+
+func formatSynonyms(synonyms string, sPrintFunc sPrintFunc) []string {
+	synoSplit := strings.Split(synonyms, ";")
+	for i, length := 0, len(synoSplit); i < length; {
+		if synoSplit[i] == "" {
+			synoSplit = synoSplit[:i+copy(synoSplit[i:], synoSplit[i+1:])]
+			length--
+		} else {
+			synoSplit[i] = sPrintFunc(strings.TrimSpace(synoSplit[i]))
+			i++
+		}
+	}
+	return synoSplit
+}
+
+func formatGenres(genres []string, sPrintFunc sPrintFunc) []string {
+	if length := len(genres); length == 0 {
+		return genres
+	} else if length == 1 {
+		genres[0] = strings.Trim(genres[0], "[]")
+	} else {
+		genres[0] = strings.TrimLeft(genres[0], "[")
+		genres[length-1] = strings.TrimRight(genres[1], "]")
+	}
+	for i := range genres {
+		genres[i] = sPrintFunc(genres[i])
+	}
+	return genres
 }
 
 func printRelated(ctx *cli.Context) error {
