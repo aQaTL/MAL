@@ -103,6 +103,10 @@ func main() {
 					Name:  "t",
 					Usage: "Select entry by title instead of by ID",
 				},
+				cli.BoolFlag{
+					Name: "s",
+					Usage: "Show selected entry",
+				},
 			},
 		},
 		cli.Command{
@@ -390,6 +394,9 @@ func setEntryStatus(ctx *cli.Context) error {
 }
 
 func selectEntry(ctx *cli.Context) error {
+	if ctx.Bool("s") {
+		return showSelectedEntry(ctx)
+	}
 	if ctx.Bool("t") {
 		return selectByTitle(ctx)
 	}
@@ -410,6 +417,20 @@ func selectEntry(ctx *cli.Context) error {
 
 	fmt.Println("Selected entry:")
 	printEntryDetails(list.GetByID(id))
+
+	return nil
+}
+
+func showSelectedEntry(ctx *cli.Context) error {
+	cfg := LoadConfig()
+	_, list, err := loadMAL(ctx)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Selected entry:")
+	selEntry := list.GetByID(cfg.SelectedID)
+	printEntryDetails(selEntry)
 
 	return nil
 }
