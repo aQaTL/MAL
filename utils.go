@@ -7,6 +7,7 @@ import (
 	"log"
 	"os/user"
 	"github.com/fatih/color"
+	"time"
 )
 
 func basicAuth(username, password string) string {
@@ -37,16 +38,19 @@ func printEntryDetails(entry *mal.Anime) {
 		entry.Episodes)
 	score := color.HiRedString("%d", entry.MyScore)
 	status := color.HiRedString("%v", entry.MyStatus)
+	lastUpdated := color.HiRedString("%v", time.Unix(entry.LastUpdated, 0))
 
 	fmt.Printf(
 			"Title: %s\n"+
 			"Episodes: %s\n"+
 			"Score: %s\n"+
-			"Status: %v\n",
+			"Status: %v\n" +
+			"Last updated: %v\n",
 		title,
 		episodes,
 		score,
 		status,
+		lastUpdated,
 	)
 }
 
