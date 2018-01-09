@@ -2,11 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/aqatl/mal/mal"
-	"github.com/atotto/clipboard"
-	"github.com/fatih/color"
-	"github.com/skratchdot/open-golang/open"
-	"github.com/urfave/cli"
 	"log"
 	"os"
 	"path/filepath"
@@ -14,6 +9,12 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/aqatl/mal/mal"
+	"github.com/atotto/clipboard"
+	"github.com/fatih/color"
+	"github.com/skratchdot/open-golang/open"
+	"github.com/urfave/cli"
 )
 
 var dataDir = filepath.Join(homeDir(), ".mal")
@@ -104,7 +105,7 @@ func main() {
 					Usage: "Select entry by title instead of by ID",
 				},
 				cli.BoolFlag{
-					Name: "s",
+					Name:  "s",
 					Usage: "Show selected entry",
 				},
 			},
@@ -693,10 +694,9 @@ func printMusic(ctx *cli.Context) error {
 	details, err := c.FetchDetails(entry)
 
 	printThemes := func(themes []string) {
-		for i, theme := range themes {
-			fmt.Printf("  %d. %s\n",
-				i+1,
-				color.HiYellowString("%s", theme))
+		for _, theme := range themes {
+			fmt.Printf("  %s\n",
+				color.HiYellowString("%s", strings.TrimSpace(theme)))
 		}
 	}
 
