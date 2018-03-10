@@ -642,6 +642,7 @@ func printDetails(ctx *cli.Context) error {
 	fmt.Println("Japanese title:", yellow(details.JapaneseTitle))
 	fmt.Println("Series synonyms:")
 	printSlice(formatSynonyms(entry.Synonyms, yellow))
+	fmt.Println("Series type:", yellow(entry.Type))
 	fmt.Println("Series status:", yellow(entry.Status))
 	fmt.Println("Series premiered:", yellow(details.Premiered))
 	fmt.Println("Series start:", yellow(entry.SeriesStart))

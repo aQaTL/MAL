@@ -4,16 +4,31 @@ import (
 	"sort"
 )
 
-type animeType int
+type AnimeType int
 
 const (
-	Tv      animeType = iota + 1
+	Tv AnimeType = iota + 1
 	Ova
 	Movie
 	Special
 	Ona
 	Music
 )
+
+func (t AnimeType) String() string {
+	types := [...]string{
+		Tv:      "TV",
+		Ova:     "OVA",
+		Movie:   "Movie",
+		Special: "Special",
+		Ona:     "ONA",
+		Music:   "Music",
+	}
+	if t < 1 || int(t) >= len(types) {
+		return ""
+	}
+	return types[t]
+}
 
 type AnimeStatus int
 
@@ -26,8 +41,8 @@ const (
 func (status AnimeStatus) String() string {
 	names := [...]string{
 		CurrentlyAiring: "CurrentlyAiring",
-		FinishedAiring: "FinishedAiring",
-		NotYetAired: "NotYetAired",
+		FinishedAiring:  "FinishedAiring",
+		NotYetAired:     "NotYetAired",
 	}
 	if status < 1 || int(status) >= len(names) {
 		return ""
@@ -54,7 +69,7 @@ const (
 type MyStatus int
 
 const (
-	All         MyStatus = iota
+	All MyStatus = iota
 	Watching
 	Completed
 	OnHold
@@ -82,7 +97,7 @@ type Anime struct {
 	ID          int         `xml:"series_animedb_id"`
 	Title       string      `xml:"series_title"`
 	Synonyms    string      `xml:"series_synonyms"`
-	Type        animeType   `xml:"series_type"`
+	Type        AnimeType   `xml:"series_type"`
 	Episodes    int         `xml:"series_episodes"`
 	Status      AnimeStatus `xml:"series_status"`
 	SeriesStart string      `xml:"series_start"`
@@ -97,7 +112,7 @@ type Anime struct {
 	MyStatus            MyStatus   `xml:"my_status"`
 	MyRewatching        int        `xml:"my_rewatching"`
 	MyRewatchingEpisode int        `xml:"my_rewatching_ep"`
-	LastUpdated         int64        `xml:"my_last_updated"`
+	LastUpdated         int64      `xml:"my_last_updated"`
 	MyTags              string     `xml:"my_tags"`
 }
 
@@ -135,7 +150,7 @@ type Character struct {
 }
 
 type Staff struct {
-	Name string
+	Name     string
 	Position string
 }
 
