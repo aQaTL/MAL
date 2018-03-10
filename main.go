@@ -556,7 +556,7 @@ func printStats(ctx *cli.Context) error {
 			"Dropped: %s\n"+
 			"On hold: %s\n"+
 			"Plan to watch: %s\n\n"+
-			"Days spent watching: %s",
+			"Days spent watching: %s\n",
 		yellow(c.Username),
 		red(c.Watching),
 		red(c.Completed),
