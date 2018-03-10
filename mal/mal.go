@@ -85,6 +85,7 @@ func newRequest(url, credentials, method string) *http.Request {
 	return req
 }
 
+//Note: Since anime list endpoint returns account stats, this method updates Client with them
 func (c *Client) AnimeList(status MyStatus) []*Anime {
 	url := fmt.Sprintf(UserAnimeListEndpoint, c.Username, "all") //Anything other than `all` doesn't really work
 

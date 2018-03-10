@@ -19,9 +19,10 @@ import (
 
 var dataDir = filepath.Join(homeDir(), ".mal")
 var (
-	CredentialsFile = filepath.Join(dataDir, "cred.dat")
-	MalCacheFile    = filepath.Join(dataDir, "cache.xml")
-	ConfigFile      = filepath.Join(dataDir, "config.json")
+	CredentialsFile   = filepath.Join(dataDir, "cred.dat")
+	MalCacheFile      = filepath.Join(dataDir, "cache.xml")
+	MalStatsCacheFile = filepath.Join(dataDir, "stats.xml")
+	ConfigFile        = filepath.Join(dataDir, "config.json")
 )
 
 func main() {
@@ -178,6 +179,13 @@ func main() {
 			},
 		},
 		cli.Command{
+			Name:      "stats",
+			Category:  "Action",
+			Usage:     "Show your account statistics",
+			UsageText: "mal stats",
+			Action:    printStats,
+		},
+		cli.Command{
 			Name:      "mal",
 			Category:  "Action",
 			Usage:     "Open MyAnimeList page of selected entry",
@@ -236,7 +244,7 @@ func loadMAL(ctx *cli.Context) (*mal.Client, mal.AnimeList, error) {
 		return nil, nil, fmt.Errorf("error creating mal.Client")
 	}
 
-	list := loadList(c, ctx)
+	list := loadData(c, ctx)
 
 	return c, list, nil
 }
@@ -531,10 +539,40 @@ func openWebsite(ctx *cli.Context) error {
 	return nil
 }
 
+func printStats(ctx *cli.Context) error {
+	c, _, err := loadMAL(ctx)
+	if err != nil {
+		return err
+	}
+
+	yellow := color.New(color.FgHiYellow).SprintFunc()
+	red := color.New(color.FgHiRed).SprintFunc()
+	cyan := color.New(color.FgHiCyan).SprintFunc()
+
+	fmt.Printf(
+		"Username: %s\n\n"+
+			"Watching: %s\n"+
+			"Completed: %s\n"+
+			"Dropped: %s\n"+
+			"On hold: %s\n"+
+			"Plan to watch: %s\n\n"+
+			"Days spent watching: %s",
+		yellow(c.Username),
+		red(c.Watching),
+		red(c.Completed),
+		red(c.Dropped),
+		red(c.OnHold),
+		red(c.PlanToWatch),
+		cyan(c.DaysSpentWatching),
+	)
+
+	return nil
+}
+
 func openMalPage(ctx *cli.Context) error {
 	_, list, err := loadMAL(ctx)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	cfg := LoadConfig()

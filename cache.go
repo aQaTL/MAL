@@ -57,18 +57,21 @@ func saveCredentials(credentials string) {
 	}
 }
 
-func loadList(c *mal.Client, ctx *cli.Context) mal.AnimeList {
+//Loads Client statistic data and returns Client's AnimeList
+func loadData(c *mal.Client, ctx *cli.Context) mal.AnimeList {
 	var list []*mal.Anime
 
 	if ctx.GlobalBool("refresh") || cacheNotExist() {
 		list = c.AnimeList(mal.All)
 		cacheList(list)
+		cacheClient(c)
 
 		cfg := LoadConfig()
 		cfg.LastUpdate = time.Now()
 		cfg.Save()
 	} else {
 		list = loadCachedList()
+		loadCachedStats(c)
 	}
 	return list
 }
@@ -76,7 +79,9 @@ func loadList(c *mal.Client, ctx *cli.Context) mal.AnimeList {
 func cacheNotExist() bool {
 	f, err := os.Open(MalCacheFile)
 	defer f.Close()
-	return os.IsNotExist(err)
+	f2, err2 := os.Open(MalStatsCacheFile)
+	defer f2.Close()
+	return os.IsNotExist(err) || os.IsNotExist(err2)
 }
 
 func cacheList(list []*mal.Anime) {
@@ -84,11 +89,12 @@ func cacheList(list []*mal.Anime) {
 	defer f.Close()
 	if err != nil {
 		log.Printf("Error creating %s file: %v", MalCacheFile, err)
+		return
 	}
 
 	encoder := xml.NewEncoder(f)
 	if err := encoder.Encode(list); err != nil {
-		log.Printf("Caching error: %v", err)
+		log.Printf("Encoding error: %v", err)
 	}
 }
 
@@ -114,3 +120,30 @@ func loadCachedList() mal.AnimeList {
 	return list
 }
 
+func cacheClient(c *mal.Client) {
+	f, err := os.Create(MalStatsCacheFile)
+	defer f.Close()
+	if err != nil {
+		log.Printf("Error opening %s file: %v", MalStatsCacheFile, err)
+		return
+	}
+
+	encoder := xml.NewEncoder(f)
+	if err := encoder.Encode(c); err != nil {
+		log.Printf("Encoding error: %v", err)
+	}
+}
+
+func loadCachedStats(c *mal.Client) {
+	f, err := os.Open(MalStatsCacheFile)
+	defer f.Close()
+	if err != nil {
+		log.Printf("Error opening %s file: %v", MalCacheFile, err)
+		return
+	}
+
+	decoder := xml.NewDecoder(f)
+	if err := decoder.Decode(c); err != nil {
+		log.Printf("Error decoding %s file", MalStatsCacheFile)
+	}
+}
