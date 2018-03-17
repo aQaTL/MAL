@@ -467,12 +467,13 @@ func selectByTitle(ctx *cli.Context) error {
 		fmt.Printf("%3s%8s%7s\n", "No.", "ID", "Title")
 		fmt.Println(strings.Repeat("=", 80))
 		for i, entry := range found {
-			fmt.Printf("%3d. %6d: %s\n", i, entry.ID, entry.Title)
+			fmt.Printf("%3d. %6d: %s\n", i+1, entry.ID, entry.Title)
 		}
 
 		fmt.Printf("Enter index of the selected entry: ")
 		idx := 0
 		_, err := fmt.Scanln(&idx)
+		idx-- //List is displayed from 1
 		if err != nil || idx < 0 || idx > len(found)-1 {
 			return fmt.Errorf("invalid input %v", err)
 		}
