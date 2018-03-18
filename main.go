@@ -94,27 +94,23 @@ func main() {
 			Action:    setEntryStatus,
 		},
 		cli.Command{
-			Name: "cmpl",
-			Category: "Update",
-			Usage: "Set entry status to completed",
+			Name:      "cmpl",
+			Category:  "Update",
+			Usage:     "Set entry status to completed",
 			UsageText: "mal cmpl",
-			Action: setEntryStatusCompleted,
+			Action:    setEntryStatusCompleted,
 		},
 		cli.Command{
 			Name:      "sel",
 			Aliases:   []string{"select"},
 			Category:  "Config",
 			Usage:     "Select an entry",
-			UsageText: "mal sel [entry ID]",
+			UsageText: "mal sel [entry title]",
 			Action:    selectEntry,
 			Flags: []cli.Flag{
 				cli.BoolFlag{
-					Name:  "t",
-					Usage: "Select entry by title instead of by ID",
-				},
-				cli.BoolFlag{
-					Name:  "s",
-					Usage: "Show selected entry",
+					Name:  "id",
+					Usage: "Select entry by id instead of by title",
 				},
 			},
 		},
@@ -430,54 +426,50 @@ func setEntryStatusCompleted(ctx *cli.Context) error {
 }
 
 func selectEntry(ctx *cli.Context) error {
-	if ctx.Bool("s") {
-		return showSelectedEntry(ctx)
-	}
-	if ctx.Bool("t") {
+	switch {
+	case ctx.Bool("id"):
+		return selectById(ctx)
+	default:
 		return selectByTitle(ctx)
 	}
+}
 
+func selectById(ctx *cli.Context) error {
 	id, err := strconv.Atoi(ctx.Args().First())
 	if err != nil {
 		return fmt.Errorf("invalid id (use with -t to select by title)")
 	}
 
+	_, list, err := loadMAL(ctx)
+	if err != nil {
+		return err
+	}
 	cfg := LoadConfig()
+
+	entry := list.GetByID(id)
+	if entry == nil {
+		return fmt.Errorf("entry %d not found", id)
+	}
+
 	cfg.SelectedID = id
 	cfg.Save()
 
-	_, list, err := loadMAL(ctx)
-	if err != nil {
-		return err
-	}
-
 	fmt.Println("Selected entry:")
-	printEntryDetails(list.GetByID(id))
-
-	return nil
-}
-
-func showSelectedEntry(ctx *cli.Context) error {
-	cfg := LoadConfig()
-	_, list, err := loadMAL(ctx)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Selected entry:")
-	selEntry := list.GetByID(cfg.SelectedID)
-	printEntryDetails(selEntry)
+	printEntryDetails(entry)
 
 	return nil
 }
 
 func selectByTitle(ctx *cli.Context) error {
+	title := strings.ToLower(strings.Join(ctx.Args(), " "))
+	if title == "" {
+		return showSelectedEntry(ctx)
+	}
+
 	_, list, err := loadMAL(ctx)
 	if err != nil {
 		return err
 	}
-
-	title := strings.ToLower(strings.Join(ctx.Args(), " "))
 
 	found := make(mal.AnimeList, 0)
 	for _, entry := range list {
@@ -518,6 +510,20 @@ func selectByTitle(ctx *cli.Context) error {
 
 	fmt.Println("Selected entry:")
 	printEntryDetails(selectedEntry)
+
+	return nil
+}
+
+func showSelectedEntry(ctx *cli.Context) error {
+	cfg := LoadConfig()
+	_, list, err := loadMAL(ctx)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Selected entry:")
+	selEntry := list.GetByID(cfg.SelectedID)
+	printEntryDetails(selEntry)
 
 	return nil
 }
