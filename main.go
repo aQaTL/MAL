@@ -94,6 +94,13 @@ func main() {
 			Action:    setEntryStatus,
 		},
 		cli.Command{
+			Name: "cmpl",
+			Category: "Update",
+			Usage: "Set entry status to completed",
+			UsageText: "mal cmpl",
+			Action: setEntryStatusCompleted,
+		},
+		cli.Command{
 			Name:      "sel",
 			Aliases:   []string{"select"},
 			Category:  "Config",
@@ -393,6 +400,26 @@ func setEntryStatus(ctx *cli.Context) error {
 	}
 
 	selectedEntry.MyStatus = status
+	if c.Update(selectedEntry) {
+		fmt.Println("Updated successfully")
+		printEntryDetails(selectedEntry)
+
+		cacheList(list)
+	}
+	return nil
+}
+
+func setEntryStatusCompleted(ctx *cli.Context) error {
+	c, list, err := loadMAL(ctx)
+	if err != nil {
+		return err
+	}
+	cfg := LoadConfig()
+
+	selectedEntry := list.GetByID(cfg.SelectedID)
+	selectedEntry.MyStatus = mal.Completed
+	selectedEntry.WatchedEpisodes = selectedEntry.Episodes
+
 	if c.Update(selectedEntry) {
 		fmt.Println("Updated successfully")
 		printEntryDetails(selectedEntry)

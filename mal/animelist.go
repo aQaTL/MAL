@@ -3,14 +3,12 @@ package mal
 type AnimeList []*Anime
 
 func (list AnimeList) GetByID(id int) *Anime {
-	var foundEntry *Anime
-	for i, entry := range list {
+	for _, entry := range list {
 		if entry.ID == id {
-			foundEntry = list[i]
-			break
+			return entry
 		}
 	}
-	return foundEntry
+	return nil
 }
 
 func (list AnimeList) FilterByStatus(status MyStatus) AnimeList {
