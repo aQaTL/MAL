@@ -600,7 +600,7 @@ func printStats(ctx *cli.Context) error {
 
 	yellow := color.New(color.FgHiYellow).SprintFunc()
 	red := color.New(color.FgHiRed).SprintFunc()
-	cyan := color.New(color.FgHiCyan).SprintFunc()
+	cyan := color.New(color.FgHiCyan).SprintfFunc()
 	magenta := color.New(color.FgHiMagenta).SprintFunc()
 
 	totalEntries := c.Watching + c.Completed + c.Dropped + c.OnHold + c.PlanToWatch
@@ -633,8 +633,8 @@ func printStats(ctx *cli.Context) error {
 		magenta(totalEntries),
 		magenta(watchedEps),
 		magenta(rewatchedSeries),
-		cyan(c.DaysSpentWatching),
-		cyan(hoursSpentWatching),
+		cyan("%.2f", c.DaysSpentWatching),
+		cyan("%.2f", hoursSpentWatching),
 	)
 
 	return nil
