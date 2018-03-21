@@ -593,7 +593,7 @@ func openWebsite(ctx *cli.Context) error {
 }
 
 func printStats(ctx *cli.Context) error {
-	c, _, err := loadMAL(ctx)
+	c, list, err := loadMAL(ctx)
 	if err != nil {
 		return err
 	}
@@ -601,6 +601,17 @@ func printStats(ctx *cli.Context) error {
 	yellow := color.New(color.FgHiYellow).SprintFunc()
 	red := color.New(color.FgHiRed).SprintFunc()
 	cyan := color.New(color.FgHiCyan).SprintFunc()
+	magenta := color.New(color.FgHiMagenta).SprintFunc()
+
+	totalEntries := c.Watching + c.Completed + c.Dropped + c.OnHold + c.PlanToWatch
+
+	watchedEps, rewatchedSeries := 0, 0
+	for _, entry := range list {
+		watchedEps += entry.WatchedEpisodes
+		rewatchedSeries += entry.MyRewatching
+	}
+
+	hoursSpentWatching := c.DaysSpentWatching * 24.0
 
 	fmt.Printf(
 		"Username: %s\n\n"+
@@ -609,14 +620,21 @@ func printStats(ctx *cli.Context) error {
 			"Dropped: %s\n"+
 			"On hold: %s\n"+
 			"Plan to watch: %s\n\n"+
-			"Days spent watching: %s\n",
+			"Total entries: %s\n"+
+			"Episodes watched: %s\n"+
+			"Times rewatched: %s\n\n"+
+			"Days spent watching: %s (%s hours)\n",
 		yellow(c.Username),
 		red(c.Watching),
 		red(c.Completed),
 		red(c.Dropped),
 		red(c.OnHold),
 		red(c.PlanToWatch),
+		magenta(totalEntries),
+		magenta(watchedEps),
+		magenta(rewatchedSeries),
 		cyan(c.DaysSpentWatching),
+		cyan(hoursSpentWatching),
 	)
 
 	return nil
