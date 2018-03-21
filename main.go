@@ -228,7 +228,7 @@ func main() {
 	app.Action = cli.ActionFunc(defaultAction)
 
 	if err := app.Run(os.Args); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v", err)
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 }
@@ -360,6 +360,9 @@ func setEntryScore(ctx *cli.Context) error {
 	cfg := LoadConfig()
 
 	selectedEntry := list.GetByID(cfg.SelectedID)
+	if selectedEntry == nil {
+		return fmt.Errorf("no entry selected")
+	}
 
 	score, err := strconv.Atoi(ctx.Args().First())
 	if err != nil {
@@ -388,6 +391,9 @@ func setEntryStatus(ctx *cli.Context) error {
 	cfg := LoadConfig()
 
 	selectedEntry := list.GetByID(cfg.SelectedID)
+	if selectedEntry == nil {
+		return fmt.Errorf("no entry selected")
+	}
 
 	status := mal.ParseStatus(ctx.Args().First())
 	if status == mal.All {
@@ -413,6 +419,10 @@ func setEntryStatusCompleted(ctx *cli.Context) error {
 	cfg := LoadConfig()
 
 	selectedEntry := list.GetByID(cfg.SelectedID)
+	if selectedEntry == nil {
+		return fmt.Errorf("no entry selected")
+	}
+
 	selectedEntry.MyStatus = mal.Completed
 	selectedEntry.WatchedEpisodes = selectedEntry.Episodes
 
@@ -521,8 +531,12 @@ func showSelectedEntry(ctx *cli.Context) error {
 		return err
 	}
 
-	fmt.Println("Selected entry:")
 	selEntry := list.GetByID(cfg.SelectedID)
+	if selEntry == nil {
+		return fmt.Errorf("no entry selected")
+	}
+
+	fmt.Println("Selected entry:")
 	printEntryDetails(selEntry)
 
 	return nil
@@ -536,12 +550,17 @@ func openWebsite(ctx *cli.Context) error {
 
 	cfg := LoadConfig()
 
+	entry := list.GetByID(cfg.SelectedID)
+	if entry == nil {
+		return fmt.Errorf("no entry selected")
+	}
+
 	if url := ctx.Args().First(); url != "" {
 		cfg.Websites[cfg.SelectedID] = url
 		cfg.Save()
 
 		fmt.Print("Entry: ")
-		color.HiYellow("%v", list.GetByID(cfg.SelectedID).Title)
+		color.HiYellow("%v", entry.Title)
 		fmt.Print("URL: ")
 		color.HiRed("%v", cfg.Websites[cfg.SelectedID])
 
@@ -564,7 +583,7 @@ func openWebsite(ctx *cli.Context) error {
 		}
 
 		fmt.Println("Opened website for:")
-		printEntryDetails(list.GetByID(cfg.SelectedID))
+		printEntryDetails(entry)
 		fmt.Printf("URL: %v\n", color.CyanString("%v", url))
 	} else {
 		log.Println("Nothing to open")
@@ -656,6 +675,10 @@ func printDetails(ctx *cli.Context) error {
 	}
 
 	entry := list.GetByID(cfg.SelectedID)
+	if entry == nil {
+		return fmt.Errorf("no entry selected")
+	}
+
 	details, err := c.FetchDetails(entry)
 	if err != nil {
 		return err
@@ -743,6 +766,10 @@ func printRelated(ctx *cli.Context) error {
 	}
 
 	selEntry := list.GetByID(cfg.SelectedID)
+	if selEntry == nil {
+		return fmt.Errorf("no entry selected")
+	}
+
 	details, err := c.FetchDetails(selEntry)
 	if err != nil {
 		return err
@@ -764,6 +791,10 @@ func printMusic(ctx *cli.Context) error {
 	}
 
 	entry := list.GetByID(cfg.SelectedID)
+	if entry == nil {
+		return fmt.Errorf("no entry selected")
+	}
+
 	details, err := c.FetchDetails(entry)
 
 	printThemes := func(themes []string) {
@@ -788,7 +819,12 @@ func copyIntoClipboard(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
+
 	entry := list.GetByID(cfg.SelectedID)
+	if entry == nil {
+		return fmt.Errorf("no entry selected")
+	}
+
 	var text string
 
 	switch strings.ToLower(ctx.Args().First()) {
