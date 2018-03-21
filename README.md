@@ -2,6 +2,14 @@
 
 This time with CLI
 
+- [mal in action](#mal-in-action) - video
+- [Dependencies](#dependencies)
+- [Quick start](#quick-start)
+- [Commands](#commands) - usage of some commands
+- [Examples](#examples) usage
+
+## mal in action
+
 [![asciicast](https://asciinema.org/a/DNvVHEadubTfNeZo6O84SVuaO.png)](https://asciinema.org/a/DNvVHEadubTfNeZo6O84SVuaO)
 
 ## Dependencies
@@ -59,16 +67,18 @@ NAME:
    mal sel - Select an entry
 
 USAGE:
-   mal sel [entry ID]
+   mal sel [entry title]
 
 CATEGORY:
    Config
 
 OPTIONS:
-   -t  Select entry by title instead of by ID
+   --id  Select entry by id instead of by title
 ```
 
-For example, to select "Naruto", type `mal sel -t naruto` (case insensitive)
+For example, to select "Naruto", type `mal sel naruto` (case insensitive).
+If `sel` is given no arguments, it will just display info about currently selected entry 
+(if there's one).
 
 #### Update entry
 
@@ -78,6 +88,7 @@ For now, you can update your entry with the following commands:
 eps, episodes  Set the watched episodes value. If n not specified, the number will be increased by one
 score          Set your rating for selected entry
 status         Set your status for selected entry
+cmpl           Alias for 'mal status completed'
 ```
 
 ##### `mal eps` command
@@ -139,4 +150,51 @@ CATEGORY:
    Update
 ```
 
+There is also `cmpl` command that is an alias for `status completed`.
 
+## Examples
+
+A few examples of how I use this program.
+
+Remember that everything is in `--help` :)
+
+### Everyday usage
+
+Okay, so when I add a new anime to my list, I run `mal -r` to update the cache. Then, if I 
+want to watch it, I select it with `mal sel [name]`. Then I go to the web browser to find a 
+website where I can watch it. If the name is long, I copy the title with `mal copy title`. 
+To not forget the website and make it a little bit more convenient for me in the future, I 
+copy the website's link and bind it to the selected anime with `mal web [website url]`. 
+
+Now, when I want to watch it, I can just type `mal web` and it will open saved url in the 
+web browser (you can configure which browser to use). When I finish an episode I type 
+`mal eps` to update watched episodes and that's it. There's an option to automatically set 
+the status to "completed", so I don't have to do anything more. 
+
+Oh, and usually I also rate the show by `mal score [number from 0 to 10]`.
+
+### Showing all entries from plan to watch list
+
+Useful when you want to choose what to watch next.
+
+`mal --status plantowatch --max -1`
+
+The `--max -1` flag tells the program not to limit the displayed list length.
+
+### Checking highest ranked (by you) shows
+
+`mal --status all --sort score`
+
+Again, you can add `--max -1` flag to turn off the list length limit.
+
+### Showing your account stats
+
+`mal stats`
+
+### Checking entry details
+
+`mal detials`
+
+`mal related`
+
+`mal music`
