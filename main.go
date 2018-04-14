@@ -54,6 +54,10 @@ func main() {
 			Name:  "max",
 			Usage: "visible entries threshold",
 		},
+		cli.BoolFlag{
+			Name: "all, a",
+			Usage: "display all entries; same as --max -1",
+		},
 		cli.StringFlag{
 			Name: "status",
 			Usage: "display entries only with given status " +
@@ -290,7 +294,7 @@ func defaultAction(ctx *cli.Context) error {
 		//`Max` flag not specified, get value from config
 		visibleEntries = cfg.MaxVisibleEntries
 	}
-	if visibleEntries > len(list) || visibleEntries < 0 {
+	if visibleEntries > len(list) || visibleEntries < 0 || ctx.Bool("all") {
 		visibleEntries = len(list)
 	}
 	visibleList := list[:visibleEntries]
