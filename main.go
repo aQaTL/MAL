@@ -853,7 +853,11 @@ func copyIntoClipboard(ctx *cli.Context) error {
 	case "title":
 		text = entry.Title
 	case "url":
-		text = cfg.Websites[cfg.SelectedID]
+		url, ok := cfg.Websites[cfg.SelectedID]
+		if !ok {
+			return fmt.Errorf("no url to copy")
+		}
+		text = url
 	default:
 		return fmt.Errorf("usage: mal copy [title|url]")
 	}
