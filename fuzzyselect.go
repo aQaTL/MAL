@@ -66,6 +66,7 @@ func fuzzySelectEntry(ctx *cli.Context) error {
 const (
 	FsgInputView  = "fsgInputView"
 	FsgOutputView = "fsgOutputView"
+	FsgShortcutsView = "fsgShortcutsView"
 )
 
 type fuzzySelGui struct {
@@ -81,7 +82,7 @@ type fuzzySelGui struct {
 
 func (fsg *fuzzySelGui) Layout(gui *gocui.Gui) error {
 	w, h := gui.Size()
-	if v, err := gui.SetView(FsgInputView, 0, 0, w-1, h/7); err != nil {
+	if v, err := gui.SetView(FsgInputView, 0, 0, w-1, 2); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
@@ -91,23 +92,34 @@ func (fsg *fuzzySelGui) Layout(gui *gocui.Gui) error {
 		v.Editable = true
 		v.Wrap = true
 
-		fsg.InputView = v
 		gui.SetCurrentView(FsgInputView)
+		fsg.InputView = v
 	}
 
-	if v, err := gui.SetView(FsgOutputView, 0, h/7+1, w-1, h-1); err != nil {
+	if v, err := gui.SetView(FsgOutputView, 0, 3, w-1, h-4); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
 
+		v.Title = "Found entries"
 		v.SelBgColor = gocui.ColorGreen
 		v.SelFgColor = gocui.ColorBlack
 		v.Highlight = true
-
 		v.Editable = true
 		v.Editor = gocui.EditorFunc(fsg.OutputViewEditor)
 
 		fsg.OutputView = v
+	}
+
+	if v, err := gui.SetView(FsgShortcutsView, 0, h-3, w-1, h-1); err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+
+		v.Title = "Shortcuts"
+		v.Editable = false
+
+		fmt.Fprintf(v, "Ctrl+C: quit | Tab: switch window | Enter: select highlighted entry")
 	}
 
 	return nil
