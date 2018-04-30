@@ -55,7 +55,7 @@ func main() {
 			Usage: "visible entries threshold",
 		},
 		cli.BoolFlag{
-			Name: "all, a",
+			Name:  "all, a",
 			Usage: "display all entries; same as --max -1",
 		},
 		cli.StringFlag{
@@ -117,6 +117,13 @@ func main() {
 					Usage: "Select entry by id instead of by title",
 				},
 			},
+		},
+		cli.Command{
+			Name:      "fuzzy-select",
+			Aliases:   []string{"fsel"},
+			Usage:     "Interactive fuzzy search through your list",
+			UsageText: "mal sel fs",
+			Action: fuzzySelectEntry,
 		},
 		cli.Command{
 			Name:     "cfg",
