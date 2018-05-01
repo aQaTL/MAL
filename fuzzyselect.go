@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/aqatl/mal/mal"
+	"github.com/fatih/color"
 	"github.com/jroimartin/gocui"
+	"github.com/sahilm/fuzzy"
 	"github.com/urfave/cli"
 	"strings"
-	"github.com/sahilm/fuzzy"
 )
 
 func fuzzySelectEntry(ctx *cli.Context) error {
@@ -23,14 +25,16 @@ func fuzzySelectEntry(ctx *cli.Context) error {
 
 	listStr := make([]string, len(list))
 	for i, entry := range list {
-		listStr[i] = strings.ToLower(fmt.Sprintf("%s (%s)", entry.Title, entry.Synonyms))
+		listStr[i] = strings.ToLower(fmt.Sprintf("%s %s",
+			entry.Title,
+			strings.Replace(entry.Synonyms, ";", "", -1)))
 	}
 
 	fsg := &fuzzySelGui{
-		List: list,
+		List:    list,
 		ListStr: listStr,
-		Cfg:  cfg,
-		Match: nil,
+		Cfg:     cfg,
+		Match:   nil,
 	}
 
 	gui.SetManager(fsg)
@@ -64,18 +68,18 @@ func fuzzySelectEntry(ctx *cli.Context) error {
 }
 
 const (
-	FsgInputView  = "fsgInputView"
-	FsgOutputView = "fsgOutputView"
+	FsgInputView     = "fsgInputView"
+	FsgOutputView    = "fsgOutputView"
 	FsgShortcutsView = "fsgShortcutsView"
 )
 
 type fuzzySelGui struct {
-	List mal.AnimeList
+	List    mal.AnimeList
 	ListStr []string
-	Cfg  *Config
+	Cfg     *Config
 
 	Matches []fuzzy.Match
-	Match *mal.Anime
+	Match   *mal.Anime
 
 	InputView, OutputView *gocui.View
 }
@@ -131,11 +135,24 @@ func (fsg *fuzzySelGui) InputViewEditor(v *gocui.View, key gocui.Key, ch rune, m
 	fsg.OutputView.Clear()
 
 	pattern := strings.TrimSpace(v.Buffer())
-
 	fsg.Matches = fuzzy.Find(pattern, fsg.ListStr)
+
+	highlight := color.New(color.FgBlack, color.BgWhite).FprintFunc()
+	buf := bufio.NewWriter(fsg.OutputView)
+
 	for _, match := range fsg.Matches {
-		fmt.Fprintf(fsg.OutputView, "%s\n", fsg.List[match.Index].Title)
+		mIdx := 0
+		for i, r := range []rune(fsg.List[match.Index].Title) {
+			if mIdx < len(match.MatchedIndexes) && i == match.MatchedIndexes[mIdx] {
+				mIdx++
+				highlight(buf, string(r))
+			} else {
+				buf.WriteRune(r)
+			}
+		}
+		buf.WriteRune('\n')
 	}
+	buf.Flush()
 }
 
 func (fsg *fuzzySelGui) OutputViewEditor(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
@@ -166,7 +183,7 @@ func setGuiKeyBindings(gui *gocui.Gui, fsg *fuzzySelGui) {
 
 	gui.SetKeybinding(FsgOutputView, gocui.KeyEnter, gocui.ModNone, func(gui *gocui.Gui, v *gocui.View) error {
 		_, y := fsg.OutputView.Cursor()
-		if ml := len(fsg.Matches); ml == 0 || y > ml - 1 || y < 0 {
+		if ml := len(fsg.Matches); ml == 0 || y > ml-1 || y < 0 {
 			return nil
 		}
 
