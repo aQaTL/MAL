@@ -153,6 +153,8 @@ func (fsg *fuzzySelGui) InputViewEditor(v *gocui.View, key gocui.Key, ch rune, m
 		buf.WriteRune('\n')
 	}
 	buf.Flush()
+
+	fsg.OutputView.SetCursor(0, 0)
 }
 
 func (fsg *fuzzySelGui) OutputViewEditor(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
