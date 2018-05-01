@@ -183,7 +183,7 @@ func setGuiKeyBindings(gui *gocui.Gui, fsg *fuzzySelGui) {
 		return nil
 	})
 
-	gui.SetKeybinding(FsgOutputView, gocui.KeyEnter, gocui.ModNone, func(gui *gocui.Gui, v *gocui.View) error {
+	gui.SetKeybinding("", gocui.KeyEnter, gocui.ModNone, func(gui *gocui.Gui, v *gocui.View) error {
 		_, y := fsg.OutputView.Cursor()
 		if ml := len(fsg.Matches); ml == 0 || y > ml-1 || y < 0 {
 			return nil
