@@ -105,6 +105,14 @@ func main() {
 			Action:    setEntryStatusCompleted,
 		},
 		cli.Command{
+			Name:      "delete",
+			Aliases:   []string{"del"},
+			Category:  "Update",
+			Usage:     "Delete entry from your list",
+			UsageText: "mal delete",
+			Action:    deleteEntry,
+		},
+		cli.Command{
 			Name:      "sel",
 			Aliases:   []string{"select"},
 			Category:  "Config",
@@ -444,6 +452,30 @@ func setEntryStatusCompleted(ctx *cli.Context) error {
 
 		cacheList(list)
 	}
+	return nil
+}
+
+func deleteEntry(ctx *cli.Context) error {
+	c, list, err := loadMAL(ctx)
+	if err != nil {
+		return err
+	}
+	cfg := LoadConfig()
+
+	entry := list.GetByID(cfg.SelectedID)
+	if entry == nil {
+		return fmt.Errorf("no entry selected")
+	}
+
+	if ok := c.Delete(entry); !ok {
+		return fmt.Errorf("deleting entry failed")
+	}
+
+	title := color.HiRedString("%s", entry.Title)
+	fmt.Printf("%s seleted successfully\n", title)
+	list = list.DeleteByID(entry.ID)
+	cacheList(list)
+
 	return nil
 }
 

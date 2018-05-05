@@ -24,6 +24,7 @@ const (
 //For using as a printf format
 const (
 	UpdateEndpoint = ApiEndpoint + "/animelist/update/%d.xml" //%d - anime database ID
+	DeleteEndpoint = ApiEndpoint + "/animelist/delete/%d.xml" //%d - anime database ID
 
 	UserAnimeListEndpoint = BaseMALAddress + "/malappinfo.php?u=%s&status=%s&type=anime" //%s - username %s - status
 
@@ -125,32 +126,13 @@ func (c *Client) AnimeList(status MyStatus) []*Anime {
 }
 
 func (c *Client) Update(entry *Anime) bool {
-	buf := &bytes.Buffer{}
-
-	template.Must(
-		template.New("animeXML").
-			Parse(AnimeXMLTemplate)).
-		Execute(buf, entry)
-
-	payload := url.Values{}
-	payload.Set("data", buf.String())
-
-	req, err := http.NewRequest(
-		http.MethodPost,
+	resp, err := c.doApiRequestWithEntryData(
 		fmt.Sprintf(UpdateEndpoint, entry.ID),
-		strings.NewReader(payload.Encode()),
+		http.MethodPost,
+		entry,
 	)
-
 	if err != nil {
-		log.Printf("Error creating http request: %v", err)
-		return false
-	}
-	req.Header.Set("Authorization", c.credentials)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Printf("Error getting response for %d - %s update: %v", entry.ID, entry.Title, err)
+		log.Print(err)
 		return false
 	}
 
@@ -165,6 +147,62 @@ func (c *Client) Update(entry *Anime) bool {
 		return false
 	}
 	return true
+}
+
+func (c *Client) Delete(entry *Anime) bool {
+	resp, err := c.doApiRequestWithEntryData(
+		fmt.Sprintf(DeleteEndpoint, entry.ID),
+		http.MethodPost,
+		entry,
+	)
+	if err != nil {
+		log.Print(err)
+		return false
+	}
+
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Error reading body: %v", err)
+		return false
+	}
+	body := string(bodyBytes)
+
+	if body != "Deleted" || resp.StatusCode != 200 {
+		log.Printf("Body: %v\nStatus: %s", body, resp.Status)
+		return false
+	}
+	return true
+}
+
+func (c *Client) doApiRequestWithEntryData(address, method string, entry *Anime) (*http.Response, error) {
+	buf := &bytes.Buffer{}
+
+	template.Must(
+		template.New("animeXML").
+			Parse(AnimeXMLTemplate)).
+		Execute(buf, entry)
+
+	payload := url.Values{}
+	payload.Set("data", buf.String())
+
+	req, err := http.NewRequest(
+		method,
+		address,
+		strings.NewReader(payload.Encode()),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error creating http request: %v", err)
+	}
+
+	req.Header.Set("Authorization", c.credentials)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("error getting response for %d - %s update: %v",
+			entry.ID, entry.Title, err)
+	}
+	return resp, nil
 }
 
 //This works by scrapping the normal MAL website for given entry. It means that this method

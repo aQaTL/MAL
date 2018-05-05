@@ -28,3 +28,24 @@ func (list AnimeList) FilterByStatus(status MyStatus) AnimeList {
 		return filter(list, func(anime *Anime) bool { return anime.MyStatus == status })
 	}
 }
+
+func (list AnimeList) DeleteByID(id int) AnimeList {
+	idx := 0
+	found := false
+	for i, entry := range list {
+		if entry.ID == id {
+			idx = i
+			found = true
+			break
+		}
+	}
+	if !found {
+		return list
+	}
+
+	copy(list[idx:], list[idx+1:])
+	list[len(list)-1] = nil
+	list = list[:len(list)-1]
+
+	return list
+}
