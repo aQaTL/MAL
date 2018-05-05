@@ -121,9 +121,10 @@ func main() {
 		cli.Command{
 			Name:      "fuzzy-select",
 			Aliases:   []string{"fsel"},
+			Category:  "Config",
 			Usage:     "Interactive fuzzy search through your list",
 			UsageText: "mal sel fs",
-			Action: fuzzySelectEntry,
+			Action:    fuzzySelectEntry,
 		},
 		cli.Command{
 			Name:     "cfg",
