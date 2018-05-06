@@ -539,6 +539,8 @@ func selectByTitle(ctx *cli.Context) error {
 		fmt.Printf("Found more than 1 matching entry:\n")
 		fmt.Printf("%3s%8s%7s\n", "No.", "ID", "Title")
 		fmt.Println(strings.Repeat("=", 80))
+
+		sort.Sort(mal.AnimeSortByLastUpdated(found))
 		for i, entry := range found {
 			fmt.Printf("%3d. %6d: %s\n", i+1, entry.ID, entry.Title)
 		}
