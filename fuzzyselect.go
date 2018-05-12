@@ -158,10 +158,10 @@ func (fsg *fuzzySelGui) InputViewEditor(v *gocui.View, key gocui.Key, ch rune, m
 }
 
 func (fsg *fuzzySelGui) OutputViewEditor(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
-	switch key {
-	case gocui.KeyArrowDown:
+	switch {
+	case key == gocui.KeyArrowDown || ch == 'j':
 		v.MoveCursor(0, 1, false)
-	case gocui.KeyArrowUp:
+	case key == gocui.KeyArrowUp || ch == 'k':
 		v.MoveCursor(0, -1, false)
 	}
 }
