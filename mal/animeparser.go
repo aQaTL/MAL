@@ -23,14 +23,14 @@ func parseDuration(spanDarkText *goquery.Selection) string {
 		Data)
 }
 
-func parseGenres(spanDarkText *goquery.Selection) *[]string {
+func parseGenres(spanDarkText *goquery.Selection) []string {
 	genres := make([]string, 0)
 	spanDarkText.FilterFunction(isTextEqualFilterFunc("Genres:")).
 		Siblings().
 		Each(func(i int, s *goquery.Selection) {
 			genres = append(genres, s.Text())
 		})
-	return &genres
+	return genres
 }
 
 func parseSource(spanDarkText *goquery.Selection) string {
@@ -41,7 +41,7 @@ func parseSource(spanDarkText *goquery.Selection) string {
 		Data)
 }
 
-func parseStudios(spanDarkText *goquery.Selection) *[]string {
+func parseStudios(spanDarkText *goquery.Selection) []string {
 	studios := make([]string, 0)
 
 	spanDarkText.FilterFunction(isTextEqualFilterFunc("Studios:")).
@@ -50,10 +50,10 @@ func parseStudios(spanDarkText *goquery.Selection) *[]string {
 			studios = append(studios, s.Text())
 		})
 
-	return &studios
+	return studios
 }
 
-func parseLicensors(spanDarkText *goquery.Selection) *[]string {
+func parseLicensors(spanDarkText *goquery.Selection) []string {
 	licensors := make([]string, 0)
 
 	spanDarkText.FilterFunction(isTextEqualFilterFunc("Licensors:")).
@@ -62,10 +62,10 @@ func parseLicensors(spanDarkText *goquery.Selection) *[]string {
 			licensors = append(licensors, s.Text())
 		})
 
-	return &licensors
+	return licensors
 }
 
-func parseProducers(spanDarkText *goquery.Selection) *[]string {
+func parseProducers(spanDarkText *goquery.Selection) []string {
 	producers := make([]string, 0)
 
 	spanDarkText.FilterFunction(isTextEqualFilterFunc("Producers:")).
@@ -74,7 +74,7 @@ func parseProducers(spanDarkText *goquery.Selection) *[]string {
 			producers = append(producers, s.Text())
 		})
 
-	return &producers
+	return producers
 }
 
 func parseBroadcast(spanDarkText *goquery.Selection) string {
@@ -130,7 +130,7 @@ func parseRelated(reader *goquery.Document) []Related {
 	return relateds
 }
 
-func parseCharacters(reader *goquery.Document) *[]Character {
+func parseCharacters(reader *goquery.Document) []Character {
 	characters := make([]Character, 0)
 
 	reader.Selection.
@@ -165,7 +165,7 @@ func parseCharacters(reader *goquery.Document) *[]Character {
 			characters = append(characters, c)
 		})
 
-	return &characters
+	return characters
 }
 
 func parseScore(spanDarkText *goquery.Selection) float64 {
@@ -263,7 +263,7 @@ func parseFavorites(spanDarkText *goquery.Selection) int {
 	return favorites
 }
 
-func parseStaff(reader *goquery.Document) *[]Staff {
+func parseStaff(reader *goquery.Document) []Staff {
 	staff := make([]Staff, 0)
 
 	reader.Selection.
@@ -276,10 +276,10 @@ func parseStaff(reader *goquery.Document) *[]Staff {
 			staff = append(staff, Staff{name, position})
 		})
 
-	return &staff
+	return staff
 }
 
-func parseOpeningThemes(reader *goquery.Document) *[]string {
+func parseOpeningThemes(reader *goquery.Document) []string {
 	openingThemes := make([]string, 0)
 
 	reader.Selection.
@@ -289,10 +289,10 @@ func parseOpeningThemes(reader *goquery.Document) *[]string {
 			openingThemes = append(openingThemes, song)
 		})
 
-	return &openingThemes
+	return openingThemes
 }
 
-func parseEndingThemes(reader *goquery.Document) *[]string {
+func parseEndingThemes(reader *goquery.Document) []string {
 	endingThemes := make([]string, 0)
 
 	reader.Selection.
@@ -302,5 +302,5 @@ func parseEndingThemes(reader *goquery.Document) *[]string {
 			endingThemes = append(endingThemes, song)
 		})
 
-	return &endingThemes
+	return endingThemes
 }
