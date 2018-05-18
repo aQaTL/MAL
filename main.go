@@ -776,8 +776,6 @@ func printDetails(ctx *cli.Context) error {
 	fmt.Println("Genres:")
 	printSlice(formatGenres(details.Genres, yellow))
 
-	fmt.Println()
-
 	fmt.Println("Episodes:", red(entry.WatchedEpisodes), "/", red(entry.Episodes))
 	fmt.Println("Score:", red(entry.MyScore))
 	fmt.Println("Status:", yellow(entry.MyStatus))
@@ -814,7 +812,7 @@ func formatGenres(genres []string, sPrintFunc sPrintFunc) []string {
 		genres[0] = strings.Trim(genres[0], "[]")
 	} else {
 		genres[0] = strings.TrimLeft(genres[0], "[")
-		genres[length-1] = strings.TrimRight(genres[1], "]")
+		genres[length-1] = strings.TrimRight(genres[length-1], "]")
 	}
 	for i := range genres {
 		genres[i] = sPrintFunc(genres[i])
