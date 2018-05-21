@@ -223,35 +223,43 @@ func (c *Client) FetchDetails(entry *Anime) (*AnimeDetails, error) {
 	details := AnimeDetails{}
 
 	//All functions used below are in the animeparser.go file
-	details.JapaneseTitle = parseJapaneseTitle(reader)
-	details.Related = parseRelated(reader)
-	details.Characters = parseCharacters(reader)
-	details.Staff = parseStaff(reader)
-	details.OpeningThemes = parseOpeningThemes(reader)
-	details.EndingThemes = parseEndingThemes(reader)
-	details.ScoreVoters = parseScoreVoters(reader)
+	go func(d *AnimeDetails) {
+		details.JapaneseTitle = parseJapaneseTitle(reader)
+		details.Related = parseRelated(reader)
+		details.Characters = parseCharacters(reader)
+		details.Staff = parseStaff(reader)
+		details.OpeningThemes = parseOpeningThemes(reader)
+		details.EndingThemes = parseEndingThemes(reader)
+		details.ScoreVoters = parseScoreVoters(reader)
+	}(&details)
 
-	synopsisNode := reader.Find("span[itemprop=description]")
+	go func(d *AnimeDetails) {
+		synopsisNode := reader.Find("span[itemprop=description]")
 
-	details.Synopsis = parseSynopsis(synopsisNode)
-	details.Background = parseBackground(synopsisNode) //not working correctly
+		details.Synopsis = parseSynopsis(synopsisNode)
+		details.Background = parseBackground(synopsisNode) //not working correctly
+	}(&details)
 
 	spanDarkText := reader.Selection.Find("span[class=dark_text]")
 
-	details.Premiered = parsePremiered(spanDarkText)
-	details.Broadcast = parseBroadcast(spanDarkText)
-	details.Producers = parseProducers(spanDarkText)
-	details.Licensors = parseLicensors(spanDarkText)
-	details.Studios = parseStudios(spanDarkText)
-	details.Source = parseSource(spanDarkText)
-	details.Genres = parseGenres(spanDarkText)
-	details.Duration = parseDuration(spanDarkText)
-	details.Rating = parseRating(spanDarkText)
-	details.Score = parseScore(spanDarkText)
-	details.Ranked = parseRanked(spanDarkText)
-	details.Popularity = parsePopularity(spanDarkText)
-	details.Members = parseMembers(spanDarkText)
-	details.Favorites = parseFavorites(spanDarkText)
+	go func(d *AnimeDetails, spanDarkText *goquery.Selection) {
+		details.Premiered = parsePremiered(spanDarkText)
+		details.Broadcast = parseBroadcast(spanDarkText)
+		details.Producers = parseProducers(spanDarkText)
+		details.Licensors = parseLicensors(spanDarkText)
+		details.Studios = parseStudios(spanDarkText)
+		details.Source = parseSource(spanDarkText)
+		details.Genres = parseGenres(spanDarkText)
+	}(&details, spanDarkText)
+	go func(d *AnimeDetails, spanDarkText *goquery.Selection) {
+		details.Duration = parseDuration(spanDarkText)
+		details.Rating = parseRating(spanDarkText)
+		details.Score = parseScore(spanDarkText)
+		details.Ranked = parseRanked(spanDarkText)
+		details.Popularity = parsePopularity(spanDarkText)
+		details.Members = parseMembers(spanDarkText)
+		details.Favorites = parseFavorites(spanDarkText)
+	}(&details, spanDarkText)
 
 	return &details, nil
 }
