@@ -237,6 +237,13 @@ func main() {
 			Action:    printMusic,
 		},
 		cli.Command{
+			Name:      "broadcast",
+			Category:  "Action",
+			Usage:     "Print broadcast (airing) time",
+			UsageText: "mal broadcast",
+			Action:    printBroadcast,
+		},
+		cli.Command{
 			Name:      "copy",
 			Category:  "Action",
 			Usage:     "Copy selected value into system clipboard",
@@ -871,6 +878,37 @@ func printMusic(ctx *cli.Context) error {
 
 	fmt.Println("\nEndings:")
 	printThemes(details.EndingThemes)
+
+	return nil
+}
+
+func printBroadcast(ctx *cli.Context) error {
+	cfg := LoadConfig()
+	c, list, err := loadMAL(ctx)
+	if err != nil {
+		return err
+	}
+
+	entry := list.GetByID(cfg.SelectedID)
+	if entry == nil {
+		return fmt.Errorf("no entry selected")
+	}
+
+	yellow := color.New(color.FgHiYellow).SprintFunc()
+	green := color.New(color.FgHiGreen).SprintFunc()
+
+	if entry.Status != mal.CurrentlyAiring {
+		return fmt.Errorf("%s isn't currently airing", yellow(entry.Title))
+	}
+
+	details, err := c.FetchDetails(entry)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Title: %s\nBroadcast: %s\n",
+		yellow(entry.Title),
+		green(details.Broadcast))
 
 	return nil
 }
