@@ -783,7 +783,7 @@ func printDetails(ctx *cli.Context) error {
 		return fmt.Errorf("no entry selected")
 	}
 
-	details, err := c.FetchDetails(entry)
+	details, err := mal.FetchDetailsWithAnimation(c, entry)
 	if err != nil {
 		return err
 	}
@@ -872,7 +872,7 @@ func printRelated(ctx *cli.Context) error {
 		return fmt.Errorf("no entry selected")
 	}
 
-	details, err := c.FetchDetails(selEntry)
+	details, err := mal.FetchDetailsWithAnimation(c, selEntry)
 	if err != nil {
 		return err
 	}
@@ -897,7 +897,7 @@ func printMusic(ctx *cli.Context) error {
 		return fmt.Errorf("no entry selected")
 	}
 
-	details, err := c.FetchDetails(entry)
+	details, err := mal.FetchDetailsWithAnimation(c, entry)
 
 	printThemes := func(themes []string) {
 		for _, theme := range themes {
@@ -934,7 +934,7 @@ func printBroadcast(ctx *cli.Context) error {
 		return fmt.Errorf("%s isn't currently airing", yellow(entry.Title))
 	}
 
-	details, err := c.FetchDetails(entry)
+	details, err := mal.FetchDetailsWithAnimation(c, entry)
 	if err != nil {
 		return err
 	}

@@ -4,9 +4,9 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/aqatl/mal/mal"
+	"github.com/fatih/color"
 	"log"
 	"os/user"
-	"github.com/fatih/color"
 	"time"
 )
 
@@ -31,7 +31,6 @@ func homeDir() string {
 	return usr.HomeDir
 }
 
-
 func printEntryDetails(entry *mal.Anime) {
 	title := color.HiYellowString("%s", entry.Title)
 	episodes := color.HiRedString("%d/%d", entry.WatchedEpisodes,
@@ -41,10 +40,10 @@ func printEntryDetails(entry *mal.Anime) {
 	lastUpdated := color.HiRedString("%v", time.Unix(entry.LastUpdated, 0))
 
 	fmt.Printf(
-			"Title: %s\n"+
+		"Title: %s\n"+
 			"Episodes: %s\n"+
 			"Score: %s\n"+
-			"Status: %v\n" +
+			"Status: %v\n"+
 			"Last updated: %v\n",
 		title,
 		episodes,
