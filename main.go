@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -249,6 +250,12 @@ func main() {
 			Usage:     "Copy selected value into system clipboard",
 			UsageText: "mal copy [title|url]",
 			Action:    copyIntoClipboard,
+		},
+		cli.Command{
+			Name:     "nyaa",
+			Category: "Action",
+			Usage:    "Search for selected entry on nyaa tracker",
+			Action:   nyaa,
 		},
 	}
 
@@ -641,6 +648,32 @@ func openWebsite(ctx *cli.Context) error {
 	} else {
 		log.Println("Nothing to open")
 	}
+
+	return nil
+}
+
+func nyaa(ctx *cli.Context) error {
+	cfg := LoadConfig()
+	_, list, err := loadMAL(ctx)
+	if err != nil {
+		return err
+	}
+
+	entry := list.GetByID(cfg.SelectedID)
+	if entry == nil {
+		return fmt.Errorf("no entry selected")
+	}
+
+	address := "https://nyaa.si/?f=0&c=1_2&q=" + url.QueryEscape(entry.Title)
+
+	if path := cfg.BrowserPath; path == "" {
+		open.Start(address)
+	} else {
+		open.StartWith(address, path)
+	}
+
+	fmt.Println("Searched for:")
+	printEntryDetails(entry)
 
 	return nil
 }
