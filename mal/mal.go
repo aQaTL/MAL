@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"strings"
 	"text/template"
+	"sync"
 )
 
 const (
@@ -223,7 +224,10 @@ func (c *Client) FetchDetails(entry *Anime) (*AnimeDetails, error) {
 	details := AnimeDetails{}
 
 	//All functions used below are in the animeparser.go file
+	wg := sync.WaitGroup{}
+	wg.Add(1)
 	go func(d *AnimeDetails) {
+		defer wg.Done()
 		details.JapaneseTitle = parseJapaneseTitle(reader)
 		details.Related = parseRelated(reader)
 		details.Characters = parseCharacters(reader)
@@ -233,7 +237,9 @@ func (c *Client) FetchDetails(entry *Anime) (*AnimeDetails, error) {
 		details.ScoreVoters = parseScoreVoters(reader)
 	}(&details)
 
+	wg.Add(1)
 	go func(d *AnimeDetails) {
+		defer wg.Done()
 		synopsisNode := reader.Find("span[itemprop=description]")
 
 		details.Synopsis = parseSynopsis(synopsisNode)
@@ -242,7 +248,9 @@ func (c *Client) FetchDetails(entry *Anime) (*AnimeDetails, error) {
 
 	spanDarkText := reader.Selection.Find("span[class=dark_text]")
 
+	wg.Add(1)
 	go func(d *AnimeDetails, spanDarkText *goquery.Selection) {
+		defer wg.Done()
 		details.Premiered = parsePremiered(spanDarkText)
 		details.Broadcast = parseBroadcast(spanDarkText)
 		details.Producers = parseProducers(spanDarkText)
@@ -251,7 +259,9 @@ func (c *Client) FetchDetails(entry *Anime) (*AnimeDetails, error) {
 		details.Source = parseSource(spanDarkText)
 		details.Genres = parseGenres(spanDarkText)
 	}(&details, spanDarkText)
+	wg.Add(1)
 	go func(d *AnimeDetails, spanDarkText *goquery.Selection) {
+		defer wg.Done()
 		details.Duration = parseDuration(spanDarkText)
 		details.Rating = parseRating(spanDarkText)
 		details.Score = parseScore(spanDarkText)
@@ -260,6 +270,8 @@ func (c *Client) FetchDetails(entry *Anime) (*AnimeDetails, error) {
 		details.Members = parseMembers(spanDarkText)
 		details.Favorites = parseFavorites(spanDarkText)
 	}(&details, spanDarkText)
+
+	wg.Wait()
 
 	return &details, nil
 }
