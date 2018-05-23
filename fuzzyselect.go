@@ -135,6 +135,10 @@ func (fsg *fuzzySelGui) Layout(gui *gocui.Gui) error {
 }
 
 func (fsg *fuzzySelGui) InputViewEditor(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
+	if key == gocui.KeyArrowUp || key == gocui.KeyArrowDown {
+		fsg.OutputViewEditor(fsg.OutputView, key, ch, mod)
+		return
+	}
 	gocui.DefaultEditor.Edit(v, key, ch, mod)
 
 	fsg.OutputView.Clear()
