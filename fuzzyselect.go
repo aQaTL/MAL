@@ -45,6 +45,11 @@ func fuzzySelectEntry(ctx *cli.Context) error {
 	gui.Highlight = true
 	gui.SelFgColor = gocui.ColorGreen
 
+	initSearch := strings.Join(ctx.Args(), " ")
+	fsg.Layout(gui)
+	fsg.InputView.Write([]byte(initSearch))
+	fsg.InputView.Editor.Edit(fsg.InputView, gocui.KeyArrowUp, 0, gocui.ModNone)
+
 	err = gui.MainLoop()
 	if err != nil && err != gocui.ErrQuit {
 		gui.Close()

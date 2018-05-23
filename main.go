@@ -132,7 +132,7 @@ func main() {
 			Aliases:   []string{"fsel"},
 			Category:  "Config",
 			Usage:     "Interactive fuzzy search through your list",
-			UsageText: "mal sel fs",
+			UsageText: "mal fsel [search string (optional)]",
 			Action:    fuzzySelectEntry,
 		},
 		cli.Command{
