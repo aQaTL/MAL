@@ -48,7 +48,8 @@ func fuzzySelectEntry(ctx *cli.Context) error {
 	initSearch := strings.Join(ctx.Args(), " ")
 	fsg.Layout(gui)
 	fsg.InputView.Write([]byte(initSearch))
-	fsg.InputView.Editor.Edit(fsg.InputView, gocui.KeyArrowUp, 0, gocui.ModNone)
+	fsg.InputView.Editor.Edit(fsg.InputView, gocui.KeyBackspace, 0, gocui.ModNone)
+	fsg.InputView.MoveCursor(len(initSearch), 0, true)
 
 	err = gui.MainLoop()
 	if err != nil && err != gocui.ErrQuit {
