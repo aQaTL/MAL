@@ -149,29 +149,26 @@ func (c *Client) Update(entry *Anime) error {
 	return nil
 }
 
-func (c *Client) Delete(entry *Anime) bool {
+func (c *Client) Delete(entry *Anime) error {
 	resp, err := c.doApiRequestWithEntryData(
 		fmt.Sprintf(DeleteEndpoint, entry.ID),
 		http.MethodPost,
 		entry,
 	)
 	if err != nil {
-		log.Print(err)
-		return false
+		return err
 	}
 
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("Error reading body: %v", err)
-		return false
+		return fmt.Errorf("reading response body failed: %v", err)
 	}
 	body := string(bodyBytes)
 
 	if body != "Deleted" || resp.StatusCode != 200 {
-		log.Printf("Body: %v\nStatus: %s", body, resp.Status)
-		return false
+		return fmt.Errorf("deleting failed; server returned: %s", resp.Status)
 	}
-	return true
+	return nil
 }
 
 func (c *Client) doApiRequestWithEntryData(address, method string, entry *Anime) (*http.Response, error) {

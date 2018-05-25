@@ -495,8 +495,11 @@ func deleteEntry(ctx *cli.Context) error {
 		return fmt.Errorf("no entry selected")
 	}
 
-	if ok := c.Delete(entry); !ok {
-		return fmt.Errorf("deleting entry failed")
+	mal.DoFuncWithWaitAnimation("Deleting entry", func() {
+		err = c.Delete(entry)
+	})
+	if err != nil {
+		return fmt.Errorf("deleting entry failed\n%v", err)
 	}
 
 	title := color.HiRedString("%s", entry.Title)
