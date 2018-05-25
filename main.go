@@ -281,9 +281,9 @@ func loadMAL(ctx *cli.Context) (*mal.Client, mal.AnimeList, error) {
 		return nil, nil, fmt.Errorf("error creating mal.Client")
 	}
 
-	list := loadData(c, ctx)
+	list, err := loadData(c, ctx)
 
-	return c, list, nil
+	return c, list, err
 }
 
 func defaultAction(ctx *cli.Context) error {

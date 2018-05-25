@@ -12,8 +12,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"text/template"
 	"sync"
+	"text/template"
 )
 
 const (
@@ -89,18 +89,19 @@ func newRequest(url, credentials, method string) *http.Request {
 
 //Note: Since anime list endpoint, besides anime list, returns account stats, this method also
 //updates Client with them
-func (c *Client) AnimeList(status MyStatus) []*Anime {
+func (c *Client) AnimeList(status MyStatus) ([]*Anime, error) {
 	url := fmt.Sprintf(UserAnimeListEndpoint, c.Username, "all") //Anything other than `all` doesn't really work
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		fmt.Printf("Request error: %v", err)
-		return nil
+		return nil, err
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Printf("List list getting error: %v", err)
+		return nil, err
+	} else if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("server returned: %v", resp.Status)
 	}
 
 	decoder := xml.NewDecoder(resp.Body)
@@ -123,7 +124,7 @@ func (c *Client) AnimeList(status MyStatus) []*Anime {
 		}
 	}
 
-	return list
+	return list, nil
 }
 
 func (c *Client) Update(entry *Anime) bool {

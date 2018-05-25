@@ -58,13 +58,18 @@ func saveCredentials(credentials string) {
 }
 
 //Loads Client statistic data and returns Client's AnimeList
-func loadData(c *mal.Client, ctx *cli.Context) mal.AnimeList {
+func loadData(c *mal.Client, ctx *cli.Context) (mal.AnimeList, error) {
 	var list []*mal.Anime
 
 	if ctx.GlobalBool("refresh") || cacheNotExist() {
-		mal.DoFuncWithWaitAnimation("Fetching your list", func() {
-			list = c.AnimeList(mal.All)
-		})
+		{
+			var err error
+			mal.DoFuncWithWaitAnimation("Fetching your list", func() {
+				list, err = c.AnimeList(mal.All)
+			})
+			return nil, fmt.Errorf("error fetching your list\n%v", err)
+		}
+
 		cacheList(list)
 		cacheClient(c)
 
@@ -75,7 +80,7 @@ func loadData(c *mal.Client, ctx *cli.Context) mal.AnimeList {
 		list = loadCachedList()
 		loadCachedStats(c)
 	}
-	return list
+	return list, nil
 }
 
 func cacheNotExist() bool {
