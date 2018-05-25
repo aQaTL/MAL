@@ -62,7 +62,9 @@ func loadData(c *mal.Client, ctx *cli.Context) mal.AnimeList {
 	var list []*mal.Anime
 
 	if ctx.GlobalBool("refresh") || cacheNotExist() {
-		list = c.AnimeList(mal.All)
+		mal.DoFuncWithWaitAnimation("Fetching your list", func() {
+			list = c.AnimeList(mal.All)
+		})
 		cacheList(list)
 		cacheClient(c)
 
