@@ -377,12 +377,15 @@ func setEntryEpisodes(ctx *cli.Context) error {
 
 	statusAutoUpdate(cfg, selectedEntry)
 
-	if c.Update(selectedEntry) {
-		fmt.Println("Updated successfully")
-		printEntryDetailsAfterUpdatedEpisodes(selectedEntry, epsBefore)
-
-		cacheList(list)
+	if err := mal.UpdateEntryWithAnimation(c, selectedEntry); err != nil {
+		return err
 	}
+
+	fmt.Println("Updated successfully")
+	printEntryDetailsAfterUpdatedEpisodes(selectedEntry, epsBefore)
+
+	cacheList(list)
+
 	return nil
 }
 
@@ -408,12 +411,16 @@ func setEntryScore(ctx *cli.Context) error {
 	}
 
 	selectedEntry.MyScore = parsedScore
-	if c.Update(selectedEntry) {
-		fmt.Println("Updated successfully")
-		printEntryDetails(selectedEntry)
 
-		cacheList(list)
+	if err := mal.UpdateEntryWithAnimation(c, selectedEntry); err != nil {
+		return err
 	}
+
+	fmt.Println("Updated successfully")
+	printEntryDetails(selectedEntry)
+
+	cacheList(list)
+
 	return nil
 }
 
@@ -436,12 +443,16 @@ func setEntryStatus(ctx *cli.Context) error {
 	}
 
 	selectedEntry.MyStatus = status
-	if c.Update(selectedEntry) {
-		fmt.Println("Updated successfully")
-		printEntryDetails(selectedEntry)
 
-		cacheList(list)
+	if err := mal.UpdateEntryWithAnimation(c, selectedEntry); err != nil {
+		return err
 	}
+
+	fmt.Println("Updated successfully")
+	printEntryDetails(selectedEntry)
+
+	cacheList(list)
+
 	return nil
 }
 
@@ -460,12 +471,15 @@ func setEntryStatusCompleted(ctx *cli.Context) error {
 	selectedEntry.MyStatus = mal.Completed
 	selectedEntry.WatchedEpisodes = selectedEntry.Episodes
 
-	if c.Update(selectedEntry) {
-		fmt.Println("Updated successfully")
-		printEntryDetails(selectedEntry)
-
-		cacheList(list)
+	if err := mal.UpdateEntryWithAnimation(c, selectedEntry); err != nil {
+		return err
 	}
+
+	fmt.Println("Updated successfully")
+	printEntryDetails(selectedEntry)
+
+	cacheList(list)
+
 	return nil
 }
 

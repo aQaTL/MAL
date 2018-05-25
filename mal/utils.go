@@ -79,3 +79,11 @@ func FetchDetailsWithAnimation(c *Client, entry *Anime) (*AnimeDetails, error) {
 	return details, err
 
 }
+
+func UpdateEntryWithAnimation(c *Client, entry *Anime) (error) {
+	var err error
+	DoFuncWithWaitAnimation("Updating entry", func() {
+		err = c.Update(entry)
+	})
+	return err
+}

@@ -127,15 +127,14 @@ func (c *Client) AnimeList(status MyStatus) ([]*Anime, error) {
 	return list, nil
 }
 
-func (c *Client) Update(entry *Anime) bool {
+func (c *Client) Update(entry *Anime) error {
 	resp, err := c.doApiRequestWithEntryData(
 		fmt.Sprintf(UpdateEndpoint, entry.ID),
 		http.MethodPost,
 		entry,
 	)
 	if err != nil {
-		log.Print(err)
-		return false
+		return err
 	}
 
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
@@ -145,10 +144,9 @@ func (c *Client) Update(entry *Anime) bool {
 	body := string(bodyBytes)
 
 	if body != "Updated" || resp.StatusCode != 200 {
-		log.Printf("Body: %v\nStatus: %s", body, resp.Status)
-		return false
+		return fmt.Errorf("updating failed; server returned: %s", resp.Status)
 	}
-	return true
+	return nil
 }
 
 func (c *Client) Delete(entry *Anime) bool {
