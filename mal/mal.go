@@ -211,6 +211,9 @@ func (c *Client) FetchDetails(entry *Anime) (*AnimeDetails, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error getting response: %v", err)
 	}
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("fetching details failed; server returned: %s", resp.Status)
+	}
 
 	reader, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
