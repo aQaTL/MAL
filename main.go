@@ -256,6 +256,12 @@ func main() {
 			Category: "Action",
 			Usage:    "Search for selected entry on nyaa tracker",
 			Action:   nyaa,
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name: "alt",
+					Usage: "choose an alternative title",
+				},
+			},
 		},
 	}
 
@@ -681,7 +687,17 @@ func nyaa(ctx *cli.Context) error {
 		return fmt.Errorf("no entry selected")
 	}
 
-	address := "https://nyaa.si/?f=0&c=1_2&q=" + url.QueryEscape(entry.Title)
+	var searchTerm string
+	if ctx.Bool("alt") {
+		searchTerm = chooseSynonym(entry)
+		if searchTerm == "" {
+			return fmt.Errorf("no alternative titles")
+		}
+	} else {
+		searchTerm = entry.Title
+	}
+
+	address := "https://nyaa.si/?f=0&c=1_2&q=" + url.QueryEscape(searchTerm)
 
 	if path := cfg.BrowserPath; path == "" {
 		open.Start(address)
@@ -693,6 +709,34 @@ func nyaa(ctx *cli.Context) error {
 	printEntryDetails(entry)
 
 	return nil
+}
+
+func chooseSynonym(entry *mal.Anime) string {
+	synonyms := formatSynonyms(entry.Synonyms, func(a ...interface{}) string {
+		return a[0].(string)
+	})
+
+	if length := len(synonyms); length == 1 {
+		return synonyms[0]
+	} else if length == 0 {
+		return ""
+	}
+
+	fmt.Printf("Select desired title\n\n")
+	for i, synonym := range synonyms {
+		fmt.Printf("%2d. %s\n", i+1, synonym)
+	}
+
+	idx := 0
+	scan := func() {
+		fmt.Scan(&idx)
+	}
+	for scan(); idx <= 0 || idx > len(synonyms); {
+		fmt.Print("\rInvalid input. Try again: ")
+		scan()
+	}
+
+	return synonyms[idx-1]
 }
 
 func printStats(ctx *cli.Context) error {
