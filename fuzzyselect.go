@@ -12,11 +12,6 @@ import (
 )
 
 func fuzzySelectEntry(ctx *cli.Context) error {
-	gui, err := gocui.NewGui(gocui.OutputNormal)
-	if err != nil {
-		return fmt.Errorf("gocui error: %v", err)
-	}
-
 	_, list, err := loadMAL(ctx)
 	if err != nil {
 		return err
@@ -37,6 +32,32 @@ func fuzzySelectEntry(ctx *cli.Context) error {
 		Match:   nil,
 	}
 
+	initSearch := strings.Join(ctx.Args(), " ")
+
+	if ctx.NArg() != 0 {
+		fsg.Matches = fuzzy.Find(initSearch, fsg.ListStr)
+		if matchesLen := len(fsg.Matches); matchesLen == 0 {
+			return fmt.Errorf("no match found")
+		} else if matchesLen == 1 {
+			saveSelection(cfg, fsg.List[fsg.Matches[0].Index])
+			return nil
+		}
+	}
+
+	if err = startGui(fsg, initSearch); err != nil || fsg.Match == nil {
+		return err
+	}
+	saveSelection(cfg, fsg.Match)
+
+	return nil
+}
+
+func startGui(fsg *fuzzySelGui, initSearch string) error {
+	gui, err := gocui.NewGui(gocui.OutputNormal)
+	if err != nil {
+		return fmt.Errorf("gocui error: %v", err)
+	}
+
 	gui.SetManager(fsg)
 	setGuiKeyBindings(gui, fsg)
 
@@ -45,32 +66,25 @@ func fuzzySelectEntry(ctx *cli.Context) error {
 	gui.Highlight = true
 	gui.SelFgColor = gocui.ColorGreen
 
-	initSearch := strings.Join(ctx.Args(), " ")
 	fsg.Layout(gui)
 	fsg.InputView.Write([]byte(initSearch))
 	fsg.InputView.Editor.Edit(fsg.InputView, gocui.KeyBackspace, 0, gocui.ModNone)
 	fsg.InputView.MoveCursor(len(initSearch), 0, true)
 
 	err = gui.MainLoop()
-	if err != nil && err != gocui.ErrQuit {
-		gui.Close()
-		return err
+	gui.Close()
+	if err == gocui.ErrQuit {
+		err = nil
 	}
+	return err
+}
 
-	if fsg.Match == nil {
-		gui.Close()
-		return nil
-	}
-
-	cfg.SelectedID = fsg.Match.ID
+func saveSelection(cfg *Config, entry *mal.Anime) {
+	cfg.SelectedID = entry.ID
 	cfg.Save()
 
-	gui.Close()
-
 	fmt.Println("Selected entry:")
-	printEntryDetails(fsg.Match)
-
-	return nil
+	printEntryDetails(entry)
 }
 
 const (
@@ -135,6 +149,8 @@ func (fsg *fuzzySelGui) Layout(gui *gocui.Gui) error {
 	return nil
 }
 
+var highlighter = color.New(color.FgBlack, color.BgWhite).FprintFunc()
+
 func (fsg *fuzzySelGui) InputViewEditor(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
 	if key == gocui.KeyArrowUp || key == gocui.KeyArrowDown {
 		fsg.OutputViewEditor(fsg.OutputView, key, ch, mod)
@@ -147,7 +163,6 @@ func (fsg *fuzzySelGui) InputViewEditor(v *gocui.View, key gocui.Key, ch rune, m
 	pattern := strings.TrimSpace(v.Buffer())
 	fsg.Matches = fuzzy.Find(pattern, fsg.ListStr)
 
-	highlight := color.New(color.FgBlack, color.BgWhite).FprintFunc()
 	buf := bufio.NewWriter(fsg.OutputView)
 
 	for _, match := range fsg.Matches {
@@ -155,7 +170,7 @@ func (fsg *fuzzySelGui) InputViewEditor(v *gocui.View, key gocui.Key, ch rune, m
 		for i, r := range []rune(fsg.List[match.Index].Title) {
 			if mIdx < len(match.MatchedIndexes) && i == match.MatchedIndexes[mIdx] {
 				mIdx++
-				highlight(buf, string(r))
+				highlighter(buf, string(r))
 			} else {
 				buf.WriteRune(r)
 			}
@@ -195,6 +210,8 @@ func setGuiKeyBindings(gui *gocui.Gui, fsg *fuzzySelGui) {
 
 	gui.SetKeybinding("", gocui.KeyEnter, gocui.ModNone, func(gui *gocui.Gui, v *gocui.View) error {
 		_, y := fsg.OutputView.Cursor()
+		_, oy := fsg.OutputView.Origin()
+		y += oy
 		if ml := len(fsg.Matches); ml == 0 || y > ml-1 || y < 0 {
 			return nil
 		}
