@@ -8,7 +8,7 @@ import (
 
 const PrettyListTemplate = `No{{printf "%57s" "Title"}}{{printf "%8s" "Eps"}}{{printf "%6s" "Score"}}{{printf "%7s" "ID"}}
 ================================================================================{{range $index, $var := .List}}
-{{if eq .ID $.SelectedID}}{{"\033[31;1m"}}{{end}}{{len $.List | minus $index | abs | printf "%2d"}}{{.Title | printf " %56.56s"}}{{printf "%d/%d" .WatchedEpisodes .Episodes | printf "%8s"}}{{.MyScore | printf "%6d"}}{{.ID | printf "%7d"}}{{if eq .ID $.SelectedID}}{{"\033[0m "}}{{end}}{{end}}
+{{if eq .ID $.SelectedID}}{{"\033[93;1m"}}{{end}}{{len $.List | minus $index | abs | printf "%2d"}}{{.Title | printf " %56.56s"}}{{printf "%d/%d" .WatchedEpisodes .Episodes | printf "%8s"}}{{.MyScore | printf "%6d"}}{{.ID | printf "%7d"}}{{if eq .ID $.SelectedID}}{{"\033[0m "}}{{end}}{{end}}
 `
 
 var PrettyList = template.Must(
