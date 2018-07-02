@@ -10,6 +10,7 @@ import (
 	"time"
 	"strconv"
 	"strings"
+	"regexp"
 )
 
 type NyaaCategory struct {
@@ -80,29 +81,51 @@ type NyaaEntry struct {
 
 const nyaaQueryPattern = "https://nyaa.si/?%v&%v&p=%d&q=%s"
 
-func Search(query string, category NyaaCategory, filter NyaaFilter) ([]NyaaEntry, error) {
+type NyaaResultPage struct {
+	DisplayedFrom int
+	DisplayedTo int
+	DisplayedOutOf int
+
+	Results []NyaaEntry
+}
+
+func Search(query string, category NyaaCategory, filter NyaaFilter) (NyaaResultPage, error) {
 	return SearchSpecificPage(query, category, filter, 1)
 }
 
-func SearchSpecificPage(query string, category NyaaCategory, filter NyaaFilter, page int) ([]NyaaEntry, error) {
+func SearchSpecificPage(query string, category NyaaCategory, filter NyaaFilter, page int) (NyaaResultPage, error) {
+	resultPage := NyaaResultPage{}
+
 	address := fmt.Sprintf(nyaaQueryPattern, filter, category, page, url.PathEscape(query))
 	respBody, err := doRequest(address)
 	defer respBody.Close()
 	if err != nil {
-		return nil, err
+		return resultPage, err
 	}
 
 	doc, err := goquery.NewDocumentFromReader(respBody)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing response: %v", err)
+		return resultPage, fmt.Errorf("error parsing response: %v", err)
 	}
 
 	rows := doc.Find(".torrent-list > tbody").Children()
-	resultPage := make([]NyaaEntry, rows.Size())
+	resultPage.Results = make([]NyaaEntry, rows.Size())
 
 	rows.Each(func(i int, sel *goquery.Selection) {
-		resultPage[i] = *parseNyaaEntry(sel)
+		resultPage.Results[i] = *parseNyaaEntry(sel)
 	})
+
+	info := strings.TrimSpace(doc.Find("div .pagination-page-info").Text())
+
+	re := regexp.MustCompile("[0-9]+")
+	numbers := re.FindAllString(info, -1)
+
+	if len(numbers) < 3 {
+		return resultPage, fmt.Errorf("regexp failed (returned less than 3 resutls)")
+	}
+	resultPage.DisplayedFrom, _ = strconv.Atoi(numbers[0])
+	resultPage.DisplayedTo, _ = strconv.Atoi(numbers[1])
+	resultPage.DisplayedOutOf, _ = strconv.Atoi(numbers[2])
 
 	return resultPage, nil
 }
