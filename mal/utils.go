@@ -59,11 +59,11 @@ func DoFuncWithWaitAnimation(text string, f func()) {
 	for {
 		select {
 		case <-ticker.C:
-			green(stdout, fmt.Sprintf("\r%s %s", text, clockStates[currClockState]))
+			green(color.Output, fmt.Sprintf("\r%s %s", text, clockStates[currClockState]))
 			stdout.Flush()
 			currClockState = (currClockState + 1) % len(clockStates)
 		case <-done:
-			fmt.Fprintf(stdout, "\r%s\r", strings.Repeat(" ", len(text)+4))
+			fmt.Fprintf(color.Output, "\r%s\r", strings.Repeat(" ", len(text)+4))
 			stdout.Flush()
 			return
 		}

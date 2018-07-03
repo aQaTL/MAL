@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -258,7 +257,7 @@ func main() {
 			Action:   nyaa,
 			Flags: []cli.Flag{
 				cli.BoolFlag{
-					Name: "alt",
+					Name:  "alt",
 					Usage: "choose an alternative title",
 				},
 			},
@@ -277,7 +276,7 @@ func main() {
 	app.Action = cli.ActionFunc(defaultAction)
 
 	if err := app.Run(os.Args); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fmt.Fprintf(color.Output, "Error: %v\n", err)
 		os.Exit(1)
 	}
 }
@@ -345,7 +344,7 @@ func defaultAction(ctx *cli.Context) error {
 	visibleList := list[:visibleEntries]
 	reverseAnimeSlice(visibleList)
 
-	PrettyList.Execute(os.Stdout, PrettyListData{visibleList, cfg.SelectedID})
+	PrettyList.Execute(color.Output, PrettyListData{visibleList, cfg.SelectedID})
 
 	if cfg.LastUpdate != *new(time.Time) {
 		fmt.Printf("\nList last updated: %v (%d days ago)\n",
@@ -518,7 +517,7 @@ func deleteEntry(ctx *cli.Context) error {
 	}
 
 	title := color.HiRedString("%s", entry.Title)
-	fmt.Printf("%s seleted successfully\n", title)
+	fmt.Fprintf(color.Output, "%s seleted successfully\n", title)
 	list = list.DeleteByID(entry.ID)
 	cacheList(list)
 
@@ -663,7 +662,7 @@ func openWebsite(ctx *cli.Context) error {
 		delete(cfg.Websites, cfg.SelectedID)
 		cfg.Save()
 
-		log.Println("Entry cleared")
+		fmt.Println("Entry cleared")
 		return nil
 	}
 
@@ -676,9 +675,9 @@ func openWebsite(ctx *cli.Context) error {
 
 		fmt.Println("Opened website for:")
 		printEntryDetails(entry)
-		fmt.Printf("URL: %v\n", color.CyanString("%v", url))
+		fmt.Fprintf(color.Output, "URL: %v\n", color.CyanString("%v", url))
 	} else {
-		log.Println("Nothing to open")
+		fmt.Println("Nothing to open")
 	}
 
 	return nil
@@ -769,7 +768,8 @@ func printStats(ctx *cli.Context) error {
 
 	hoursSpentWatching := c.DaysSpentWatching * 24.0
 
-	fmt.Printf(
+	fmt.Fprintf(
+		color.Output,
 		"Username: %s\n\n"+
 			"Watching: %s\n"+
 			"Completed: %s\n"+
@@ -835,7 +835,7 @@ func printWebsites(ctx *cli.Context) error {
 			title = entry.Title
 		}
 
-		fmt.Printf("%6d (%s): %s\n", k, title, url)
+		fmt.Fprintf(color.Output, "%6d (%s): %s\n", k, title, url)
 	}
 
 	return nil
@@ -860,7 +860,7 @@ func printDetails(ctx *cli.Context) error {
 
 	printSlice := func(slice []string) {
 		for _, str := range slice {
-			fmt.Printf("\t%s\n", str)
+			fmt.Fprintf(color.Output, "\t%s\n", str)
 		}
 	}
 
@@ -869,32 +869,32 @@ func printDetails(ctx *cli.Context) error {
 	cyan := color.New(color.FgHiCyan).SprintFunc()
 	green := color.New(color.FgHiGreen).SprintFunc()
 
-	fmt.Println("Title:", yellow(entry.Title))
-	fmt.Println("Japanese title:", yellow(details.JapaneseTitle))
-	fmt.Println("Series synonyms:")
+	fmt.Fprintln(color.Output, "Title:", yellow(entry.Title))
+	fmt.Fprintln(color.Output, "Japanese title:", yellow(details.JapaneseTitle))
+	fmt.Fprintln(color.Output, "Series synonyms:")
 	printSlice(formatSynonyms(entry.Synonyms, yellow))
-	fmt.Println("Series type:", yellow(entry.Type))
-	fmt.Println("Series status:", yellow(entry.Status))
-	fmt.Println("Series premiered:", yellow(details.Premiered))
-	fmt.Println("Series start:", yellow(entry.SeriesStart))
-	fmt.Println("Series end:", yellow(entry.SeriesEnd))
-	fmt.Println("Series score:", red(details.Score),
+	fmt.Fprintln(color.Output, "Series type:", yellow(entry.Type))
+	fmt.Fprintln(color.Output, "Series status:", yellow(entry.Status))
+	fmt.Fprintln(color.Output, "Series premiered:", yellow(details.Premiered))
+	fmt.Fprintln(color.Output, "Series start:", yellow(entry.SeriesStart))
+	fmt.Fprintln(color.Output, "Series end:", yellow(entry.SeriesEnd))
+	fmt.Fprintln(color.Output, "Series score:", red(details.Score),
 		"(by", red(details.ScoreVoters), "voters)")
-	fmt.Println("Series popularity:", "#"+red(details.Popularity))
-	fmt.Println("Series rating:", "#"+yellow(details.Rating))
-	fmt.Println("Duration:", yellow(details.Duration))
-	fmt.Println("Genres:")
+	fmt.Fprintln(color.Output, "Series popularity:", "#"+red(details.Popularity))
+	fmt.Fprintln(color.Output, "Series rating:", "#"+yellow(details.Rating))
+	fmt.Fprintln(color.Output, "Duration:", yellow(details.Duration))
+	fmt.Fprintln(color.Output, "Genres:")
 	printSlice(formatGenres(details.Genres, yellow))
 
-	fmt.Println("Episodes:", red(entry.WatchedEpisodes), "/", red(entry.Episodes))
-	fmt.Println("Score:", red(entry.MyScore))
-	fmt.Println("Status:", yellow(entry.MyStatus))
-	fmt.Println("Last updated:", red(time.Unix(entry.LastUpdated, 0)))
-	fmt.Println("Website url:", cyan(cfg.Websites[entry.ID]))
+	fmt.Fprintln(color.Output, "Episodes:", red(entry.WatchedEpisodes), "/", red(entry.Episodes))
+	fmt.Fprintln(color.Output, "Score:", red(entry.MyScore))
+	fmt.Fprintln(color.Output, "Status:", yellow(entry.MyStatus))
+	fmt.Fprintln(color.Output, "Last updated:", red(time.Unix(entry.LastUpdated, 0)))
+	fmt.Fprintln(color.Output, "Website url:", cyan(cfg.Websites[entry.ID]))
 
-	fmt.Println()
+	fmt.Fprintln(color.Output, )
 
-	fmt.Println("Synposis:", green(details.Synopsis))
+	fmt.Fprintln(color.Output, "Synposis:", green(details.Synopsis))
 
 	return nil
 }
@@ -949,7 +949,7 @@ func printRelated(ctx *cli.Context) error {
 
 	for _, related := range details.Related {
 		title := color.HiYellowString("%s", related.Title)
-		fmt.Printf("%s: %s (%s)\n", related.Relation, title, related.Url)
+		fmt.Fprintf(color.Output, "%s: %s (%s)\n", related.Relation, title, related.Url)
 	}
 
 	return nil
@@ -971,15 +971,16 @@ func printMusic(ctx *cli.Context) error {
 
 	printThemes := func(themes []string) {
 		for _, theme := range themes {
-			fmt.Printf("  %s\n",
+			fmt.Fprintf(
+				color.Output, "  %s\n",
 				color.HiYellowString("%s", strings.TrimSpace(theme)))
 		}
 	}
 
-	fmt.Println("Openings:")
+	fmt.Fprintln(color.Output, "Openings:")
 	printThemes(details.OpeningThemes)
 
-	fmt.Println("\nEndings:")
+	fmt.Fprintln(color.Output, "\nEndings:")
 	printThemes(details.EndingThemes)
 
 	return nil
@@ -1009,7 +1010,7 @@ func printBroadcast(ctx *cli.Context) error {
 		return err
 	}
 
-	fmt.Printf("Title: %s\nBroadcast: %s\n",
+	fmt.Fprintf(color.Output, "Title: %s\nBroadcast: %s\n",
 		yellow(entry.Title),
 		green(details.Broadcast))
 
@@ -1044,7 +1045,7 @@ func copyIntoClipboard(ctx *cli.Context) error {
 	}
 
 	if err = clipboard.WriteAll(text); err == nil {
-		fmt.Println("Text", color.HiYellowString("%s", text), "copied into clipboard")
+		fmt.Fprintln(color.Output, "Text", color.HiYellowString("%s", text), "copied into clipboard")
 	}
 
 	return err
@@ -1126,7 +1127,7 @@ func configChangeBrowser(ctx *cli.Context) error {
 	cfg.BrowserPath = browserPath
 	cfg.Save()
 
-	fmt.Printf("New browser path: %v\n", color.HiYellowString("%v", browserPath))
+	fmt.Fprintf(color.Output, "New browser path: %v\n", color.HiYellowString("%v", browserPath))
 
 	return nil
 }

@@ -39,7 +39,8 @@ func printEntryDetails(entry *mal.Anime) {
 	status := color.HiRedString("%v", entry.MyStatus)
 	lastUpdated := color.HiRedString("%v", time.Unix(entry.LastUpdated, 0))
 
-	fmt.Printf(
+	fmt.Fprintf(
+		color.Output,
 		"Title: %s\n"+
 			"Episodes: %s\n"+
 			"Score: %s\n"+
@@ -62,7 +63,8 @@ func printEntryDetailsAfterUpdatedEpisodes(entry *mal.Anime, epsBefore int) {
 	score := color.HiRedString("%d", entry.MyScore)
 	status := color.HiRedString("%v", entry.MyStatus)
 
-	fmt.Printf(
+	fmt.Fprintf(
+		color.Output,
 		"Title: %s\n"+
 			"Episodes: %s -> %s\n"+
 			"Score: %s\n"+
