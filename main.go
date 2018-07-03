@@ -646,8 +646,8 @@ func openWebsite(ctx *cli.Context) error {
 		return fmt.Errorf("no entry selected")
 	}
 
-	if url := ctx.Args().First(); url != "" {
-		cfg.Websites[cfg.SelectedID] = url
+	if newUrl := ctx.Args().First(); newUrl != "" {
+		cfg.Websites[cfg.SelectedID] = newUrl
 		cfg.Save()
 
 		fmt.Print("Entry: ")
@@ -666,16 +666,16 @@ func openWebsite(ctx *cli.Context) error {
 		return nil
 	}
 
-	if url, ok := cfg.Websites[cfg.SelectedID]; ok {
+	if entryUrl, ok := cfg.Websites[cfg.SelectedID]; ok {
 		if path := cfg.BrowserPath; path == "" {
-			open.Start(url)
+			open.Start(entryUrl)
 		} else {
-			open.StartWith(url, path)
+			open.StartWith(entryUrl, path)
 		}
 
 		fmt.Println("Opened website for:")
 		printEntryDetails(entry)
-		fmt.Fprintf(color.Output, "URL: %v\n", color.CyanString("%v", url))
+		fmt.Fprintf(color.Output, "URL: %v\n", color.CyanString("%v", entryUrl))
 	} else {
 		fmt.Println("Nothing to open")
 	}
@@ -828,14 +828,14 @@ func printWebsites(ctx *cli.Context) error {
 	cfg := LoadConfig()
 
 	for k, v := range cfg.Websites {
-		url := fmt.Sprintf("\033[3%d;%dm%s\033[0m ", 3, 1, v)
+		entryUrl := fmt.Sprintf("\033[3%d;%dm%s\033[0m ", 3, 1, v)
 
 		var title string
 		if entry := list.GetByID(k); entry != nil {
 			title = entry.Title
 		}
 
-		fmt.Fprintf(color.Output, "%6d (%s): %s\n", k, title, url)
+		fmt.Fprintf(color.Output, "%6d (%s): %s\n", k, title, entryUrl)
 	}
 
 	return nil
@@ -1035,11 +1035,11 @@ func copyIntoClipboard(ctx *cli.Context) error {
 	case "title":
 		text = entry.Title
 	case "url":
-		url, ok := cfg.Websites[cfg.SelectedID]
+		entryUrl, ok := cfg.Websites[cfg.SelectedID]
 		if !ok {
 			return fmt.Errorf("no url to copy")
 		}
-		text = url
+		text = entryUrl
 	default:
 		return fmt.Errorf("usage: mal copy [title|url]")
 	}

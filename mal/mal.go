@@ -90,9 +90,10 @@ func newRequest(url, credentials, method string) *http.Request {
 //Note: Since anime list endpoint, besides anime list, returns account stats, this method also
 //updates Client with them
 func (c *Client) AnimeList(status MyStatus) ([]*Anime, error) {
-	url := fmt.Sprintf(UserAnimeListEndpoint, c.Username, "all") //Anything other than `all` doesn't really work
+	//NOTE: Anything other than `all` doesn't really work
+	userListUrl := fmt.Sprintf(UserAnimeListEndpoint, c.Username, "all")
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequest(http.MethodGet, userListUrl, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -205,9 +206,9 @@ func (c *Client) doApiRequestWithEntryData(address, method string, entry *Anime)
 //This works by scrapping the normal MAL website for given entry. It means that this method
 //will stop working when they change something
 func (c *Client) FetchDetails(entry *Anime) (*AnimeDetails, error) {
-	url := fmt.Sprintf(AnimePage, entry.ID)
+	malPageUrl := fmt.Sprintf(AnimePage, entry.ID)
 
-	resp, err := http.DefaultClient.Get(url)
+	resp, err := http.DefaultClient.Get(malPageUrl)
 	if err != nil {
 		return nil, fmt.Errorf("error getting response: %v", err)
 	}
