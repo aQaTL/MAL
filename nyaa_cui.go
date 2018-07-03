@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/aqatl/mal/nyaa_scraper"
+	"github.com/fatih/color"
 	"github.com/jroimartin/gocui"
 	"github.com/urfave/cli"
+	"math"
 	"os/exec"
 	"time"
 	"unicode/utf8"
@@ -22,7 +24,7 @@ func browseNyaa(ctx *cli.Context) error {
 		return fmt.Errorf("no entry found")
 	}
 
-	gui, err := gocui.NewGui(gocui.OutputNormal)
+	gui, err := gocui.NewGui(gocui.Output256)
 	defer gui.Close()
 	if err != nil {
 		return fmt.Errorf("gocui error: %v", err)
@@ -43,11 +45,19 @@ func browseNyaa(ctx *cli.Context) error {
 			if pl.ResultErr != nil {
 				return pl.ResultErr
 			}
+			rp := pl.Result
+			pages := int(math.Ceil(float64(rp.DisplayedOutOf) /
+				float64(rp.DisplayedTo-rp.DisplayedFrom+1)))
 
 			nc := &nyaaCui{
-				Cfg:         cfg,
-				ResultPages: []nyaa_scraper.NyaaResultPage{pl.Result},
-				CurrPageIdx: pl.PageToLoad - 1,
+				Cfg: cfg,
+
+				SearchTerm: entry.Title,
+
+				Results:     rp.Results,
+				MaxResults:  rp.DisplayedOutOf,
+				MaxPages:    pages,
+				LoadedPages: pl.PageToLoad,
 			}
 			setUpNyaaCui(nc, gui)
 
@@ -71,8 +81,12 @@ const (
 type nyaaCui struct {
 	Cfg *Config
 
-	ResultPages []nyaa_scraper.NyaaResultPage
-	CurrPageIdx int
+	SearchTerm string
+
+	Results     []nyaa_scraper.NyaaEntry
+	MaxResults  int
+	MaxPages    int
+	LoadedPages int
 
 	ResultsView *gocui.View
 }
@@ -97,9 +111,8 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 		v.Title = "Info"
 		v.Editable = false
 
-		currPage := &nc.ResultPages[nc.CurrPageIdx]
-		fmt.Fprintf(v, "Displaying results %d-%d out of %d results",
-			currPage.DisplayedFrom, currPage.DisplayedTo, currPage.DisplayedOutOf)
+		fmt.Fprintf(v, "[%s]: displaying %d out of %d results",
+			nc.SearchTerm, len(nc.Results), nc.MaxResults)
 	}
 
 	if v, err := gui.SetView(ncResultsView, 0, 3, w-1, h-4); err != nil {
@@ -118,9 +131,9 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 		gui.SetCurrentView(ncResultsView)
 		nc.ResultsView = v
 
-		for i, result := range nc.ResultPages[nc.CurrPageIdx].Results {
-			fmt.Fprintf(v, "%d. %s %s %v %d %d %d\n",
-				i+1,
+		//TODO Better/clearer results printing
+		for _, result := range nc.Results {
+			fmt.Fprintf(v, "%s %s %v %d %d %d\n",
 				result.Title,
 				result.Size,
 				result.DateAdded,
@@ -139,7 +152,8 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 		v.Title = "Shortcuts"
 		v.Editable = false
 
-		fmt.Fprintf(v, "d download")
+		c := color.New(color.FgCyan).SprintFunc()
+		fmt.Fprintln(v, c("d"), "download", c("l"), "load next page")
 	}
 
 	return nil
@@ -149,19 +163,24 @@ func (nc *nyaaCui) Editor(gui *gocui.Gui) func(v *gocui.View, key gocui.Key, ch 
 	return func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
 		switch {
 		case key == gocui.KeyArrowDown || ch == 'j':
-			v.MoveCursor(0, 1, false)
+			_, oy := v.Origin()
+			_, y := v.Cursor()
+			y += oy
+			if y < len(nc.Results)-1 {
+				v.MoveCursor(0, 1, false)
+			}
 		case key == gocui.KeyArrowUp || ch == 'k':
 			v.MoveCursor(0, -1, false)
 		case ch == 'd':
 			_, y := v.Cursor()
 			_, oy := v.Origin()
 			y += oy
-			if ml := len(nc.ResultPages[nc.CurrPageIdx].Results); ml == 0 || y > ml-1 || y < 0 {
+			if y >= len(nc.Results) {
 				return
 			}
 
 			link := ""
-			if entry := nc.ResultPages[nc.CurrPageIdx].Results[y]; entry.MagnetLink != "" {
+			if entry := nc.Results[y]; entry.MagnetLink != "" {
 				link = entry.MagnetLink
 			} else if entry.TorrentLink != "" {
 				link = entry.TorrentLink
@@ -178,6 +197,34 @@ func (nc *nyaaCui) Editor(gui *gocui.Gui) func(v *gocui.View, key gocui.Key, ch 
 					return err
 				})
 			}
+		case ch == 'l':
+			if nc.LoadedPages >= nc.MaxPages {
+				return
+			}
+			nc.LoadedPages++
+			go func() {
+				//TODO implement way to set search category and filter
+				resultPage, _ := nyaa_scraper.SearchSpecificPage(
+					nc.SearchTerm,
+					nyaa_scraper.AnimeEnglishTranslated,
+					nyaa_scraper.NoFilter,
+					nc.LoadedPages-1,
+				)
+				nc.Results = append(nc.Results, resultPage.Results...)
+				gui.Update(func(gui *gocui.Gui) error {
+					_, oy := nc.ResultsView.Origin()
+					_, y := nc.ResultsView.Cursor()
+
+					gui.DeleteView(ncInfoView)
+					gui.DeleteView(ncResultsView)
+
+					nc.Layout(gui)
+					nc.ResultsView.SetOrigin(0, oy)
+					nc.ResultsView.SetCursor(0, y)
+
+					return nil
+				})
+			}()
 		}
 	}
 }
