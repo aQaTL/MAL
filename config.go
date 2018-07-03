@@ -1,12 +1,12 @@
 package main
 
 import (
-	"os"
 	"encoding/json"
-	"log"
-	"github.com/aqatl/mal/mal"
-	"time"
 	"fmt"
+	"github.com/aqatl/mal/mal"
+	"log"
+	"os"
+	"time"
 )
 
 type Config struct {
@@ -18,12 +18,14 @@ type Config struct {
 	Sorting              Sorting
 	LastUpdate           time.Time
 	BrowserPath          string
+	TorrentClientPath    string
+	TorrentClientArgs    string
 }
 
 type StatusAutoUpdateMode byte
 
 const (
-	Off            StatusAutoUpdateMode = iota
+	Off StatusAutoUpdateMode = iota
 	Normal
 	AfterThreshold
 )
@@ -31,7 +33,7 @@ const (
 type Sorting byte
 
 const (
-	ByLastUpdated     Sorting = iota
+	ByLastUpdated Sorting = iota
 	ByTitle
 	ByWatchedEpisodes
 	ByScore
@@ -64,6 +66,8 @@ func LoadConfig() (c *Config) {
 	c.Status = mal.All
 	c.StatusAutoUpdateMode = Off
 	c.Sorting = ByLastUpdated
+	c.TorrentClientPath = "qbittorrent"
+	c.TorrentClientArgs = ""
 
 	f, err := os.Open(ConfigFile)
 	defer f.Close()

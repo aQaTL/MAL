@@ -5,6 +5,7 @@ import (
 	"github.com/aqatl/mal/nyaa_scraper"
 	"github.com/jroimartin/gocui"
 	"github.com/urfave/cli"
+	"os/exec"
 	"time"
 	"unicode/utf8"
 )
@@ -112,6 +113,7 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 		v.SelFgColor = gocui.ColorBlack
 		v.Highlight = true
 		v.Editable = true
+		v.Editor = gocui.EditorFunc(nc.Editor(gui))
 
 		gui.SetCurrentView(ncResultsView)
 		nc.ResultsView = v
@@ -137,10 +139,54 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 		v.Title = "Shortcuts"
 		v.Editable = false
 
-		fmt.Fprintf(v, "placeholder")
+		fmt.Fprintf(v, "d download")
 	}
 
 	return nil
+}
+
+func (nc *nyaaCui) Editor(gui *gocui.Gui) func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
+	return func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
+		switch {
+		case key == gocui.KeyArrowDown || ch == 'j':
+			v.MoveCursor(0, 1, false)
+		case key == gocui.KeyArrowUp || ch == 'k':
+			v.MoveCursor(0, -1, false)
+		case ch == 'd':
+			_, y := v.Cursor()
+			_, oy := v.Origin()
+			y += oy
+			if ml := len(nc.ResultPages[nc.CurrPageIdx].Results); ml == 0 || y > ml-1 || y < 0 {
+				return
+			}
+
+			link := ""
+			if entry := nc.ResultPages[nc.CurrPageIdx].Results[y]; entry.MagnetLink != "" {
+				link = entry.MagnetLink
+			} else if entry.TorrentLink != "" {
+				link = entry.TorrentLink
+			} else {
+				gui.Update(func(gui *gocui.Gui) error {
+					//TODO don't exit app when no link is present
+					return fmt.Errorf("no link found")
+				})
+				return
+			}
+
+			if err := nc.Download(link); err != nil {
+				gui.Update(func(gui *gocui.Gui) error {
+					return err
+				})
+			}
+		}
+	}
+}
+
+func (nc *nyaaCui) Download(link string) error {
+	link = "\"" + link + "\""
+	cmd := exec.Command(nc.Cfg.TorrentClientPath, nc.Cfg.TorrentClientArgs, link)
+	cmd.Args = cmd.Args[1:]
+	return cmd.Start()
 }
 
 func (nc *nyaaCui) setGuiKeyBindings(gui *gocui.Gui) {

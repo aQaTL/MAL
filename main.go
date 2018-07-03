@@ -168,7 +168,7 @@ func main() {
 				cli.Command{
 					Name:      "browser",
 					Usage:     "Specifies a browser to use",
-					UsageText: "mal cfg browser <browser_path>",
+					UsageText: "mal cfg browser [browser_path]",
 					Action:    configChangeBrowser,
 					Flags: []cli.Flag{
 						cli.BoolFlag{
@@ -176,6 +176,13 @@ func main() {
 							Usage: "Clear browser path (return to default)",
 						},
 					},
+				},
+				cli.Command{
+					Name:      "torrent",
+					Usage:     "Sets path to torrent client and it args",
+					UsageText: "mal cfg torrent [path] [args...]",
+					SkipFlagParsing: true,
+					Action:    configChangeTorrent,
 				},
 			},
 		},
@@ -1128,6 +1135,23 @@ func configChangeBrowser(ctx *cli.Context) error {
 	cfg.Save()
 
 	fmt.Fprintf(color.Output, "New browser path: %v\n", color.HiYellowString("%v", browserPath))
+
+	return nil
+}
+
+func configChangeTorrent(ctx *cli.Context) error {
+	cfg := LoadConfig()
+
+	cfg.TorrentClientPath = ctx.Args().First()
+	cfg.TorrentClientArgs = strings.Join(ctx.Args().Tail(), " ")
+
+	cfg.Save()
+
+	fmt.Fprintf(
+		color.Output,
+		"New torrent config: %s %s\n",
+		color.HiYellowString("%s", cfg.TorrentClientPath),
+		color.HiCyanString("%s", cfg.TorrentClientArgs))
 
 	return nil
 }
