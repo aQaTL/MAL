@@ -96,12 +96,16 @@ func Search(query string, category NyaaCategory, filter NyaaFilter) (NyaaResultP
 func SearchSpecificPage(query string, category NyaaCategory, filter NyaaFilter, page int) (NyaaResultPage, error) {
 	resultPage := NyaaResultPage{}
 
+	//TODO check PathEscape vs QueryEscape
 	address := fmt.Sprintf(nyaaQueryPattern, filter, category, page, url.PathEscape(query))
 	respBody, err := doRequest(address)
-	defer respBody.Close()
 	if err != nil {
-		return resultPage, err
+		if respBody != nil {
+			respBody.Close()
+		}
+		return resultPage, fmt.Errorf("request failed: %v", err)
 	}
+	defer respBody.Close()
 
 	doc, err := goquery.NewDocumentFromReader(respBody)
 	if err != nil {

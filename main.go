@@ -262,6 +262,15 @@ func main() {
 					Usage: "choose an alternative title",
 				},
 			},
+			Subcommands: []cli.Command{
+				cli.Command{
+					Name:      "i",
+					Aliases:   []string{"interactive", "ui"},
+					Usage:     "Use builtin interactive search",
+					UsageText: "mal nyaa i",
+					Action:    browseNyaa,
+				},
+			},
 		},
 	}
 
