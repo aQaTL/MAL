@@ -7,64 +7,118 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"time"
+	"regexp"
 	"strconv"
 	"strings"
-	"regexp"
+	"time"
 )
 
 type NyaaCategory struct {
+	Name  string
 	Major int
 	Minor int
 }
 
-func (category NyaaCategory) String() string {
+func (category NyaaCategory) QueryParam() string {
 	return fmt.Sprintf("c=%d_%d", category.Major, category.Minor)
 }
 
+func (category NyaaCategory) String() string {
+	return category.Name
+}
+
 var (
-	AllCategories = NyaaCategory{0, 0}
+	AllCategories = NyaaCategory{"All categories", 0, 0}
 
-	Anime                     = NyaaCategory{1, 0}
-	AnimeMusicVideo           = NyaaCategory{1, 1}
-	AnimeEnglishTranslated    = NyaaCategory{1, 2}
-	AnimeNonEnglishTranslated = NyaaCategory{1, 3}
-	AnimeRaw                  = NyaaCategory{1, 4}
+	Anime                     = NyaaCategory{"All anime", 1, 0}
+	AnimeMusicVideo           = NyaaCategory{"Anime music video", 1, 1}
+	AnimeEnglishTranslated    = NyaaCategory{"Anime English translated", 1, 2}
+	AnimeNonEnglishTranslated = NyaaCategory{"Anime non English translated", 1, 3}
+	AnimeRaw                  = NyaaCategory{"Anime raw", 1, 4}
 
-	Audio         = NyaaCategory{2, 0}
-	AudioLossless = NyaaCategory{2, 1}
-	AudioLossy    = NyaaCategory{2, 2}
+	Audio         = NyaaCategory{"All Audio", 2, 0}
+	AudioLossless = NyaaCategory{"Audio lossless", 2, 1}
+	AudioLossy    = NyaaCategory{"Audio lossy", 2, 2}
 
-	Literature                     = NyaaCategory{3, 0}
-	LiteratureEnglishTranslated    = NyaaCategory{3, 1}
-	LiteratureNonEnglishTranslated = NyaaCategory{3, 2}
-	LiteratureRaw                  = NyaaCategory{3, 3}
+	Literature                     = NyaaCategory{"All literature", 3, 0}
+	LiteratureEnglishTranslated    = NyaaCategory{"Literature English translated", 3, 1}
+	LiteratureNonEnglishTranslated = NyaaCategory{"Literature non English translated", 3, 2}
+	LiteratureRaw                  = NyaaCategory{"Literature raw", 3, 3}
 
-	LiveAction                       = NyaaCategory{4, 0}
-	LiveActionEnglishTranslated      = NyaaCategory{4, 1}
-	LiveActionIdolOrPromotionalVideo = NyaaCategory{4, 2}
-	LiveActionNonEnglishTranslated   = NyaaCategory{4, 3}
-	LiveActionRaw                    = NyaaCategory{4, 4}
+	LiveAction                       = NyaaCategory{"Live action all", 4, 0}
+	LiveActionEnglishTranslated      = NyaaCategory{"Live action English translated", 4, 1}
+	LiveActionIdolOrPromotionalVideo = NyaaCategory{"Live action idol/promotional video", 4, 2}
+	LiveActionNonEnglishTranslated   = NyaaCategory{"Live action non English translated", 4, 3}
+	LiveActionRaw                    = NyaaCategory{"Live action raw", 4, 4}
 
-	Pictures         = NyaaCategory{5, 0}
-	PicturesGraphics = NyaaCategory{5, 1}
-	PicturesPhotos   = NyaaCategory{5, 2}
+	Pictures         = NyaaCategory{"Pictures all", 5, 0}
+	PicturesGraphics = NyaaCategory{"Graphics", 5, 1}
+	PicturesPhotos   = NyaaCategory{"Photos", 5, 2}
 
-	Software             = NyaaCategory{6, 0}
-	SoftwareApplications = NyaaCategory{6, 1}
-	SoftwareGames        = NyaaCategory{6, 2}
+	Software             = NyaaCategory{"Software all", 6, 0}
+	SoftwareApplications = NyaaCategory{"Applications", 6, 1}
+	SoftwareGames        = NyaaCategory{"Games", 6, 2}
 )
 
-type NyaaFilter uint8
+var Categories = []NyaaCategory{
+	AllCategories,
+	Anime,
+	AnimeMusicVideo,
+	AnimeEnglishTranslated,
+	AnimeNonEnglishTranslated,
+	AnimeRaw,
+	Audio,
+	AudioLossless,
+	AudioLossy,
+	Literature,
+	LiteratureEnglishTranslated,
+	LiteratureNonEnglishTranslated,
+	LiteratureRaw,
+	LiveAction,
+	LiveActionEnglishTranslated,
+	LiveActionIdolOrPromotionalVideo,
+	LiveActionNonEnglishTranslated,
+	LiveActionRaw,
+	Pictures,
+	PicturesGraphics,
+	PicturesPhotos,
+	Software,
+	SoftwareApplications,
+	SoftwareGames,
+}
 
-const (
-	NoFilter    NyaaFilter = iota
-	NoRemakes
-	TrustedOnly
+func GetNyaaCategory(major, minor int) NyaaCategory {
+	for _, c := range Categories {
+		if c.Major == major && c.Minor == minor {
+			return c
+		}
+	}
+	return NyaaCategory{"Unknown", major, minor}
+}
+
+type NyaaFilter struct {
+	Name string
+	Val uint8
+}
+
+var (
+	NoFilter = NyaaFilter{"No filter", 0}
+	NoRemakes = NyaaFilter{"No remakes", 1}
+	TrustedOnly = NyaaFilter{"Trusted only", 2}
 )
+
+func (filter NyaaFilter) QueryParam() string {
+	return fmt.Sprintf("f=%d", filter.Val)
+}
 
 func (filter NyaaFilter) String() string {
-	return fmt.Sprintf("f=%d", filter)
+	return filter.Name
+}
+
+var Filters = []NyaaFilter{
+	NoFilter,
+	NoRemakes,
+	TrustedOnly,
 }
 
 type NyaaEntry struct {
@@ -79,11 +133,11 @@ type NyaaEntry struct {
 	CompletedDownloads int
 }
 
-const nyaaQueryPattern = "https://nyaa.si/?%v&%v&p=%d&q=%s"
+const nyaaQueryPattern = "https://nyaa.si/?%s&%s&p=%d&q=%s"
 
 type NyaaResultPage struct {
-	DisplayedFrom int
-	DisplayedTo int
+	DisplayedFrom  int
+	DisplayedTo    int
 	DisplayedOutOf int
 
 	Results []NyaaEntry
@@ -97,7 +151,8 @@ func SearchSpecificPage(query string, category NyaaCategory, filter NyaaFilter, 
 	resultPage := NyaaResultPage{}
 
 	//TODO check PathEscape vs QueryEscape
-	address := fmt.Sprintf(nyaaQueryPattern, filter, category, page, url.PathEscape(query))
+	address := fmt.Sprintf(nyaaQueryPattern, filter.QueryParam(), category.QueryParam(),
+		page, url.PathEscape(query))
 	respBody, err := doRequest(address)
 	if err != nil {
 		if respBody != nil {
@@ -141,7 +196,7 @@ func parseNyaaEntry(sel *goquery.Selection) *NyaaEntry {
 	category := currChild.Find("a").AttrOr("href", "")
 	major, _ := strconv.Atoi(category[4:5])
 	minor, _ := strconv.Atoi(category[6:7])
-	entry.Category = NyaaCategory{major, minor}
+	entry.Category = GetNyaaCategory(major, minor)
 
 	currChild = currChild.Next()
 	entry.Title = currChild.Find("a").Last().AttrOr("title", "")

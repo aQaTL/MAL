@@ -8,8 +8,7 @@ import (
 	"github.com/urfave/cli"
 	"math"
 	"os/exec"
-	"time"
-	"unicode/utf8"
+	"github.com/aqatl/mal/dialog"
 )
 
 func browseNyaa(ctx *cli.Context) error {
@@ -30,40 +29,25 @@ func browseNyaa(ctx *cli.Context) error {
 		return fmt.Errorf("gocui error: %v", err)
 	}
 
-	pl := &nyaaPageLoaderCui{
+	nc := &nyaaCui{
+		Cfg: cfg,
+
 		SearchTerm: entry.Title,
 		Category:   nyaa_scraper.AnimeEnglishTranslated,
 		Filter:     nyaa_scraper.NoFilter,
-		PageToLoad: 1,
 	}
-	done := setUpPageLoaderCui(gui, pl)
+	gui.SetManager(nc)
+	nc.setGuiKeyBindings(gui)
 
-	go func() {
-		<-done
+	gui.Cursor = false
+	gui.Mouse = false
+	gui.Highlight = true
+	gui.SelFgColor = gocui.ColorGreen
 
-		gui.Update(func(gui *gocui.Gui) error {
-			if pl.ResultErr != nil {
-				return pl.ResultErr
-			}
-			rp := pl.Result
-			pages := int(math.Ceil(float64(rp.DisplayedOutOf) /
-				float64(rp.DisplayedTo-rp.DisplayedFrom+1)))
-
-			nc := &nyaaCui{
-				Cfg: cfg,
-
-				SearchTerm: entry.Title,
-
-				Results:     rp.Results,
-				MaxResults:  rp.DisplayedOutOf,
-				MaxPages:    pages,
-				LoadedPages: pl.PageToLoad,
-			}
-			setUpNyaaCui(nc, gui)
-
-			return nil
-		})
-	}()
+	gui.Update(func(gui *gocui.Gui) error {
+		nc.Reload(gui)
+		return nil
+	})
 
 	if err = gui.MainLoop(); err != nil && err != gocui.ErrQuit {
 		return err
@@ -82,6 +66,8 @@ type nyaaCui struct {
 	Cfg *Config
 
 	SearchTerm string
+	Category   nyaa_scraper.NyaaCategory
+	Filter     nyaa_scraper.NyaaFilter
 
 	Results     []nyaa_scraper.NyaaEntry
 	MaxResults  int
@@ -89,16 +75,6 @@ type nyaaCui struct {
 	LoadedPages int
 
 	ResultsView *gocui.View
-}
-
-func setUpNyaaCui(nc *nyaaCui, gui *gocui.Gui) {
-	gui.SetManager(nc)
-	nc.setGuiKeyBindings(gui)
-
-	gui.Cursor = false
-	gui.Mouse = false
-	gui.Highlight = true
-	gui.SelFgColor = gocui.ColorGreen
 }
 
 func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
@@ -153,13 +129,15 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 		v.Editable = false
 
 		c := color.New(color.FgCyan).SprintFunc()
-		fmt.Fprintln(v, c("d"), "download", c("l"), "load next page")
+		fmt.Fprintln(v, c("d"), "download", c("l"), "load next page",
+			c("c"), "category", c("f"), "filters")
 	}
 
 	return nil
 }
 
 func (nc *nyaaCui) Editor(gui *gocui.Gui) func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
+	//TODO it's too big
 	return func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
 		switch {
 		case key == gocui.KeyArrowDown || ch == 'j':
@@ -225,14 +203,84 @@ func (nc *nyaaCui) Editor(gui *gocui.Gui) func(v *gocui.View, key gocui.Key, ch 
 					return nil
 				})
 			}()
+		case ch == 'c':
+			categories := make([]fmt.Stringer, len(nyaa_scraper.Categories))
+			for i := range categories {
+				categories[i] = nyaa_scraper.Categories[i]
+			}
+			selIdxChan, viewName, err := dialog.ListSelect(gui, "Select category", categories)
+			if err != nil {
+				gocuiReturnError(gui, err)
+			}
+			go func() {
+				idx := <-selIdxChan
+
+				gui.Update(func(gui *gocui.Gui) error {
+					return gui.DeleteView(viewName)
+				})
+
+				nc.Category = nyaa_scraper.Categories[idx]
+				nc.Reload(gui)
+			}()
+		case ch == 'f':
+			filters := make([]fmt.Stringer, len(nyaa_scraper.Filters))
+			for i := range filters {
+				filters[i] = nyaa_scraper.Filters[i]
+			}
+			selIdxChan, viewName, err := dialog.ListSelect(gui, "Select filter", filters)
+			if err != nil {
+				gocuiReturnError(gui, err)
+			}
+			go func() {
+				idx := <-selIdxChan
+
+				gui.Update(func(gui *gocui.Gui) error {
+					return gui.DeleteView(viewName)
+				})
+
+				nc.Filter = nyaa_scraper.Filters[idx]
+				nc.Reload(gui)
+			}()
 		}
 	}
+}
+
+func (nc *nyaaCui) Reload(gui *gocui.Gui) {
+	var resultPage nyaa_scraper.NyaaResultPage
+	var err error
+	f := func() {
+		resultPage, err = nyaa_scraper.Search(nc.SearchTerm, nc.Category, nc.Filter)
+	}
+	jobDone, err := dialog.StuffLoader(dialog.FitMessage(gui, "Loading "+nc.SearchTerm), f)
+	if err != nil {
+		gocuiReturnError(gui, err)
+	}
+	go func() {
+		ok := <-jobDone
+		if err != nil {
+			//TODO Show message to user
+			panic(err)
+			return
+		}
+		if ok {
+			nc.Results = resultPage.Results
+			nc.MaxPages = int(math.Ceil(float64(resultPage.DisplayedOutOf) /
+				float64(resultPage.DisplayedTo-resultPage.DisplayedFrom+1)))
+			nc.LoadedPages = 1
+		}
+
+		gui.Update(func(gui *gocui.Gui) error {
+			gui.DeleteView(ncResultsView)
+			gui.DeleteView(ncInfoView)
+			return nil
+		})
+	}()
 }
 
 func (nc *nyaaCui) Download(link string) error {
 	link = "\"" + link + "\""
 	cmd := exec.Command(nc.Cfg.TorrentClientPath, nc.Cfg.TorrentClientArgs, link)
-	cmd.Args = cmd.Args[1:]
+	cmd.Args = cmd.Args[1:] //Why they include app name in the arguments???
 	return cmd.Start()
 }
 
@@ -240,95 +288,12 @@ func (nc *nyaaCui) setGuiKeyBindings(gui *gocui.Gui) {
 	gui.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quitGocui)
 }
 
-const (
-	nplcStatusView = "nplcStatusView"
-)
-
-type nyaaPageLoaderCui struct {
-	SearchTerm string
-	Category   nyaa_scraper.NyaaCategory
-	Filter     nyaa_scraper.NyaaFilter
-	PageToLoad int
-
-	Result    nyaa_scraper.NyaaResultPage
-	ResultErr error
-
-	doneInner chan struct{}
-}
-
-func setUpPageLoaderCui(gui *gocui.Gui, pl *nyaaPageLoaderCui) (done chan struct{}) {
-	pl.doneInner = make(chan struct{})
-	done = make(chan struct{})
-	go func(pl *nyaaPageLoaderCui) {
-		result, err := nyaa_scraper.SearchSpecificPage(
-			pl.SearchTerm, pl.Category, pl.Filter, pl.PageToLoad,
-		)
-		pl.Result = result
-		pl.ResultErr = err
-
-		pl.doneInner <- struct{}{}
-		close(pl.doneInner)
-		done <- struct{}{}
-		close(done)
-	}(pl)
-
-	gui.SetManager(pl)
-	gui.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quitGocui)
-
-	gui.Cursor = false
-	gui.Highlight = true
-	gui.Mouse = false
-
-	return
-}
-
-func (pl *nyaaPageLoaderCui) Layout(gui *gocui.Gui) error {
-	w, h := gui.Size()
-	vw, vh := 19+utf8.RuneCountInString(pl.SearchTerm), 2
-	x0, y0 := w/2-vw/2, h/2-vh/2
-	x1, y1 := x0+vw, y0+vh
-	if v, err := gui.SetView(nplcStatusView, x0, y0, x1, y1); err != nil {
-		if err != gocui.ErrUnknownView {
-			return err
-		}
-
-		v.Highlight = true
-		v.Editable = false
-
-		fmt.Fprintf(v, "Searching for %s [-]", pl.SearchTerm)
-
-		gui.SetCurrentView(nplcStatusView)
-
-		go func() {
-			ticker := time.NewTicker(100 * time.Millisecond)
-			defer ticker.Stop()
-
-			clockStates := [...]string{"-", "\\", "|", "/"}
-			currClockState := 1
-
-		loop:
-			for {
-				select {
-				case <-ticker.C:
-					gui.Update(func(gui *gocui.Gui) error {
-						v.Clear()
-						fmt.Fprintf(v, "Searching for %s [%s]",
-							pl.SearchTerm,
-							clockStates[currClockState])
-
-						currClockState = (currClockState + 1) % len(clockStates)
-						return nil
-					})
-				case <-pl.doneInner:
-					break loop
-				}
-			}
-		}()
-	}
-
-	return nil
-}
-
 func quitGocui(gui *gocui.Gui, view *gocui.View) error {
 	return gocui.ErrQuit
+}
+
+func gocuiReturnError(gui *gocui.Gui, err error) {
+	gui.Update(func(gui *gocui.Gui) error {
+		return err
+	})
 }
