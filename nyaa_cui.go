@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/aqatl/mal/dialog"
 	"github.com/aqatl/mal/nyaa_scraper"
 	"github.com/fatih/color"
 	"github.com/jroimartin/gocui"
 	"github.com/urfave/cli"
 	"math"
 	"os/exec"
-	"github.com/aqatl/mal/dialog"
 )
 
 func browseNyaa(ctx *cli.Context) error {
@@ -208,38 +208,34 @@ func (nc *nyaaCui) Editor(gui *gocui.Gui) func(v *gocui.View, key gocui.Key, ch 
 			for i := range categories {
 				categories[i] = nyaa_scraper.Categories[i]
 			}
-			selIdxChan, viewName, err := dialog.ListSelect(gui, "Select category", categories)
+			selIdxChan, cleanUp, err := dialog.ListSelect(gui, "Select category", categories)
 			if err != nil {
 				gocuiReturnError(gui, err)
 			}
 			go func() {
-				idx := <-selIdxChan
-
-				gui.Update(func(gui *gocui.Gui) error {
-					return gui.DeleteView(viewName)
-				})
-
-				nc.Category = nyaa_scraper.Categories[idx]
-				nc.Reload(gui)
+				idx, ok := <-selIdxChan
+				gui.Update(cleanUp)
+				if ok {
+					nc.Category = nyaa_scraper.Categories[idx]
+					nc.Reload(gui)
+				}
 			}()
 		case ch == 'f':
 			filters := make([]fmt.Stringer, len(nyaa_scraper.Filters))
 			for i := range filters {
 				filters[i] = nyaa_scraper.Filters[i]
 			}
-			selIdxChan, viewName, err := dialog.ListSelect(gui, "Select filter", filters)
+			selIdxChan, cleanUp, err := dialog.ListSelect(gui, "Select filter", filters)
 			if err != nil {
 				gocuiReturnError(gui, err)
 			}
 			go func() {
-				idx := <-selIdxChan
-
-				gui.Update(func(gui *gocui.Gui) error {
-					return gui.DeleteView(viewName)
-				})
-
-				nc.Filter = nyaa_scraper.Filters[idx]
-				nc.Reload(gui)
+				idx, ok := <-selIdxChan
+				gui.Update(cleanUp)
+				if ok {
+					nc.Filter = nyaa_scraper.Filters[idx]
+					nc.Reload(gui)
+				}
 			}()
 		}
 	}
