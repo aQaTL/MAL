@@ -203,7 +203,7 @@ func (c *Client) doApiRequestWithEntryData(address, method string, entry *Anime)
 	return resp, nil
 }
 
-//This works by scrapping the normal MAL website for given entry. It means that this method
+//This works by scraping the normal MAL website for given entry. It means that this method
 //will stop working when they change something
 func (c *Client) FetchDetails(entry *Anime) (*AnimeDetails, error) {
 	malPageUrl := fmt.Sprintf(AnimePage, entry.ID)
