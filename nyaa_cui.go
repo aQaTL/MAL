@@ -260,6 +260,7 @@ func (nc *nyaaCui) Reload(gui *gocui.Gui) {
 		}
 		if ok {
 			nc.Results = resultPage.Results
+			nc.MaxResults = resultPage.DisplayedOutOf
 			nc.MaxPages = int(math.Ceil(float64(resultPage.DisplayedOutOf) /
 				float64(resultPage.DisplayedTo-resultPage.DisplayedFrom+1)))
 			nc.LoadedPages = 1

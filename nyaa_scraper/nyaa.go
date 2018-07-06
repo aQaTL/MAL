@@ -150,9 +150,8 @@ func Search(query string, category NyaaCategory, filter NyaaFilter) (NyaaResultP
 func SearchSpecificPage(query string, category NyaaCategory, filter NyaaFilter, page int) (NyaaResultPage, error) {
 	resultPage := NyaaResultPage{}
 
-	//TODO check PathEscape vs QueryEscape
 	address := fmt.Sprintf(nyaaQueryPattern, filter.QueryParam(), category.QueryParam(),
-		page, url.PathEscape(query))
+		page, url.QueryEscape(query))
 	respBody, err := doRequest(address)
 	if err != nil {
 		if respBody != nil {
