@@ -12,7 +12,7 @@ const (
 )
 
 func ListSelect(gui *gocui.Gui, title string, list []fmt.Stringer) (
-	<-chan int, func(gui2 *gocui.Gui) error, error,
+	<-chan int, CleanUpFunc, error,
 ) {
 	listW := 1
 	listH := len(list)
@@ -40,7 +40,7 @@ func ListSelect(gui *gocui.Gui, title string, list []fmt.Stringer) (
 }
 
 func ListSelectString(gui *gocui.Gui, title string, list []string) (
-	<-chan int, func(*gocui.Gui) error, error,
+	<-chan int, CleanUpFunc, error,
 ) {
 	listW := longestStringLen(list) + 2
 	listH := len(list)
@@ -75,7 +75,6 @@ func listSelect(gui *gocui.Gui, title string, listW, listH int) (chan int, *gocu
 	gui.SetViewOnTop(listSelectViewName)
 
 	v.Title = title
-	v.SelBgColor = gocui.ColorGreen
 	v.SelBgColor = gocui.ColorGreen
 	v.SelFgColor = gocui.ColorBlack
 	v.Highlight = true

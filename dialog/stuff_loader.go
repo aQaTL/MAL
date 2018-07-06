@@ -8,27 +8,9 @@ import (
 
 const stuffLoaderViewName = "stuffLoaderViewName"
 
-/*
-(x0,y0)---------(  ,  )
-   |               |
-   |               |
-   |               |
-(  ,  )---------(x1,y1)
- */
-type Pos struct {
-	x0, y0 int
-	x1, y1 int
-}
-
-type Config struct {
-	Gui        *gocui.Gui
-	Pos
-	ViewConfig func(*gocui.View)
-}
-
 func StuffLoader(config Config, f func()) (<-chan bool, error) {
 	cleanUp := cleanUpFunc(config.Gui, stuffLoaderViewName)
-	v, err := config.Gui.SetView(stuffLoaderViewName, config.x0, config.y0, config.x1, config.y1)
+	v, err := config.Gui.SetView(stuffLoaderViewName, config.X0, config.Y0, config.X1, config.Y1)
 	if err == gocui.ErrUnknownView {
 		err = nil
 	} else if err != nil {

@@ -163,10 +163,7 @@ func (nc *nyaaCui) Editor(gui *gocui.Gui) func(v *gocui.View, key gocui.Key, ch 
 			} else if entry.TorrentLink != "" {
 				link = entry.TorrentLink
 			} else {
-				gui.Update(func(gui *gocui.Gui) error {
-					//TODO don't exit app when no link is present
-					return fmt.Errorf("no link found")
-				})
+				dialog.JustShowOkDialog(gui, "Error", "No link found")
 				return
 			}
 
@@ -181,7 +178,6 @@ func (nc *nyaaCui) Editor(gui *gocui.Gui) func(v *gocui.View, key gocui.Key, ch 
 			}
 			nc.LoadedPages++
 			go func() {
-				//TODO implement way to set search category and filter
 				resultPage, _ := nyaa_scraper.SearchSpecificPage(
 					nc.SearchTerm,
 					nyaa_scraper.AnimeEnglishTranslated,
@@ -243,9 +239,9 @@ func (nc *nyaaCui) Editor(gui *gocui.Gui) func(v *gocui.View, key gocui.Key, ch 
 
 func (nc *nyaaCui) Reload(gui *gocui.Gui) {
 	var resultPage nyaa_scraper.NyaaResultPage
-	var err error
+	var searchErr error
 	f := func() {
-		resultPage, err = nyaa_scraper.Search(nc.SearchTerm, nc.Category, nc.Filter)
+		resultPage, searchErr = nyaa_scraper.Search(nc.SearchTerm, nc.Category, nc.Filter)
 	}
 	jobDone, err := dialog.StuffLoader(dialog.FitMessage(gui, "Loading "+nc.SearchTerm), f)
 	if err != nil {
@@ -253,9 +249,8 @@ func (nc *nyaaCui) Reload(gui *gocui.Gui) {
 	}
 	go func() {
 		ok := <-jobDone
-		if err != nil {
-			//TODO Show message to user
-			panic(err)
+		if searchErr != nil {
+			dialog.JustShowOkDialog(gui, "Error", searchErr.Error())
 			return
 		}
 		if ok {

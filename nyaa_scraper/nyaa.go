@@ -188,6 +188,7 @@ func SearchSpecificPage(query string, category NyaaCategory, filter NyaaFilter, 
 	return resultPage, nil
 }
 
+//TODO parsing green/neutral/red highlighted rows
 func parseNyaaEntry(sel *goquery.Selection) *NyaaEntry {
 	entry := NyaaEntry{}
 
