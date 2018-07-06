@@ -20,10 +20,10 @@ func ListSelect(gui *gocui.Gui, title string, list []fmt.Stringer) (
 	buffer := bytes.Buffer{}
 
 	for i, str := range list {
-		buffer.WriteString(strconv.Itoa(i))
-		buffer.Write([]byte{'.', ' '})
+		idxLen, _ := buffer.WriteString(strconv.Itoa(i))
+		buffer.WriteByte('.')
 		strBytes := []byte(str.String())
-		if bLen := len(strBytes); bLen > listW {
+		if bLen := len(strBytes)+idxLen+1; bLen > listW {
 			listW = bLen
 		}
 		buffer.Write(strBytes)
@@ -61,10 +61,13 @@ func ListSelectString(gui *gocui.Gui, title string, list []string) (
 func listSelect(gui *gocui.Gui, title string, listW, listH int) (chan int, *gocui.View, error) {
 	w, h := gui.Size()
 
-	//TODO scrolling list if list length is too big
 	//TODO wrap list if list is too wide (handle moving up & down correctly)
-	x0, y0 := w/2-listW/2, h/2-(listH+1)/2
-	x1, y1 := x0+listW, y0+(listH+1)
+	viewHeight := listH + 1
+	if maxHeight := int(float64(h)*0.8); listH > maxHeight {
+		viewHeight = maxHeight
+	}
+	x0, y0 := w/2-listW/2, h/2-viewHeight/2
+	x1, y1 := x0+listW, y0+viewHeight
 
 	v, err := gui.SetView(listSelectViewName, x0, y0, x1, y1)
 	if err == gocui.ErrUnknownView {
