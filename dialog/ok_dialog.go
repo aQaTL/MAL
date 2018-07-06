@@ -57,9 +57,13 @@ func OkDialog(config Config) (<-chan struct{}, CleanUpFunc, error) {
 }
 
 func FitMessageWithOkButton(gui *gocui.Gui, msg string, cfgs ...func(*gocui.View)) Config {
-	//TODO support long messages
 	w, h := gui.Size()
-	vw, vh := int(math.Max(float64(utf8.RuneCountInString(msg)+2), 5)), 3
+	msgLen := utf8.RuneCountInString(msg)
+	vw, vh := int(math.Max(float64(msgLen+2), 5)), 3
+	if maxWidth := int(float64(w)*0.7); msgLen > maxWidth {
+		vw = maxWidth
+		vh = int(math.Ceil(float64(msgLen) / float64(maxWidth - 2.0))) + 2
+	}
 	x0, y0 := w/2-vw/2, h/2-vh/2
 	x1, y1 := x0+vw, y0+vh
 	return Config{
@@ -74,8 +78,9 @@ func FitMessageWithOkButton(gui *gocui.Gui, msg string, cfgs ...func(*gocui.View
 			filler := strings.Repeat(" ", vw/2-2)
 			fmt.Fprint(v, filler, ">OK<", filler)
 
-			v.SetCursor(0, 1)
+			v.SetCursor(0, vh-2)
 			v.Highlight = true
+			v.Wrap = true
 			v.SelBgColor = gocui.ColorGreen
 			v.SelFgColor = gocui.ColorBlack
 		}}
