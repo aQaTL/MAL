@@ -27,6 +27,7 @@ type Config struct {
 }
 
 func StuffLoader(config Config, f func()) (<-chan bool, error) {
+	cleanUp := cleanUpFunc(config.Gui, stuffLoaderViewName)
 	v, err := config.Gui.SetView(stuffLoaderViewName, config.x0, config.y0, config.x1, config.y1)
 	if err == gocui.ErrUnknownView {
 		err = nil
@@ -40,9 +41,7 @@ func StuffLoader(config Config, f func()) (<-chan bool, error) {
 		switch {
 		case key == gocui.KeyCtrlQ || key == gocui.KeyEsc || ch == 'q':
 			jobDone <- false
-			config.Gui.Update(func(gui *gocui.Gui) error {
-				return gui.DeleteView(stuffLoaderViewName)
-			})
+			config.Gui.Update(cleanUp)
 		}
 	})
 
@@ -54,9 +53,7 @@ func StuffLoader(config Config, f func()) (<-chan bool, error) {
 	go func() {
 		f()
 		jobDone <- true
-		config.Gui.Update(func(gui *gocui.Gui) error {
-			return gui.DeleteView(stuffLoaderViewName)
-		})
+		config.Gui.Update(cleanUp)
 	}()
 
 	return jobDone, nil

@@ -31,7 +31,7 @@ func ListSelect(gui *gocui.Gui, title string, list []fmt.Stringer) (
 	}
 	listW += 2
 
-	cleanUp := cleanUpFunc(gui)
+	cleanUp := cleanUpFunc(gui, listSelectViewName)
 	selectedIdx, v, err := listSelect(gui, title, listW, listH)
 	if v != nil {
 		buffer.WriteTo(v)
@@ -45,7 +45,7 @@ func ListSelectString(gui *gocui.Gui, title string, list []string) (
 	listW := longestStringLen(list) + 2
 	listH := len(list)
 
-	cleanUp := cleanUpFunc(gui)
+	cleanUp := cleanUpFunc(gui, listSelectViewName)
 	selectedIdx, v, err := listSelect(gui, title, listW, listH)
 
 	if v != nil {
@@ -114,24 +114,4 @@ func listSelect(gui *gocui.Gui, title string, listW, listH int) (chan int, *gocu
 	})
 
 	return selectedIdx, v, err
-}
-
-func cleanUpFunc(gui *gocui.Gui) func(gui *gocui.Gui) error {
-	currView := gui.CurrentView()
-	return func(gui *gocui.Gui) error {
-		gui.DeleteView(listSelectViewName)
-		if currView != nil {
-			gui.SetCurrentView(currView.Name())
-		}
-		return nil
-	}
-}
-
-func longestStringLen(slice []string) (maxLen int) {
-	for _, str := range slice {
-		if l := len(str); l > maxLen {
-			maxLen = l
-		}
-	}
-	return
 }
