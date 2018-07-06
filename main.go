@@ -178,11 +178,11 @@ func main() {
 					},
 				},
 				cli.Command{
-					Name:      "torrent",
-					Usage:     "Sets path to torrent client and it args",
-					UsageText: "mal cfg torrent [path] [args...]",
+					Name:            "torrent",
+					Usage:           "Sets path to torrent client and it args",
+					UsageText:       "mal cfg torrent [path] [args...]",
 					SkipFlagParsing: true,
-					Action:    configChangeTorrent,
+					Action:          configChangeTorrent,
 				},
 			},
 		},
@@ -259,22 +259,21 @@ func main() {
 		},
 		cli.Command{
 			Name:     "nyaa",
+			Aliases:  []string{"n"},
 			Category: "Action",
-			Usage:    "Search for selected entry on nyaa tracker",
-			Action:   nyaa,
+			Usage:    "Open interactive torrent search",
+			Action:   openNyaaCui,
+		},
+		cli.Command{
+			Name:      "nyaa-web",
+			Aliases:   []string{"nw"},
+			Usage:     "Open torrent search in browser",
+			UsageText: "mal nyaa-web",
+			Action:    nyaaWebsite,
 			Flags: []cli.Flag{
 				cli.BoolFlag{
 					Name:  "alt",
 					Usage: "choose an alternative title",
-				},
-			},
-			Subcommands: []cli.Command{
-				cli.Command{
-					Name:      "i",
-					Aliases:   []string{"interactive", "ui"},
-					Usage:     "Use builtin interactive search",
-					UsageText: "mal nyaa i",
-					Action:    browseNyaa,
 				},
 			},
 		},
@@ -690,7 +689,7 @@ func openWebsite(ctx *cli.Context) error {
 	return nil
 }
 
-func nyaa(ctx *cli.Context) error {
+func nyaaWebsite(ctx *cli.Context) error {
 	cfg := LoadConfig()
 	_, list, err := loadMAL(ctx)
 	if err != nil {
@@ -899,7 +898,7 @@ func printDetails(ctx *cli.Context) error {
 	fmt.Fprintln(color.Output, "Last updated:", red(time.Unix(entry.LastUpdated, 0)))
 	fmt.Fprintln(color.Output, "Website url:", cyan(cfg.Websites[entry.ID]))
 
-	fmt.Fprintln(color.Output, )
+	fmt.Fprintln(color.Output)
 
 	fmt.Fprintln(color.Output, "Synposis:", green(details.Synopsis))
 

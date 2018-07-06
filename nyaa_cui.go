@@ -11,7 +11,7 @@ import (
 	"os/exec"
 )
 
-func browseNyaa(ctx *cli.Context) error {
+func openNyaaCui(ctx *cli.Context) error {
 	_, list, err := loadMAL(ctx)
 	if err != nil {
 		return err
