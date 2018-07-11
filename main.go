@@ -39,11 +39,16 @@ func main() {
 	appCfg := AppConfig{}
 	LoadJsonFile(AppConfigFile, &appCfg)
 
+	app := cli.NewApp()
+	app.Name = "mal"
+	app.Usage = "App for managing your MAL"
+	app.Version = "0.1"
+
 	switch appCfg.Mode {
 	case MalMode:
-		runApp(MalApp())
+		runApp(MalApp(app))
 	case AniListMode:
-		runApp(AniListApp())
+		runApp(AniListApp(app))
 	}
 }
 

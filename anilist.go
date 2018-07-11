@@ -4,30 +4,9 @@ import (
 	"encoding/json"
 	"github.com/aqatl/mal/anilist"
 	"github.com/aqatl/mal/oauth2"
-	"github.com/urfave/cli"
 	"os"
 	"time"
-	"fmt"
 )
-
-func openAniList(ctx *cli.Context) error {
-	al, err := loadAniList()
-	if err != nil {
-		return err
-	}
-
-	counter := 0
-	for _, listGroup := range al.Lists {
-		for _, entry := range listGroup.Entries {
-			fmt.Println(entry.Title.Romaji)
-			counter++
-		}
-	}
-
-	fmt.Println(counter)
-
-	return nil
-}
 
 func loadAniList() (*anilist.AniList, error) {
 	token, err := loadOAuthToken()

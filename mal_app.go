@@ -16,12 +16,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-func MalApp() *cli.App {
-	app := cli.NewApp()
-	app.Name = "mal"
-	app.Usage = "App for managing your MAL"
-	app.Version = "0.1"
-
+func MalApp(app *cli.App) *cli.App {
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:  "creds, prompt-credentials",
@@ -63,6 +58,13 @@ func MalApp() *cli.App {
 	}
 
 	app.Commands = []cli.Command{
+		cli.Command{
+			Name:      "anilist",
+			Aliases:   []string{"al"},
+			Usage:     "Switches app mode to AniList",
+			UsageText: "mal anilist",
+			Action:    switchToAniList,
+		},
 		cli.Command{
 			Name:     "eps",
 			Aliases:  []string{"episodes"},
@@ -256,6 +258,7 @@ func MalApp() *cli.App {
 		cli.Command{
 			Name:      "nyaa-web",
 			Aliases:   []string{"nw"},
+			Category:  "Action",
 			Usage:     "Open torrent search in browser",
 			UsageText: "mal nyaa-web",
 			Action:    nyaaWebsite,
@@ -266,14 +269,9 @@ func MalApp() *cli.App {
 				},
 			},
 		},
-		//TODO Integrate AniList
-		cli.Command{
-			Name: "anilist",
-			Action: openAniList,
-		},
 	}
 
-	app.Action = cli.ActionFunc(defaultAction)
+	app.Action = cli.ActionFunc(malDefaultAction)
 
 	return app
 }
@@ -297,7 +295,7 @@ func loadMAL(ctx *cli.Context) (*mal.Client, mal.AnimeList, error) {
 	return c, list, err
 }
 
-func defaultAction(ctx *cli.Context) error {
+func malDefaultAction(ctx *cli.Context) error {
 	_, list, err := loadMAL(ctx)
 	if err != nil {
 		return err
@@ -353,7 +351,6 @@ func defaultAction(ctx *cli.Context) error {
 	return nil
 }
 
-
 func statusFlag(ctx *cli.Context) mal.MyStatus {
 	var status mal.MyStatus
 	if customStatus := ctx.GlobalString("status"); customStatus != "" {
@@ -381,6 +378,13 @@ func statusAutoUpdate(cfg *Config, entry *mal.Anime) {
 		entry.MyStatus = mal.Watching
 		return
 	}
+}
+
+func switchToAniList(ctx *cli.Context) error {
+	appCfg := AppConfig{}
+	LoadJsonFile(AppConfigFile, &appCfg)
+	appCfg.Mode = AniListMode
+	return SaveJsonFile(AppConfigFile, &appCfg)
 }
 
 func setEntryEpisodes(ctx *cli.Context) error {

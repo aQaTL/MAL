@@ -98,3 +98,12 @@ func LoadJsonFile(file string, i interface{}) bool {
 	panic(err)
 	return false
 }
+
+func SaveJsonFile(file string, i interface{}) error {
+	f, err := os.Create(file)
+	defer f.Close()
+	if err != nil {
+		return err
+	}
+	return json.NewEncoder(f).Encode(i)
+}
