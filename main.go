@@ -20,6 +20,8 @@ import (
 var dataDir = filepath.Join(homeDir(), ".mal")
 var (
 	CredentialsFile   = filepath.Join(dataDir, "cred.dat")
+	AniListCredsFile  = filepath.Join(dataDir, "aniListCreds.json")
+	AniListUserFile   = filepath.Join(dataDir, "aniListUser.json")
 	MalCacheFile      = filepath.Join(dataDir, "cache.xml")
 	MalStatsCacheFile = filepath.Join(dataDir, "stats.xml")
 	ConfigFile        = filepath.Join(dataDir, "config.json")
@@ -276,6 +278,10 @@ func main() {
 					Usage: "choose an alternative title",
 				},
 			},
+		},
+		cli.Command{
+			Name: "anilist",
+			Action: openAniList,
 		},
 	}
 
