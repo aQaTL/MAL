@@ -8,6 +8,8 @@ import (
 	"log"
 	"os/user"
 	"time"
+	"os"
+	"encoding/json"
 )
 
 func basicAuth(username, password string) string {
@@ -75,4 +77,24 @@ func printEntryDetailsAfterUpdatedEpisodes(entry *mal.Anime, epsBefore int) {
 		score,
 		status,
 	)
+}
+
+//Returns true if file was loaded correctly
+func LoadJsonFile(file string, i interface{}) bool {
+	f, err := os.Open(file)
+	defer f.Close()
+	if err == nil {
+		err = json.NewDecoder(f).Decode(i)
+		if err == nil {
+			return true
+		} else {
+			panic(err)
+			return false
+		}
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	panic(err)
+	return false
 }

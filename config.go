@@ -69,12 +69,12 @@ func LoadConfig() (c *Config) {
 	c.TorrentClientPath = "qbittorrent"
 	c.TorrentClientArgs = ""
 
-	f, err := os.Open(ConfigFile)
+	f, err := os.Open(MalConfigFile)
 	defer f.Close()
 	if os.IsNotExist(err) {
 		return
 	} else if err != nil {
-		log.Printf("Error opening %s file: %v", ConfigFile, err)
+		log.Printf("Error opening %s file: %v", MalConfigFile, err)
 	}
 
 	decoder := json.NewDecoder(f)
@@ -84,14 +84,14 @@ func LoadConfig() (c *Config) {
 }
 
 func (cfg *Config) Save() {
-	f, err := os.Create(ConfigFile)
+	f, err := os.Create(MalConfigFile)
 	defer f.Close()
 	if err != nil {
-		log.Printf("Error saving %s file: %v", ConfigFile, err)
+		log.Printf("Error saving %s file: %v", MalConfigFile, err)
 	}
 
 	encoder := json.NewEncoder(f)
 	if err := encoder.Encode(cfg); err != nil {
-		log.Printf("Error encoding %s file: %v", ConfigFile, err)
+		log.Printf("Error encoding %s file: %v", MalConfigFile, err)
 	}
 }

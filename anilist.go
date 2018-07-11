@@ -80,16 +80,8 @@ const (
 
 func loadCachedOAuthToken() (oauth2.OAuthToken, error) {
 	token := oauth2.OAuthToken{}
+	LoadJsonFile(AniListCredsFile, &token)
 
-	f, err := os.Open(AniListCredsFile)
-	defer f.Close()
-	if err != nil {
-		return token, err
-	}
-
-	if err = json.NewDecoder(f).Decode(&token); err != nil {
-		return token, err
-	}
 	if token.Token == "" {
 		return token, emptyToken
 	}
@@ -97,7 +89,7 @@ func loadCachedOAuthToken() (oauth2.OAuthToken, error) {
 		return token, tokenExpired
 	}
 
-	return token, err
+	return token, nil
 }
 
 func saveOAuthToken(token oauth2.OAuthToken) error {
@@ -121,15 +113,10 @@ func requestAniListToken() (oauth2.OAuthToken, error) {
 
 func loadAniListUser(token oauth2.OAuthToken) (*anilist.User, error) {
 	user := &anilist.User{}
-	f, err := os.Open(AniListUserFile)
-	if err == nil {
-		err = json.NewDecoder(f).Decode(user)
-		return user, err
+	if LoadJsonFile(AniListUserFile, &user) {
+		return user, nil
 	}
-	if !os.IsNotExist(err) {
-		return nil, err
-	}
-	err = anilist.QueryAuthenticatedUser(user, token)
+	err := anilist.QueryAuthenticatedUser(user, token)
 	if err == nil {
 		err = saveAniListUser(user)
 	}
@@ -148,6 +135,7 @@ func saveAniListUser(user *anilist.User) error {
 
 func loadAniListAnimeLists(al *anilist.AniList) error {
 	f, err := os.Open(AniListCacheFile)
+	defer f.Close()
 	if err == nil {
 		err = json.NewDecoder(f).Decode(&al.Lists)
 		return err

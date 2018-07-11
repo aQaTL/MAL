@@ -41,7 +41,7 @@ func loadCredentials(ctx *cli.Context) string {
 
 		return basicAuth(strings.TrimSpace(username), strings.TrimSpace(password))
 	} else { //Read credentials from CredentialsFile
-		credentials, err := ioutil.ReadFile(CredentialsFile)
+		credentials, err := ioutil.ReadFile(MalCredentialsFile)
 		if err != nil {
 			log.Printf("Failed to load credentials: %v", err)
 			return ""
@@ -51,7 +51,7 @@ func loadCredentials(ctx *cli.Context) string {
 }
 
 func saveCredentials(credentials string) {
-	err := ioutil.WriteFile(CredentialsFile, []byte(credentials), 400)
+	err := ioutil.WriteFile(MalCredentialsFile, []byte(credentials), 400)
 	if err != nil {
 		log.Printf("Caching credentials failed: %v", err)
 	}
