@@ -3,10 +3,11 @@ package anilist
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"github.com/aqatl/mal/oauth2"
 	"io/ioutil"
 	"net/http"
+	"fmt"
+	"github.com/pkg/errors"
 )
 
 //TODO Anilist support
@@ -57,8 +58,8 @@ query {
 	viewer := &struct {
 		*User `json:"Viewer"`
 	}{user}
-	return graphQLRequestParsed(query, nil, token, viewer)
-	return nil
+	_, err := graphQLRequestParsed(query, nil, token, viewer)
+	return err
 }
 
 type MediaListCollection struct {
@@ -121,6 +122,8 @@ type AiringSchedule struct {
 	Episode         int `json:"episode"`
 }
 
+var InvalidToken = errors.New("Invalid token")
+
 //TODO downloading only given list like watching/completed
 func (al *AniList) QueryUserLists() error {
 	vars := make(map[string]interface{})
@@ -129,42 +132,64 @@ func (al *AniList) QueryUserLists() error {
 	resp := struct {
 		MediaListCollection `json:"MediaListCollection"`
 	}{MediaListCollection{}}
-	if err := graphQLRequestParsed(queryUserAnimeList, vars, al.Token, &resp); err != nil {
+	if gqlErrs, err := graphQLRequestParsed(queryUserAnimeList, vars, al.Token, &resp); err != nil {
 		return err
+	} else if len(gqlErrs) > 0 {
+		for _, gqlErr := range gqlErrs {
+			if gqlErr.Message == "Invalid token" {
+				return InvalidToken
+			}
+		}
+		printGqlErrs(gqlErrs)
+		return nil
 	}
 	al.Lists = resp.Lists
 
 	return nil
 }
 
+func printGqlErrs(gqlErrs []GqlError) {
+	for _, gqlErr := range gqlErrs {
+		fmt.Printf("GraphQl Error (%d): %s\n", gqlErr.Status, gqlErr.Message)
+		for _, loc := range gqlErr.Locations {
+			fmt.Printf("Line %d column %d\n", loc.Line, loc.Column)
+		}
+	}
+}
+
+type GqlError struct {
+	Message string `json:"message"`
+	Status int `json:"status"`
+	Locations []Location `json:"locations"`
+}
+
+type Location struct {
+	Line int `json:"line"`
+	Column int `json:"column"`
+}
+
 func graphQLRequestParsed(query string, vars map[string]interface{}, t oauth2.OAuthToken,
-	x interface{}) error {
+	x interface{}) ([]GqlError, error) {
 	resp, err := graphQLRequest(query, vars, t)
 	defer resp.Body.Close()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	type responseData struct {
 		Data   interface{}
-		Errors []struct {
-			Message string
-		}
+		Errors []GqlError
 	}
 	respData := &responseData{Data: x}
 
 	if err := json.NewDecoder(resp.Body).Decode(respData); err != nil {
-		return err
+		return nil, err
 	}
 	if len(respData.Errors) > 0 {
 		//TODO include all error fields
 		//TODO better error handling -> maybe typedef error array as QueryErrors?
-		errs := ""
-		for _, err := range respData.Errors {
-			errs += err.Message
-		}
-		return errors.New(errs)
+		return respData.Errors, nil
 	}
-	return nil
+	return nil, nil
 }
 
 func graphQLRequestString(query string, vars map[string]interface{}, t oauth2.OAuthToken) (
