@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"github.com/pkg/errors"
 )
 
 type OAuthToken struct {
@@ -72,9 +73,13 @@ func OAuthImplicitGrantAuth(url, browserPath string, clientID uint, listenPort i
 	authUrl := fmt.Sprintf("%s?client_id=%d&response_type=token", url, clientID)
 
 	if browserPath == "" {
-		open.Start(authUrl)
+		if err := open.Start(authUrl); err != nil {
+			return OAuthToken{}, errors.Wrap(err, "opening browser error")
+		}
 	} else {
-		open.StartWith(authUrl, browserPath)
+		if err := open.StartWith(authUrl, browserPath); err != nil {
+			return OAuthToken{}, errors.Wrap(err, "opening browser error")
+		}
 	}
 
 	token := <-tokenC
