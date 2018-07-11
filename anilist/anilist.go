@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/aqatl/mal/oauth2"
 	"io/ioutil"
 	"net/http"
@@ -16,7 +15,8 @@ const apiEndpoint = "https://graphql.anilist.co"
 
 type AniList struct {
 	Token oauth2.OAuthToken
-	User User
+	User  User
+	Lists []MediaListGroup
 }
 
 type User struct {
@@ -61,18 +61,78 @@ query {
 	return nil
 }
 
+type MediaListCollection struct {
+	Lists []MediaListGroup `json:"lists"`
+}
+
+type MediaListGroup struct {
+	Entries              []MediaList `json:"entries"`
+	Name                 string      `json:"name"`
+	IsCustomList         bool        `json:"isCustomList"`
+	IsSplitCompletedList bool        `json:"isSplitCompletedList"`
+	Status               string      `json:"status"`
+}
+
+type MediaList struct {
+	Status   string `json:"status"`
+	Score    int    `json:"score"`
+	Progress int    `json:"progress"`
+	Media    `json:"media"`
+}
+
+type Media struct {
+	Id                int            `json:"id"`
+	IdMal             int            `json:"idMal"`
+	Title             MediaTitle     `json:"title"`
+	Type              string         `json:"type"`
+	Format            string         `json:"format"`
+	Status            string         `json:"status"`
+	Description       string         `json:"description"`
+	StartDate         FuzzyDate      `json:"startDate"`
+	EndDate           FuzzyDate      `json:"endDate"`
+	Season            string         `json:"season"`
+	Duration          int            `json:"duration"`
+	Source            string         `json:"source"`
+	UpdatedAt         int            `json:"updatedAt"`
+	Genres            []string       `json:"genres"`
+	Synonyms          []string       `json:"synonyms"`
+	AverageScore      int            `json:"averageScore"`
+	Popularity        int            `json:"popularity"`
+	NextAiringEpisode AiringSchedule `json:"nextAiringEpisode"`
+}
+
+type MediaTitle struct {
+	Romaji        string `json:"romaji"`
+	English       string `json:"english"`
+	Native        string `json:"native"`
+	UserPreferred string `json:"userPreferred"`
+}
+
+type FuzzyDate struct {
+	Year  int `json:"year"`
+	Month int `json:"month"`
+	Day   int `json:"day"`
+}
+
+type AiringSchedule struct {
+	Id              int `json:"id"`
+	AiringAt        int `json:"airingAt"`
+	TimeUntilAiring int `json:"timeUntilAiring"`
+	Episode         int `json:"episode"`
+}
+
 //TODO downloading only given list like watching/completed
-func (al *AniList) QueryUserList() error {
+func (al *AniList) QueryUserLists() error {
 	vars := make(map[string]interface{})
 	vars["userID"] = al.User.Id
 
-	response, err := graphQLRequestString(queryUserAnimeList, vars, al.Token)
-	if err != nil {
+	resp := struct {
+		MediaListCollection `json:"MediaListCollection"`
+	}{MediaListCollection{}}
+	if err := graphQLRequestParsed(queryUserAnimeList, vars, al.Token, &resp); err != nil {
 		return err
 	}
-
-	//TODO parsing response
-	fmt.Println(response)
+	al.Lists = resp.Lists
 
 	return nil
 }

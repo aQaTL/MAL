@@ -279,6 +279,7 @@ func main() {
 				},
 			},
 		},
+		//TODO Integrate AniList
 		cli.Command{
 			Name: "anilist",
 			Action: openAniList,

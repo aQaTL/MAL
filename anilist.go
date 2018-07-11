@@ -7,6 +7,7 @@ import (
 	"github.com/urfave/cli"
 	"os"
 	"time"
+	"fmt"
 )
 
 func openAniList(ctx *cli.Context) error {
@@ -15,8 +16,19 @@ func openAniList(ctx *cli.Context) error {
 		return err
 	}
 
-	err = al.QueryUserList()
-	return err
+	if err = al.QueryUserLists(); err != nil {
+		return err
+	}
+
+	counter := 0
+	for _, listGroup := range al.Lists {
+		for _, entry := range listGroup.Entries {
+			fmt.Println(entry.Title.Romaji)
+			counter++
+		}
+	}
+
+	fmt.Println(counter)
 
 	return nil
 }

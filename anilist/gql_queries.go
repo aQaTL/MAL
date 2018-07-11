@@ -5,8 +5,6 @@ query UserList ($userID: Int) {
 	MediaListCollection (userId: $userID, type: ANIME) {
 		lists {
 			entries {
-				id
-				mediaId
 				status
 				score(format: POINT_10)
 				progress
@@ -16,6 +14,8 @@ query UserList ($userID: Int) {
 					title {
 						romaji
 						english
+						native
+						userPreferred
 					}
 					type
 					format
@@ -34,9 +34,7 @@ query UserList ($userID: Int) {
 					genres
 					synonyms
 					averageScore
-					meanScore
 					popularity
-					trending
 					nextAiringEpisode {
 						airingAt
 						episode
