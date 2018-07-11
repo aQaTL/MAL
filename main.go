@@ -22,6 +22,7 @@ var (
 	CredentialsFile   = filepath.Join(dataDir, "cred.dat")
 	AniListCredsFile  = filepath.Join(dataDir, "aniListCreds.json")
 	AniListUserFile   = filepath.Join(dataDir, "aniListUser.json")
+	AniListCacheFile  = filepath.Join(dataDir, "aniListCache.json")
 	MalCacheFile      = filepath.Join(dataDir, "cache.xml")
 	MalStatsCacheFile = filepath.Join(dataDir, "stats.xml")
 	ConfigFile        = filepath.Join(dataDir, "config.json")

@@ -16,10 +16,6 @@ func openAniList(ctx *cli.Context) error {
 		return err
 	}
 
-	if err = al.QueryUserLists(); err != nil {
-		return err
-	}
-
 	counter := 0
 	for _, listGroup := range al.Lists {
 		for _, entry := range listGroup.Entries {
@@ -44,8 +40,14 @@ func loadAniList() (*anilist.AniList, error) {
 		return nil, err
 	}
 
-	al := anilist.AniList{Token: token, User: *user}
-	return &al, nil
+	al := &anilist.AniList{Token: token, User: *user}
+
+	err = loadAniListAnimeLists(al)
+	if err != nil {
+		return nil, err
+	}
+
+	return al, nil
 }
 
 func loadOAuthToken() (oauth2.OAuthToken, error) {
@@ -141,5 +143,31 @@ func saveAniListUser(user *anilist.User) error {
 		return err
 	}
 	err = json.NewEncoder(f).Encode(&user)
+	return err
+}
+
+func loadAniListAnimeLists(al *anilist.AniList) error {
+	f, err := os.Open(AniListCacheFile)
+	if err == nil {
+		err = json.NewDecoder(f).Decode(&al.Lists)
+		return err
+	}
+	if !os.IsNotExist(err) {
+		return err
+	}
+	err = al.QueryUserLists()
+	if err == nil {
+		err = saveAniListAnimeLists(al)
+	}
+	return err
+}
+
+func saveAniListAnimeLists(al *anilist.AniList) error {
+	f, err := os.Create(AniListCacheFile)
+	defer f.Close()
+	if err != nil {
+		return err
+	}
+	err = json.NewEncoder(f).Encode(&al.Lists)
 	return err
 }
