@@ -286,7 +286,8 @@ func (nc *nyaaCui) Reload(gui *gocui.Gui) {
 
 func (nc *nyaaCui) Download(link string) error {
 	link = "\"" + link + "\""
-	cmd := exec.Command(nc.Cfg.TorrentClientPath, nc.Cfg.TorrentClientArgs, link)
+	cmd := exec.Command(nc.Cfg.TorrentClientPath, nc.Cfg.TorrentClientArgs...)
+	cmd.Args = append(cmd.Args, link)
 	cmd.Args = cmd.Args[1:] //Why they include app name in the arguments???
 	return cmd.Start()
 }

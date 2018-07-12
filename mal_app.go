@@ -1145,7 +1145,7 @@ func configChangeTorrent(ctx *cli.Context) error {
 	cfg := LoadConfig()
 
 	cfg.TorrentClientPath = ctx.Args().First()
-	cfg.TorrentClientArgs = strings.Join(ctx.Args().Tail(), " ")
+	cfg.TorrentClientArgs = ctx.Args().Tail()
 
 	cfg.Save()
 
@@ -1153,7 +1153,7 @@ func configChangeTorrent(ctx *cli.Context) error {
 		color.Output,
 		"New torrent config: %s %s\n",
 		color.HiYellowString("%s", cfg.TorrentClientPath),
-		color.HiCyanString("%s", cfg.TorrentClientArgs))
+		color.HiCyanString("%s", strings.Join(cfg.TorrentClientArgs, " ")))
 
 	return nil
 }

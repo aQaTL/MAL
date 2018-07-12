@@ -20,7 +20,7 @@ type Config struct {
 
 	BrowserPath          string
 	TorrentClientPath    string
-	TorrentClientArgs    string
+	TorrentClientArgs    []string
 
 	SelectedID int
 	Status     mal.MyStatus
