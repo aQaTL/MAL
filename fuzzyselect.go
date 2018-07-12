@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/aqatl/mal/anilist"
 	"github.com/aqatl/mal/mal"
 	"github.com/fatih/color"
 	"github.com/jroimartin/gocui"
@@ -18,36 +19,87 @@ func fuzzySelectEntry(ctx *cli.Context) error {
 	}
 	cfg := LoadConfig()
 
-	listStr := make([]string, len(list))
+	displayData := make([]string, len(list))
+	for i := range list {
+		displayData[i] = list[i].Title
+	}
+
+	searchData := make([]string, len(list))
 	for i, entry := range list {
-		listStr[i] = strings.ToLower(fmt.Sprintf("%s %s",
+		searchData[i] = strings.ToLower(fmt.Sprintf("%s %s",
 			entry.Title,
 			strings.Replace(entry.Synonyms, ";", "", -1)))
 	}
 
 	fsc := &fuzzySelCui{
-		List:    list,
-		ListStr: listStr,
-		Cfg:     cfg,
-		Match:   nil,
+		DisplayData: displayData,
+		SearchData:  searchData,
+		MatchIdx:    -1,
 	}
 
 	initSearch := strings.Join(ctx.Args(), " ")
 
 	if ctx.NArg() != 0 {
-		fsc.Matches = fuzzy.Find(initSearch, fsc.ListStr)
+		fsc.Matches = fuzzy.Find(initSearch, fsc.SearchData)
 		if matchesLen := len(fsc.Matches); matchesLen == 0 {
 			return fmt.Errorf("no match found")
 		} else if matchesLen == 1 {
-			saveSelection(cfg, fsc.List[fsc.Matches[0].Index])
+			saveSelection(cfg, list[fsc.Matches[0].Index])
 			return nil
 		}
 	}
 
-	if err = startFuzzySelectCUI(fsc, initSearch); err != nil || fsc.Match == nil {
+	if err = startFuzzySelectCUI(fsc, initSearch); err != nil || fsc.MatchIdx == -1 {
 		return err
 	}
-	saveSelection(cfg, fsc.Match)
+	saveSelection(cfg, list[fsc.MatchIdx])
+
+	return nil
+}
+
+func alFuzzySelectEntry(ctx *cli.Context) error {
+	al, err := loadAniList()
+	if err != nil {
+		return err
+	}
+	cfg := LoadConfig()
+	list := alGetList(al, anilist.All)
+
+	displayData := make([]string, len(list.Entries))
+	for i := range list.Entries {
+		displayData[i] = list.Entries[i].Title.UserPreferred
+	}
+
+	searchData := make([]string, len(list.Entries))
+	for i, entry := range list.Entries {
+		searchData[i] = strings.ToLower(entry.Title.Romaji +
+			entry.Title.English +
+			entry.Title.Native +
+			strings.Join(entry.Synonyms, " "))
+	}
+
+	fsc := &fuzzySelCui{
+		DisplayData: displayData,
+		SearchData:  searchData,
+		MatchIdx:    -1,
+	}
+
+	initSearch := strings.Join(ctx.Args(), " ")
+
+	if ctx.NArg() != 0 {
+		fsc.Matches = fuzzy.Find(initSearch, fsc.SearchData)
+		if matchesLen := len(fsc.Matches); matchesLen == 0 {
+			return fmt.Errorf("no match found")
+		} else if matchesLen == 1 {
+			alSaveSelection(cfg, &list.Entries[fsc.Matches[0].Index])
+			return nil
+		}
+	}
+
+	if err = startFuzzySelectCUI(fsc, initSearch); err != nil || fsc.MatchIdx == -1 {
+		return err
+	}
+	alSaveSelection(cfg, &list.Entries[fsc.MatchIdx])
 
 	return nil
 }
@@ -87,6 +139,15 @@ func saveSelection(cfg *Config, entry *mal.Anime) {
 	printEntryDetails(entry)
 }
 
+func alSaveSelection(cfg *Config, entry *anilist.MediaList) {
+	cfg.ALSelectedID = entry.ListId
+	cfg.Save()
+
+	fmt.Println("Selected entry:")
+	//TODO printEntryDetails for AniList
+	fmt.Println(entry.Title.UserPreferred)
+}
+
 const (
 	FsgInputView     = "fsgInputView"
 	FsgOutputView    = "fsgOutputView"
@@ -94,12 +155,11 @@ const (
 )
 
 type fuzzySelCui struct {
-	List    mal.AnimeList
-	ListStr []string
-	Cfg     *Config
+	DisplayData []string
+	SearchData  []string
 
-	Matches []fuzzy.Match
-	Match   *mal.Anime
+	Matches  []fuzzy.Match
+	MatchIdx int
 
 	InputView, OutputView *gocui.View
 }
@@ -161,13 +221,13 @@ func (fsc *fuzzySelCui) InputViewEditor(v *gocui.View, key gocui.Key, ch rune, m
 	fsc.OutputView.Clear()
 
 	pattern := strings.TrimSpace(v.Buffer())
-	fsc.Matches = fuzzy.Find(pattern, fsc.ListStr)
+	fsc.Matches = fuzzy.Find(pattern, fsc.SearchData)
 
 	buf := bufio.NewWriter(fsc.OutputView)
 
 	for _, match := range fsc.Matches {
 		mIdx := 0
-		for i, r := range []rune(fsc.List[match.Index].Title) {
+		for i, r := range []rune(fsc.DisplayData[match.Index]) {
 			if mIdx < len(match.MatchedIndexes) && i == match.MatchedIndexes[mIdx] {
 				mIdx++
 				highlighter(buf, string(r))
@@ -216,7 +276,7 @@ func (fsc *fuzzySelCui) setGuiKeyBindings(gui *gocui.Gui) {
 			return nil
 		}
 
-		fsc.Match = fsc.List[fsc.Matches[y].Index]
+		fsc.MatchIdx = fsc.Matches[y].Index
 
 		return gocui.ErrQuit
 	})

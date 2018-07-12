@@ -29,18 +29,12 @@ func AniListApp(app *cli.App) *cli.App {
 			Action:    switchToMal,
 		},
 		cli.Command{
-			Name:      "sel",
-			Aliases:   []string{"select"},
+			Name:      "fuzzy-select",
+			Aliases:   []string{"fsel"},
 			Category:  "Config",
-			Usage:     "Select an entry",
-			UsageText: "mal sel [entry title]",
-			Action:    alSelectEntry,
-			Flags: []cli.Flag{
-				cli.BoolFlag{
-					Name:  "id",
-					Usage: "Select entry by id instead of by title",
-				},
-			},
+			Usage:     "Interactive fuzzy search through your list",
+			UsageText: "mal fsel [search string (optional)]",
+			Action:    alFuzzySelectEntry,
 		},
 	}
 
@@ -55,19 +49,7 @@ func aniListDefaultAction(ctx *cli.Context) error {
 		return err
 	}
 	cfg := LoadConfig()
-
-	var list anilist.MediaListGroup
-	if cfg.ALStatus == anilist.All {
-		for i := range al.Lists {
-			list.Entries = append(list.Entries, al.Lists[i].Entries...)
-		}
-	} else {
-		for i := range al.Lists {
-			if al.Lists[i].Status == cfg.ALStatus {
-				list = al.Lists[i]
-			}
-		}
-	}
+	list := alGetList(al, cfg.ALStatus)
 
 	sort.Slice(list.Entries, func(i, j int) bool {
 		return list.Entries[i].UpdatedAt > list.Entries[j].UpdatedAt
@@ -102,6 +84,22 @@ func aniListDefaultAction(ctx *cli.Context) error {
 	return nil
 }
 
+func alGetList(al *anilist.AniList, status anilist.MediaListStatus) anilist.MediaListGroup {
+	var list anilist.MediaListGroup
+	if status == anilist.All {
+		for i := range al.Lists {
+			list.Entries = append(list.Entries, al.Lists[i].Entries...)
+		}
+	} else {
+		for i := range al.Lists {
+			if al.Lists[i].Status == status {
+				return al.Lists[i]
+			}
+		}
+	}
+	return list
+}
+
 func switchToMal(ctx *cli.Context) error {
 	appCfg := AppConfig{}
 	LoadJsonFile(AppConfigFile, &appCfg)
@@ -110,10 +108,5 @@ func switchToMal(ctx *cli.Context) error {
 		return err
 	}
 	fmt.Println("App mode switched to MyAnimeList")
-	return nil
-}
-
-func alSelectEntry(ctx *cli.Context) error {
-
 	return nil
 }
