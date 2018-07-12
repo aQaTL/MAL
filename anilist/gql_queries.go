@@ -5,9 +5,11 @@ query UserList ($userID: Int) {
 	MediaListCollection (userId: $userID, type: ANIME) {
 		lists {
 			entries {
+				id
 				status
 				score(format: POINT_10)
 				progress
+				updatedAt
 				media {
 					id
 					idMal
@@ -31,7 +33,6 @@ query UserList ($userID: Int) {
 					episodes
 					duration
 					source
-					updatedAt
 					genres
 					synonyms
 					averageScore

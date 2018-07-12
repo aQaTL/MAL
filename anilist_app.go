@@ -5,6 +5,7 @@ import (
 	"github.com/aqatl/mal/anilist"
 	"fmt"
 	"github.com/fatih/color"
+	"sort"
 )
 
 func AniListApp(app *cli.App) *cli.App {
@@ -27,6 +28,20 @@ func AniListApp(app *cli.App) *cli.App {
 			UsageText: "mal mal",
 			Action:    switchToMal,
 		},
+		cli.Command{
+			Name:      "sel",
+			Aliases:   []string{"select"},
+			Category:  "Config",
+			Usage:     "Select an entry",
+			UsageText: "mal sel [entry title]",
+			Action:    alSelectEntry,
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "id",
+					Usage: "Select entry by id instead of by title",
+				},
+			},
+		},
 	}
 
 	app.Action = cli.ActionFunc(aniListDefaultAction)
@@ -48,6 +63,10 @@ func aniListDefaultAction(ctx *cli.Context) error {
 		}
 	}
 
+	sort.Slice(list.Entries, func(i, j int) bool {
+		return list.Entries[i].UpdatedAt > list.Entries[j].UpdatedAt
+	})
+
 	var visibleEntries int
 	if visibleEntries = ctx.Int("max"); visibleEntries == 0 {
 		//`Max` flag not specified, get value from config
@@ -56,27 +75,22 @@ func aniListDefaultAction(ctx *cli.Context) error {
 	if visibleEntries > len(list.Entries) || visibleEntries < 0 || ctx.Bool("all") {
 		visibleEntries = len(list.Entries)
 	}
-	visibleList := list.Entries[:visibleEntries]
-	last := len(visibleList) - 1
-	for i := 0; i < len(visibleList)/2; i++ {
-		visibleList[i], visibleList[last-i] = visibleList[last-i], visibleList[i]
-	}
 
 	fmt.Printf("No%64s%8s%6s\n", "Title", "Eps", "Score")
 	fmt.Println("================================================================================")
-	i := visibleEntries
 	pattern := "%2d%64.64s%8s%6d\n"
-	for _, entry := range visibleList {
-		if entry.IdMal == cfg.SelectedID {
-			color.HiYellow(pattern, i, entry.Title.UserPreferred,
+	var entry *anilist.MediaList
+	for i := visibleEntries - 1; i >= 0; i-- {
+		entry = &list.Entries[i]
+		if entry.ListId == cfg.ALSelectedID {
+			color.HiYellow(pattern, i+1, entry.Title.UserPreferred,
 				fmt.Sprintf("%d/%d", entry.Progress, entry.Episodes),
 				entry.Score)
 		} else {
-			fmt.Printf(pattern, i, entry.Title.UserPreferred,
+			fmt.Printf(pattern, i+1, entry.Title.UserPreferred,
 				fmt.Sprintf("%d/%d", entry.Progress, entry.Episodes),
 				entry.Score)
 		}
-		i--
 	}
 
 	return nil
@@ -90,5 +104,10 @@ func switchToMal(ctx *cli.Context) error {
 		return err
 	}
 	fmt.Println("App mode switched to MyAnimeList")
+	return nil
+}
+
+func alSelectEntry(ctx *cli.Context) error {
+
 	return nil
 }

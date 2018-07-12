@@ -30,10 +30,13 @@ type MediaListGroup struct {
 }
 
 type MediaList struct {
-	Status   string `json:"status"`
-	Score    int    `json:"score"`
-	Progress int    `json:"progress"`
-	Media    `json:"media"`
+	ListId    int    `json:"id"`
+	Status    string `json:"status"`
+	Score     int    `json:"score"`
+	Progress  int    `json:"progress"`
+	UpdatedAt int    `json:"updatedAt"`
+
+	Media     `json:"media"`
 }
 
 type Media struct {
@@ -50,7 +53,6 @@ type Media struct {
 	Episodes          int            `json:"episodes"`
 	Duration          int            `json:"duration"`
 	Source            string         `json:"source"`
-	UpdatedAt         int            `json:"updatedAt"`
 	Genres            []string       `json:"genres"`
 	Synonyms          []string       `json:"synonyms"`
 	AverageScore      int            `json:"averageScore"`

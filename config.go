@@ -11,17 +11,22 @@ import (
 )
 
 type Config struct {
-	SelectedID           int
-	MaxVisibleEntries    int
 	Websites             map[int]string
-	Status               mal.MyStatus
-	ALStatus             anilist.MediaListStatus
+
+	MaxVisibleEntries    int
 	StatusAutoUpdateMode StatusAutoUpdateMode
 	Sorting              Sorting
 	LastUpdate           time.Time
+
 	BrowserPath          string
 	TorrentClientPath    string
 	TorrentClientArgs    string
+
+	SelectedID int
+	Status     mal.MyStatus
+
+	ALSelectedID int
+	ALStatus     anilist.MediaListStatus
 }
 
 type StatusAutoUpdateMode byte
@@ -62,15 +67,19 @@ func ParseSorting(sort string) (Sorting, error) {
 }
 
 func LoadConfig() (c *Config) {
-	c = new(Config)
-	c.MaxVisibleEntries = 20
-	c.Websites = make(map[int]string)
-	c.Status = mal.All
-	c.ALStatus = anilist.Current
-	c.StatusAutoUpdateMode = Off
-	c.Sorting = ByLastUpdated
-	c.TorrentClientPath = "qbittorrent"
-	c.TorrentClientArgs = ""
+	c = &Config{
+		Websites:             make(map[int]string),
+
+		MaxVisibleEntries:    20,
+		StatusAutoUpdateMode: Off,
+		Sorting:              ByLastUpdated,
+
+		TorrentClientPath:    "qbittorrent",
+
+		Status:               mal.All,
+
+		ALStatus:             anilist.Current,
+	}
 
 	f, err := os.Open(MalConfigFile)
 	defer f.Close()
