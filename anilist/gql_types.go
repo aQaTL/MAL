@@ -47,6 +47,7 @@ type Media struct {
 	StartDate         FuzzyDate      `json:"startDate"`
 	EndDate           FuzzyDate      `json:"endDate"`
 	Season            string         `json:"season"`
+	Episodes          int            `json:"episodes"`
 	Duration          int            `json:"duration"`
 	Source            string         `json:"source"`
 	UpdatedAt         int            `json:"updatedAt"`

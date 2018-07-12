@@ -28,6 +28,7 @@ query UserList ($userID: Int) {
 						...FuzzyDateFields
 					}
 					season
+					episodes
 					duration
 					source
 					updatedAt
