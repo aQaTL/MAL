@@ -3,11 +3,12 @@ package anilist
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/aqatl/mal/oauth2"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
-	"fmt"
-	"github.com/pkg/errors"
+	"strings"
 )
 
 //TODO Anilist support
@@ -35,31 +36,6 @@ type User struct {
 
 type UserStats struct {
 	WatchedTime int `json:"watchedTime"`
-}
-
-func QueryAuthenticatedUser(user *User, token oauth2.OAuthToken) error {
-	query := `
-query {
-	Viewer {
-		id
-		name
-		about
-		bannerImage
-		stats {
-			watchedTime
-		}
-		unreadNotificationCount
-		siteUrl
-		donatorTier
-		moderatorStatus
-		updatedAt
-	}
-}`
-	viewer := &struct {
-		*User `json:"Viewer"`
-	}{user}
-	_, err := graphQLRequestParsed(query, nil, token, viewer)
-	return err
 }
 
 type MediaListCollection struct {
@@ -122,6 +98,17 @@ type AiringSchedule struct {
 	Episode         int `json:"episode"`
 }
 
+type GqlError struct {
+	Message   string     `json:"message"`
+	Status    int        `json:"status"`
+	Locations []Location `json:"locations"`
+}
+
+type Location struct {
+	Line   int `json:"line"`
+	Column int `json:"column"`
+}
+
 var InvalidToken = errors.New("Invalid token")
 
 //TODO downloading only given list like watching/completed
@@ -132,19 +119,55 @@ func (al *AniList) QueryUserLists() error {
 	resp := struct {
 		MediaListCollection `json:"MediaListCollection"`
 	}{MediaListCollection{}}
-	if gqlErrs, err := graphQLRequestParsed(queryUserAnimeList, vars, al.Token, &resp); err != nil {
+	if err := gqlErrorsHandler(graphQLRequestParsed(queryUserAnimeList, vars, &al.Token, &resp)); err != nil {
 		return err
-	} else if len(gqlErrs) > 0 {
-		for _, gqlErr := range gqlErrs {
-			if gqlErr.Message == "Invalid token" {
-				return InvalidToken
-			}
-		}
-		printGqlErrs(gqlErrs)
-		return nil
 	}
 	al.Lists = resp.Lists
 
+	return nil
+}
+
+func QueryAuthenticatedUser(user *User, token *oauth2.OAuthToken) error {
+	query := `
+query {
+	Viewer {
+		id
+		name
+		about
+		bannerImage
+		stats {
+			watchedTime
+		}
+		unreadNotificationCount
+		siteUrl
+		donatorTier
+		moderatorStatus
+		updatedAt
+	}
+}`
+	viewer := &struct {
+		*User `json:"Viewer"`
+	}{user}
+	return gqlErrorsHandler(graphQLRequestParsed(query, nil, token, viewer))
+}
+
+func gqlErrorsHandler(gqlErrs []GqlError, err error) error {
+	if err != nil {
+		return err
+	}
+	for _, gqlErr := range gqlErrs {
+		if gqlErr.Message == "Invalid token" {
+			return InvalidToken
+		}
+	}
+	if len(gqlErrs) > 0 {
+		locations := strings.Builder{}
+		for _, loc := range gqlErrs[0].Locations {
+			locations.WriteString(fmt.Sprintf("Line %d column %d\n", loc.Line, loc.Column))
+		}
+		return fmt.Errorf("GraphQl Error (%d): %s\n%v",
+			gqlErrs[0].Status, gqlErrs[0].Message, locations)
+	}
 	return nil
 }
 
@@ -157,18 +180,7 @@ func printGqlErrs(gqlErrs []GqlError) {
 	}
 }
 
-type GqlError struct {
-	Message string `json:"message"`
-	Status int `json:"status"`
-	Locations []Location `json:"locations"`
-}
-
-type Location struct {
-	Line int `json:"line"`
-	Column int `json:"column"`
-}
-
-func graphQLRequestParsed(query string, vars map[string]interface{}, t oauth2.OAuthToken,
+func graphQLRequestParsed(query string, vars map[string]interface{}, t *oauth2.OAuthToken,
 	x interface{}) ([]GqlError, error) {
 	resp, err := graphQLRequest(query, vars, t)
 	defer resp.Body.Close()
@@ -192,7 +204,7 @@ func graphQLRequestParsed(query string, vars map[string]interface{}, t oauth2.OA
 	return nil, nil
 }
 
-func graphQLRequestString(query string, vars map[string]interface{}, t oauth2.OAuthToken) (
+func graphQLRequestString(query string, vars map[string]interface{}, t *oauth2.OAuthToken) (
 	string, error,
 ) {
 	resp, err := graphQLRequest(query, vars, t)
@@ -204,7 +216,7 @@ func graphQLRequestString(query string, vars map[string]interface{}, t oauth2.OA
 	return string(data), err
 }
 
-func graphQLRequest(query string, vars map[string]interface{}, t oauth2.OAuthToken) (
+func graphQLRequest(query string, vars map[string]interface{}, t *oauth2.OAuthToken) (
 	*http.Response, error,
 ) {
 	reqBody := bytes.Buffer{}

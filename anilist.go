@@ -14,7 +14,7 @@ func loadAniList() (*anilist.AniList, error) {
 		return nil, err
 	}
 
-	user, err := loadAniListUser(token)
+	user, err := loadAniListUser(&token)
 	if err != nil {
 		return nil, err
 	}
@@ -72,12 +72,18 @@ func requestAniListToken() (token oauth2.OAuthToken, err error) {
 	return
 }
 
-func loadAniListUser(token oauth2.OAuthToken) (*anilist.User, error) {
+func loadAniListUser(token *oauth2.OAuthToken) (*anilist.User, error) {
 	user := &anilist.User{}
 	if LoadJsonFile(AniListUserFile, &user) {
 		return user, nil
 	}
-	err := anilist.QueryAuthenticatedUser(user, token) //TODO return invalid token
+	err := anilist.QueryAuthenticatedUser(user, token)
+	if err == anilist.InvalidToken {
+		if *token, err = requestAniListToken(); err != nil {
+			return nil, err
+		}
+		err = anilist.QueryAuthenticatedUser(user, token)
+	}
 	if err == nil {
 		err = saveAniListUser(user)
 	}
