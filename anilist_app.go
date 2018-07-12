@@ -36,6 +36,13 @@ func AniListApp(app *cli.App) *cli.App {
 			UsageText: "mal fsel [search string (optional)]",
 			Action:    alFuzzySelectEntry,
 		},
+		cli.Command{
+			Name:     "nyaa",
+			Aliases:  []string{"n"},
+			Category: "Action",
+			Usage:    "Open interactive torrent search",
+			Action:   alNyaaCui,
+		},
 	}
 
 	app.Action = cli.ActionFunc(aniListDefaultAction)

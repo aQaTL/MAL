@@ -253,7 +253,7 @@ func MalApp(app *cli.App) *cli.App {
 			Aliases:  []string{"n"},
 			Category: "Action",
 			Usage:    "Open interactive torrent search",
-			Action:   openNyaaCui,
+			Action:   malNyaaCui,
 		},
 		cli.Command{
 			Name:      "nyaa-web",

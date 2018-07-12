@@ -11,7 +11,7 @@ import (
 	"os/exec"
 )
 
-func openNyaaCui(ctx *cli.Context) error {
+func malNyaaCui(ctx *cli.Context) error {
 	_, list, err := loadMAL(ctx)
 	if err != nil {
 		return err
@@ -22,17 +22,33 @@ func openNyaaCui(ctx *cli.Context) error {
 	if entry == nil {
 		return fmt.Errorf("no entry found")
 	}
+	return startNyaaCui(cfg, entry.Title)
+}
 
+func alNyaaCui(ctx *cli.Context) error {
+	al, err := loadAniList()
+	if err != nil {
+		return err
+	}
+	cfg := LoadConfig()
+
+	entry := al.GetMediaListById(cfg.ALSelectedID)
+	if entry == nil {
+		return fmt.Errorf("no entry found")
+	}
+	return startNyaaCui(cfg, entry.Title.Romaji)
+}
+
+func startNyaaCui(cfg *Config, searchTerm string) error {
 	gui, err := gocui.NewGui(gocui.Output256)
 	defer gui.Close()
 	if err != nil {
 		return fmt.Errorf("gocui error: %v", err)
 	}
-
 	nc := &nyaaCui{
 		Cfg: cfg,
 
-		SearchTerm: entry.Title,
+		SearchTerm: searchTerm,
 		Category:   nyaa_scraper.AnimeEnglishTranslated,
 		Filter:     nyaa_scraper.NoFilter,
 	}
@@ -52,7 +68,6 @@ func openNyaaCui(ctx *cli.Context) error {
 	if err = gui.MainLoop(); err != nil && err != gocui.ErrQuit {
 		return err
 	}
-
 	return nil
 }
 

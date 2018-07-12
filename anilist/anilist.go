@@ -18,7 +18,7 @@ const apiEndpoint = "https://graphql.anilist.co"
 type AniList struct {
 	Token oauth2.OAuthToken
 	User  User
-	Lists []MediaListGroup
+	MediaListCollection
 }
 
 var InvalidToken = errors.New("Invalid token")
@@ -132,4 +132,16 @@ func graphQLRequest(query string, vars map[string]interface{}, t *oauth2.OAuthTo
 	req.Header.Set("Authorization", "Bearer "+t.Token)
 
 	return http.DefaultClient.Do(req)
+}
+
+
+func (c *MediaListCollection) GetMediaListById(listId int) *MediaList {
+	for _, list := range c.Lists {
+		for _, entry := range list.Entries {
+			if entry.ListId == listId {
+				return &entry
+			}
+		}
+	}
+	return nil
 }
