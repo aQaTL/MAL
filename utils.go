@@ -33,6 +33,29 @@ func homeDir() string {
 	return usr.HomeDir
 }
 
+func chooseStrFromSlice(alts []string) string {
+	if length := len(alts); length == 1 {
+		return alts[0]
+	} else if length == 0 {
+		return ""
+	}
+
+	for i, synonym := range alts {
+		fmt.Printf("%2d. %s\n", i+1, synonym)
+	}
+
+	idx := 0
+	scan := func() {
+		fmt.Scan(&idx)
+	}
+	for scan(); idx <= 0 || idx > len(alts); {
+		fmt.Print("\rInvalid input. Try again: ")
+		scan()
+	}
+
+	return alts[idx-1]
+}
+
 func printEntryDetails(entry *mal.Anime) {
 	title := color.HiYellowString("%s", entry.Title)
 	episodes := color.HiRedString("%d/%d", entry.WatchedEpisodes,

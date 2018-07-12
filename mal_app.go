@@ -732,8 +732,10 @@ func nyaaWebsite(ctx *cli.Context) error {
 
 	var searchTerm string
 	if ctx.Bool("alt") {
-		searchTerm = chooseSynonym(entry)
-		if searchTerm == "" {
+		synonyms := formatSynonyms(entry.Synonyms, func(a ...interface{}) string {
+			return a[0].(string)
+		})
+		if searchTerm = chooseStrFromSlice(synonyms); searchTerm == "" {
 			return fmt.Errorf("no alternative titles")
 		}
 	} else {
@@ -752,34 +754,6 @@ func nyaaWebsite(ctx *cli.Context) error {
 	printEntryDetails(entry)
 
 	return nil
-}
-
-func chooseSynonym(entry *mal.Anime) string {
-	synonyms := formatSynonyms(entry.Synonyms, func(a ...interface{}) string {
-		return a[0].(string)
-	})
-
-	if length := len(synonyms); length == 1 {
-		return synonyms[0]
-	} else if length == 0 {
-		return ""
-	}
-
-	fmt.Printf("Select desired title\n\n")
-	for i, synonym := range synonyms {
-		fmt.Printf("%2d. %s\n", i+1, synonym)
-	}
-
-	idx := 0
-	scan := func() {
-		fmt.Scan(&idx)
-	}
-	for scan(); idx <= 0 || idx > len(synonyms); {
-		fmt.Print("\rInvalid input. Try again: ")
-		scan()
-	}
-
-	return synonyms[idx-1]
 }
 
 func printStats(ctx *cli.Context) error {

@@ -148,7 +148,19 @@ func alNyaaWebsite(ctx *cli.Context) error {
 
 	var searchTerm string
 	if ctx.Bool("alt") {
-		if searchTerm = alChooseAltSearchTerm(entry); searchTerm == "" {
+		alts := make([]string, 0, 3 + len(entry.Synonyms))
+		if t := entry.Title.English; t != "" {
+			alts = append(alts, t)
+		}
+		if t := entry.Title.Native; t != "" {
+			alts = append(alts, t)
+		}
+		if t := entry.Title.Romaji; t != "" {
+			alts = append(alts, t)
+		}
+		alts = append(alts, entry.Synonyms...)
+		fmt.Printf("Select desired title\n\n")
+		if searchTerm = chooseStrFromSlice(alts); searchTerm == "" {
 			return fmt.Errorf("no alternative titles")
 		}
 	} else {
@@ -165,40 +177,4 @@ func alNyaaWebsite(ctx *cli.Context) error {
 	fmt.Println("Searched for:")
 	fmt.Println(entry.Title.Romaji)
 	return nil
-}
-
-func alChooseAltSearchTerm(entry *anilist.MediaList) string {
-	alts := make([]string, 0, 3 + len(entry.Synonyms))
-	if t := entry.Title.English; t != "" {
-		alts = append(alts, t)
-	}
-	if t := entry.Title.Native; t != "" {
-		alts = append(alts, t)
-	}
-	if t := entry.Title.Romaji; t != "" {
-		alts = append(alts, t)
-	}
-	alts = append(alts, entry.Synonyms...)
-
-	if length := len(alts); length == 1 {
-		return alts[0]
-	} else if length == 0 {
-		return ""
-	}
-
-	fmt.Printf("Select desired title\n\n")
-	for i, synonym := range alts {
-		fmt.Printf("%2d. %s\n", i+1, synonym)
-	}
-
-	idx := 0
-	scan := func() {
-		fmt.Scan(&idx)
-	}
-	for scan(); idx <= 0 || idx > len(alts); {
-		fmt.Print("\rInvalid input. Try again: ")
-		scan()
-	}
-
-	return alts[idx-1]
 }
