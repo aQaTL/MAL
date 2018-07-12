@@ -195,9 +195,9 @@ func (nc *nyaaCui) Editor(gui *gocui.Gui) func(v *gocui.View, key gocui.Key, ch 
 			go func() {
 				resultPage, _ := nyaa_scraper.SearchSpecificPage(
 					nc.SearchTerm,
-					nyaa_scraper.AnimeEnglishTranslated,
-					nyaa_scraper.NoFilter,
-					nc.LoadedPages-1,
+					nc.Category,
+					nc.Filter,
+					nc.LoadedPages,
 				)
 				nc.Results = append(nc.Results, resultPage.Results...)
 				gui.Update(func(gui *gocui.Gui) error {
