@@ -65,13 +65,13 @@ func alFuzzySelectEntry(ctx *cli.Context) error {
 	cfg := LoadConfig()
 	list := alGetList(al, anilist.All)
 
-	displayData := make([]string, len(list.Entries))
-	for i := range list.Entries {
-		displayData[i] = list.Entries[i].Title.UserPreferred
+	displayData := make([]string, len(list))
+	for i := range list {
+		displayData[i] = list[i].Title.UserPreferred
 	}
 
-	searchData := make([]string, len(list.Entries))
-	for i, entry := range list.Entries {
+	searchData := make([]string, len(list))
+	for i, entry := range list {
 		searchData[i] = strings.ToLower(entry.Title.Romaji +
 			entry.Title.English +
 			entry.Title.Native +
@@ -91,7 +91,7 @@ func alFuzzySelectEntry(ctx *cli.Context) error {
 		if matchesLen := len(fsc.Matches); matchesLen == 0 {
 			return fmt.Errorf("no match found")
 		} else if matchesLen == 1 {
-			alSaveSelection(cfg, &list.Entries[fsc.Matches[0].Index])
+			alSaveSelection(cfg, &list[fsc.Matches[0].Index])
 			return nil
 		}
 	}
@@ -99,7 +99,7 @@ func alFuzzySelectEntry(ctx *cli.Context) error {
 	if err = startFuzzySelectCUI(fsc, initSearch); err != nil || fsc.MatchIdx == -1 {
 		return err
 	}
-	alSaveSelection(cfg, &list.Entries[fsc.MatchIdx])
+	alSaveSelection(cfg, &list[fsc.MatchIdx])
 
 	return nil
 }

@@ -113,8 +113,8 @@ func aniListDefaultAction(ctx *cli.Context) error {
 	cfg := LoadConfig()
 	list := alGetList(al, cfg.ALStatus)
 
-	sort.Slice(list.Entries, func(i, j int) bool {
-		return list.Entries[i].UpdatedAt > list.Entries[j].UpdatedAt
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].UpdatedAt > list[j].UpdatedAt
 	})
 
 	var visibleEntries int
@@ -122,8 +122,8 @@ func aniListDefaultAction(ctx *cli.Context) error {
 		//`Max` flag not specified, get value from config
 		visibleEntries = cfg.MaxVisibleEntries
 	}
-	if visibleEntries > len(list.Entries) || visibleEntries < 0 || ctx.Bool("all") {
-		visibleEntries = len(list.Entries)
+	if visibleEntries > len(list) || visibleEntries < 0 || ctx.Bool("all") {
+		visibleEntries = len(list)
 	}
 
 	fmt.Printf("No%64s%8s%6s\n", "Title", "Eps", "Score")
@@ -131,7 +131,7 @@ func aniListDefaultAction(ctx *cli.Context) error {
 	pattern := "%2d%64.64s%8s%6d\n"
 	var entry *anilist.MediaListEntry
 	for i := visibleEntries - 1; i >= 0; i-- {
-		entry = &list.Entries[i]
+		entry = &list[i]
 		if entry.ListId == cfg.ALSelectedID {
 			color.HiYellow(pattern, i+1, entry.Title.UserPreferred,
 				fmt.Sprintf("%d/%d", entry.Progress, entry.Episodes),
@@ -146,23 +146,21 @@ func aniListDefaultAction(ctx *cli.Context) error {
 	return nil
 }
 
-func alGetList(al *anilist.AniList, status anilist.MediaListStatus) anilist.MediaListGroup {
-	var list anilist.MediaListGroup
+func alGetList(al *AniList, status anilist.MediaListStatus) List {
 	if status == anilist.All {
-		for i := range al.Lists {
-			list.Entries = append(list.Entries, al.Lists[i].Entries...)
-		}
+		return al.List
 	} else {
-		for i := range al.Lists {
-			if al.Lists[i].Status == status {
-				return al.Lists[i]
+		list := make(List, 0)
+		for i := range al.List {
+			if al.List[i].Status == status {
+				list = append(list, al.List[i])
 			}
 		}
+		return list
 	}
-	return list
 }
 
-func loadAniListFull() (al *anilist.AniList, entry *anilist.MediaListEntry, cfg *Config, err error) {
+func loadAniListFull() (al *AniList, entry *anilist.MediaListEntry, cfg *Config, err error) {
 	al, err = loadAniList()
 	if err != nil {
 		return
@@ -211,7 +209,7 @@ func alSetEntryEpisodes(ctx *cli.Context) error {
 
 	alStatusAutoUpdate(cfg, entry)
 
-	if err = al.SaveMediaListEntry(entry); err != nil {
+	if err = anilist.SaveMediaListEntry(entry, al.Token); err != nil {
 		return err
 	}
 	if err = saveAniListAnimeLists(al); err != nil {
@@ -255,7 +253,7 @@ func alSetEntryStatus(ctx *cli.Context) error {
 
 	entry.Status = status
 
-	if err = al.SaveMediaListEntry(entry); err != nil {
+	if err = anilist.SaveMediaListEntry(entry, al.Token); err != nil {
 		return err
 	}
 	if err = saveAniListAnimeLists(al); err != nil {

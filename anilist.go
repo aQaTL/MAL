@@ -8,12 +8,38 @@ import (
 	"time"
 )
 
-func loadAniList() (*anilist.AniList, error) {
+type AniList struct {
+	Token oauth2.OAuthToken
+	User  anilist.User
+	List
+}
+
+type List []anilist.MediaListEntry
+
+func (l List) GetMediaListById(listId int) *anilist.MediaListEntry {
+	for i := 0; i < len(l); i++ {
+		if l[i].ListId == listId {
+			return &l[i]
+		}
+	}
+	return nil
+}
+
+func (l List) GetMediaListByMalId(malId int) *anilist.MediaListEntry {
+	for i := 0; i < len(l); i++ {
+		if l[i].IdMal == malId {
+			return &l[i]
+		}
+	}
+	return nil
+}
+
+func loadAniList() (*AniList, error) {
 	token, err := loadOAuthToken()
 	if err != nil {
 		return nil, err
 	}
-	al := &anilist.AniList{Token: token}
+	al := &AniList{Token: token}
 
 	if err := loadAniListUser(al); err != nil {
 		return nil, err
@@ -68,16 +94,16 @@ func requestAniListToken() (token oauth2.OAuthToken, err error) {
 	return
 }
 
-func loadAniListUser(al *anilist.AniList) error {
+func loadAniListUser(al *AniList) error {
 	if LoadJsonFile(AniListUserFile, &al.User) {
 		return nil
 	}
-	err := al.QueryAuthenticatedUser()
+	err := anilist.QueryAuthenticatedUser(&al.User, al.Token)
 	if err == anilist.InvalidToken {
 		if al.Token, err = requestAniListToken(); err != nil {
 			return err
 		}
-		err = al.QueryAuthenticatedUser()
+		err = anilist.QueryAuthenticatedUser(&al.User, al.Token)
 	}
 	if err == nil {
 		err = saveAniListUser(&al.User)
@@ -95,22 +121,28 @@ func saveAniListUser(user *anilist.User) error {
 	return err
 }
 
-func loadAniListAnimeLists(al *anilist.AniList) error {
+func loadAniListAnimeLists(al *AniList) error {
 	f, err := os.Open(AniListCacheFile)
 	defer f.Close()
 	if err == nil {
-		err = json.NewDecoder(f).Decode(&al.Lists)
+		err = json.NewDecoder(f).Decode(&al.List)
 		return err
 	}
 	if !os.IsNotExist(err) {
 		return err
 	}
-	err = al.QueryUserLists()
+	lists, err := anilist.QueryUserLists(al.User.Id, al.Token)
+	for i := range lists {
+		al.List = append(al.List, lists[i].Entries...)
+	}
 	if err == anilist.InvalidToken {
 		if al.Token, err = requestAniListToken(); err != nil {
 			return err
 		}
-		err = al.QueryUserLists()
+		lists, err = anilist.QueryUserLists(al.User.Id, al.Token)
+		for i := range lists {
+			al.List = append(al.List, lists[i].Entries...)
+		}
 	}
 	if err == nil {
 		err = saveAniListAnimeLists(al)
@@ -118,12 +150,12 @@ func loadAniListAnimeLists(al *anilist.AniList) error {
 	return err
 }
 
-func saveAniListAnimeLists(al *anilist.AniList) error {
+func saveAniListAnimeLists(al *AniList) error {
 	f, err := os.Create(AniListCacheFile)
 	defer f.Close()
 	if err != nil {
 		return err
 	}
-	err = json.NewEncoder(f).Encode(&al.Lists)
+	err = json.NewEncoder(f).Encode(&al.List)
 	return err
 }

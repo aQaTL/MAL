@@ -15,38 +15,30 @@ import (
 
 const apiEndpoint = "https://graphql.anilist.co"
 
-type AniList struct {
-	Token oauth2.OAuthToken
-	User  User
-	MediaListCollection
-}
-
 var InvalidToken = errors.New("Invalid token")
 
 //TODO downloading only given list like watching/completed
-func (al *AniList) QueryUserLists() error {
+func QueryUserLists(userId int, token oauth2.OAuthToken) ([]MediaListGroup, error) {
 	vars := make(map[string]interface{})
-	vars["userID"] = al.User.Id
+	vars["userID"] = userId
 
 	resp := struct {
 		MediaListCollection `json:"MediaListCollection"`
 	}{MediaListCollection{}}
-	if err := gqlErrorsHandler(graphQLRequestParsed(queryUserAnimeList, vars, &al.Token, &resp)); err != nil {
-		return err
+	if err := gqlErrorsHandler(graphQLRequestParsed(queryUserAnimeList, vars, token, &resp)); err != nil {
+		return nil, err
 	}
-	al.Lists = resp.Lists
-
-	return nil
+	return resp.Lists, nil
 }
 
-func (al *AniList) QueryAuthenticatedUser() error {
+func QueryAuthenticatedUser(user *User, token oauth2.OAuthToken) error {
 	viewer := &struct {
 		*User `json:"Viewer"`
-	}{&al.User}
-	return gqlErrorsHandler(graphQLRequestParsed(queryAuthenticatedUser, nil, &al.Token, viewer))
+	}{user}
+	return gqlErrorsHandler(graphQLRequestParsed(queryAuthenticatedUser, nil, token, viewer))
 }
 
-func (al *AniList) SaveMediaListEntry(entry *MediaListEntry) error {
+func SaveMediaListEntry(entry *MediaListEntry, token oauth2.OAuthToken) error {
 	vars := make(map[string]interface{})
 	vars["listId"] = entry.ListId
 	vars["mediaId"] = entry.Id
@@ -56,7 +48,7 @@ func (al *AniList) SaveMediaListEntry(entry *MediaListEntry) error {
 	entryData := &struct {
 		*MediaListEntry `json:"SaveMediaListEntry"`
 	}{entry}
-	return gqlErrorsHandler(graphQLRequestParsed(saveMediaListEntry, vars, &al.Token, entryData))
+	return gqlErrorsHandler(graphQLRequestParsed(saveMediaListEntry, vars, token, entryData))
 }
 
 func gqlErrorsHandler(gqlErrs []GqlError, err error) error {
@@ -88,7 +80,7 @@ func printGqlErrs(gqlErrs []GqlError) {
 	}
 }
 
-func graphQLRequestParsed(query string, vars map[string]interface{}, t *oauth2.OAuthToken,
+func graphQLRequestParsed(query string, vars map[string]interface{}, t oauth2.OAuthToken,
 	x interface{}) ([]GqlError, error) {
 	resp, err := graphQLRequest(query, vars, t)
 	defer resp.Body.Close()
@@ -112,7 +104,7 @@ func graphQLRequestParsed(query string, vars map[string]interface{}, t *oauth2.O
 	return nil, nil
 }
 
-func graphQLRequestString(query string, vars map[string]interface{}, t *oauth2.OAuthToken) (
+func graphQLRequestString(query string, vars map[string]interface{}, t oauth2.OAuthToken) (
 	string, error,
 ) {
 	resp, err := graphQLRequest(query, vars, t)
@@ -124,7 +116,7 @@ func graphQLRequestString(query string, vars map[string]interface{}, t *oauth2.O
 	return string(data), err
 }
 
-func graphQLRequest(query string, vars map[string]interface{}, t *oauth2.OAuthToken) (
+func graphQLRequest(query string, vars map[string]interface{}, t oauth2.OAuthToken) (
 	*http.Response, error,
 ) {
 	reqBody := bytes.Buffer{}
@@ -145,29 +137,6 @@ func graphQLRequest(query string, vars map[string]interface{}, t *oauth2.OAuthTo
 	req.Header.Set("Authorization", "Bearer "+t.Token)
 
 	return http.DefaultClient.Do(req)
-}
-
-
-func (c *MediaListCollection) GetMediaListById(listId int) *MediaListEntry {
-	for i := 0; i < len(c.Lists); i++ {
-		for j := 0; j < len(c.Lists[i].Entries); j++ {
-			if c.Lists[i].Entries[j].ListId == listId {
-				return &c.Lists[i].Entries[j]
-			}
-		}
-	}
-	return nil
-}
-
-func (c *MediaListCollection) GetMediaListByMalId(malId int) *MediaListEntry {
-	for i := 0; i < len(c.Lists); i++ {
-		for j := 0; j < len(c.Lists[i].Entries); j++ {
-			if c.Lists[i].Entries[j].IdMal == malId {
-				return &c.Lists[i].Entries[j]
-			}
-		}
-	}
-	return nil
 }
 
 func ParseStatus(status string) MediaListStatus {
