@@ -48,6 +48,13 @@ func AniListApp(app *cli.App) *cli.App {
 			Action:    alSetEntryStatus,
 		},
 		cli.Command{
+			Name:      "score",
+			Category:  "Update",
+			Usage:     "Set your rating for selected entry",
+			UsageText: "mal score <0-10>",
+			Action:    alSetEntryScore,
+		},
+		cli.Command{
 			Name:      "fuzzy-select",
 			Aliases:   []string{"fsel"},
 			Category:  "Config",
@@ -252,6 +259,31 @@ func alSetEntryStatus(ctx *cli.Context) error {
 	}
 
 	entry.Status = status
+
+	if err = anilist.SaveMediaListEntry(entry, al.Token); err != nil {
+		return err
+	}
+	if err = saveAniListAnimeLists(al); err != nil {
+		return err
+	}
+
+	fmt.Println("Updated successfully")
+	alPrintEntryDetails(entry)
+	return nil
+}
+
+func alSetEntryScore(ctx *cli.Context) error {
+	al, entry, _, err := loadAniListFull()
+	if err != nil {
+		return err
+	}
+
+	score, err := strconv.Atoi(ctx.Args().First())
+	if err != nil || score < 0 || score > 10 {
+		return fmt.Errorf("invalid score; valid range: <0;10>")
+	}
+
+	entry.Score = score
 
 	if err = anilist.SaveMediaListEntry(entry, al.Token); err != nil {
 		return err
