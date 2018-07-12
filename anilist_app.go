@@ -57,9 +57,15 @@ func aniListDefaultAction(ctx *cli.Context) error {
 	cfg := LoadConfig()
 
 	var list anilist.MediaListGroup
-	for i := range al.Lists {
-		if al.Lists[i].Status == cfg.ALStatus {
-			list = al.Lists[i]
+	if cfg.ALStatus == anilist.All {
+		for i := range al.Lists {
+			list.Entries = append(list.Entries, al.Lists[i].Entries...)
+		}
+	} else {
+		for i := range al.Lists {
+			if al.Lists[i].Status == cfg.ALStatus {
+				list = al.Lists[i]
+			}
 		}
 	}
 
