@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/urfave/cli"
-	"github.com/aqatl/mal/anilist"
 	"fmt"
+	"github.com/aqatl/mal/anilist"
 	"github.com/fatih/color"
-	"sort"
-	"net/url"
 	"github.com/skratchdot/open-golang/open"
+	"github.com/urfave/cli"
+	"net/url"
+	"sort"
 	"strconv"
 )
 
@@ -39,6 +39,13 @@ func AniListApp(app *cli.App) *cli.App {
 				"If n not specified, the number will be increased by one",
 			UsageText: "mal eps <n>",
 			Action:    alSetEntryEpisodes,
+		},
+		cli.Command{
+			Name:      "status",
+			Category:  "Update",
+			Usage:     "Set your status for selected entry",
+			UsageText: "mal status [watching|planning|completed|dropped|paused|repeating]",
+			Action:    alSetEntryStatus,
 		},
 		cli.Command{
 			Name:      "fuzzy-select",
@@ -155,6 +162,22 @@ func alGetList(al *anilist.AniList, status anilist.MediaListStatus) anilist.Medi
 	return list
 }
 
+func loadAniListFull() (al *anilist.AniList, entry *anilist.MediaListEntry, cfg *Config, err error) {
+	al, err = loadAniList()
+	if err != nil {
+		return
+	}
+	cfg = LoadConfig()
+	if cfg.ALSelectedID == 0 {
+		fmt.Println("No entry selected")
+	}
+	entry = al.GetMediaListById(cfg.ALSelectedID)
+	if entry == nil {
+		err = fmt.Errorf("no entry found")
+	}
+	return
+}
+
 func switchToMal(ctx *cli.Context) error {
 	appCfg := AppConfig{}
 	LoadJsonFile(AppConfigFile, &appCfg)
@@ -167,20 +190,10 @@ func switchToMal(ctx *cli.Context) error {
 }
 
 func alSetEntryEpisodes(ctx *cli.Context) error {
-	al, err := loadAniList()
+	al, entry, cfg, err := loadAniListFull()
 	if err != nil {
 		return err
 	}
-	cfg := LoadConfig()
-	if cfg.ALSelectedID == 0 {
-		fmt.Println("No entry selected")
-	}
-
-	entry := al.GetMediaListById(cfg.ALSelectedID)
-	if entry == nil {
-		return fmt.Errorf("no entry found")
-	}
-
 	epsBefore := entry.Progress
 
 	if arg := ctx.Args().First(); arg != "" {
@@ -207,7 +220,6 @@ func alSetEntryEpisodes(ctx *cli.Context) error {
 
 	fmt.Println("Updated successfully")
 	alPrintEntryDetailsAfterUpdatedEpisodes(entry, epsBefore)
-
 	return nil
 }
 
@@ -229,6 +241,31 @@ func alStatusAutoUpdate(cfg *Config, entry *anilist.MediaListEntry) {
 	}
 }
 
+func alSetEntryStatus(ctx *cli.Context) error {
+	al, entry, _, err := loadAniListFull()
+	if err != nil {
+		return err
+	}
+
+	status := anilist.ParseStatus(ctx.Args().First())
+	if status == anilist.All {
+		return fmt.Errorf("invalid status; possible values: " +
+			"watching|planning|completed|dropped|paused|repeating")
+	}
+
+	entry.Status = status
+
+	if err = al.SaveMediaListEntry(entry); err != nil {
+		return err
+	}
+	if err = saveAniListAnimeLists(al); err != nil {
+		return err
+	}
+
+	fmt.Println("Updated successfully")
+	alPrintEntryDetails(entry)
+	return nil
+}
 
 func alNyaaWebsite(ctx *cli.Context) error {
 	al, err := loadAniList()
@@ -244,7 +281,7 @@ func alNyaaWebsite(ctx *cli.Context) error {
 
 	var searchTerm string
 	if ctx.Bool("alt") {
-		alts := make([]string, 0, 3 + len(entry.Synonyms))
+		alts := make([]string, 0, 3+len(entry.Synonyms))
 		if t := entry.Title.English; t != "" {
 			alts = append(alts, t)
 		}

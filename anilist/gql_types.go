@@ -106,5 +106,11 @@ const (
 )
 
 func (status MediaListStatus) String() string {
-	return string(status[0]) + strings.ToLower(string(status[1:]))
+	if status == All {
+		return ""
+	} else if status == Current {
+		return "Watching"
+	} else {
+		return string(status[0]) + strings.ToLower(string(status[1:]))
+	}
 }

@@ -50,7 +50,7 @@ func (al *AniList) SaveMediaListEntry(entry *MediaListEntry) error {
 	vars := make(map[string]interface{})
 	vars["listId"] = entry.ListId
 	vars["mediaId"] = entry.Id
-	vars["status"] = entry.Status
+	vars["status"] = string(entry.Status)
 	vars["progress"] = entry.Progress
 	vars["score"] = entry.Score
 	entryData := &struct {
@@ -168,4 +168,23 @@ func (c *MediaListCollection) GetMediaListByMalId(malId int) *MediaListEntry {
 		}
 	}
 	return nil
+}
+
+func ParseStatus(status string) MediaListStatus {
+	switch strings.ToLower(status) {
+	case "watching", "current":
+		return Current
+	case "planning", "plantowatch":
+		return Planning
+	case "completed":
+		return Completed
+	case "dropped":
+		return Dropped
+	case "paused", "onhold":
+		return Paused
+	case "repeating":
+		return Repeating
+	default:
+		return All
+	}
 }
