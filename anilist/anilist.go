@@ -40,27 +40,10 @@ func (al *AniList) QueryUserLists() error {
 }
 
 func QueryAuthenticatedUser(user *User, token *oauth2.OAuthToken) error {
-	query := `
-query {
-	Viewer {
-		id
-		name
-		about
-		bannerImage
-		stats {
-			watchedTime
-		}
-		unreadNotificationCount
-		siteUrl
-		donatorTier
-		moderatorStatus
-		updatedAt
-	}
-}`
 	viewer := &struct {
 		*User `json:"Viewer"`
 	}{user}
-	return gqlErrorsHandler(graphQLRequestParsed(query, nil, token, viewer))
+	return gqlErrorsHandler(graphQLRequestParsed(queryAuthenticatedUser, nil, token, viewer))
 }
 
 func gqlErrorsHandler(gqlErrs []GqlError, err error) error {

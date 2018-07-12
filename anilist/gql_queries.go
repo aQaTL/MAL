@@ -54,3 +54,22 @@ fragment FuzzyDateFields on FuzzyDate {
 	day
 }
 `
+
+var queryAuthenticatedUser = `
+query {
+	Viewer {
+		id
+		name
+		about
+		bannerImage
+		stats {
+			watchedTime
+		}
+		unreadNotificationCount
+		siteUrl
+		donatorTier
+		moderatorStatus
+		updatedAt
+	}
+}
+`
