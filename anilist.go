@@ -13,16 +13,12 @@ func loadAniList() (*anilist.AniList, error) {
 	if err != nil {
 		return nil, err
 	}
+	al := &anilist.AniList{Token: token}
 
-	user, err := loadAniListUser(&token)
-	if err != nil {
+	if err := loadAniListUser(al); err != nil {
 		return nil, err
 	}
-
-	al := &anilist.AniList{Token: token, User: *user}
-
-	err = loadAniListAnimeLists(al)
-	if err != nil {
+	if err = loadAniListAnimeLists(al); err != nil {
 		return nil, err
 	}
 
@@ -72,22 +68,21 @@ func requestAniListToken() (token oauth2.OAuthToken, err error) {
 	return
 }
 
-func loadAniListUser(token *oauth2.OAuthToken) (*anilist.User, error) {
-	user := &anilist.User{}
-	if LoadJsonFile(AniListUserFile, &user) {
-		return user, nil
+func loadAniListUser(al *anilist.AniList) error {
+	if LoadJsonFile(AniListUserFile, &al.User) {
+		return nil
 	}
-	err := anilist.QueryAuthenticatedUser(user, token)
+	err := al.QueryAuthenticatedUser()
 	if err == anilist.InvalidToken {
-		if *token, err = requestAniListToken(); err != nil {
-			return nil, err
+		if al.Token, err = requestAniListToken(); err != nil {
+			return err
 		}
-		err = anilist.QueryAuthenticatedUser(user, token)
+		err = al.QueryAuthenticatedUser()
 	}
 	if err == nil {
-		err = saveAniListUser(user)
+		err = saveAniListUser(&al.User)
 	}
-	return user, err
+	return err
 }
 
 func saveAniListUser(user *anilist.User) error {
@@ -96,7 +91,7 @@ func saveAniListUser(user *anilist.User) error {
 	if err != nil {
 		return err
 	}
-	err = json.NewEncoder(f).Encode(&user)
+	err = json.NewEncoder(f).Encode(user)
 	return err
 }
 

@@ -39,11 +39,11 @@ func (al *AniList) QueryUserLists() error {
 	return nil
 }
 
-func QueryAuthenticatedUser(user *User, token *oauth2.OAuthToken) error {
+func (al *AniList) QueryAuthenticatedUser() error {
 	viewer := &struct {
 		*User `json:"Viewer"`
-	}{user}
-	return gqlErrorsHandler(graphQLRequestParsed(queryAuthenticatedUser, nil, token, viewer))
+	}{&al.User}
+	return gqlErrorsHandler(graphQLRequestParsed(queryAuthenticatedUser, nil, &al.Token, viewer))
 }
 
 func gqlErrorsHandler(gqlErrs []GqlError, err error) error {
