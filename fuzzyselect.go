@@ -144,8 +144,7 @@ func alSaveSelection(cfg *Config, entry *anilist.MediaList) {
 	cfg.Save()
 
 	fmt.Println("Selected entry:")
-	//TODO printEntryDetails for AniList
-	fmt.Println(entry.Title.UserPreferred)
+	alPrintEntryDetails(entry)
 }
 
 const (

@@ -59,6 +59,28 @@ func AniListApp(app *cli.App) *cli.App {
 				},
 			},
 		},
+		cli.Command{
+			Name:      "web",
+			Aliases:   []string{"website", "open", "url"},
+			Category:  "Action",
+			Usage:     "Open url associated with selected entry or change url if provided",
+			UsageText: "mal web <url>",
+			Action:    alOpenWebsite,
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "clear",
+					Usage: "Clear url for current entry",
+				},
+			},
+			Subcommands: []cli.Command{
+				cli.Command{
+					Name:      "get-all",
+					Usage:     "Print all set urls",
+					UsageText: "mal web get-all",
+					Action:    alPrintWebsites,
+				},
+			},
+		},
 	}
 
 	app.Action = cli.ActionFunc(aniListDefaultAction)
@@ -175,6 +197,78 @@ func alNyaaWebsite(ctx *cli.Context) error {
 	}
 
 	fmt.Println("Searched for:")
-	fmt.Println(entry.Title.Romaji)
+	alPrintEntryDetails(entry)
+	return nil
+}
+
+func alOpenWebsite(ctx *cli.Context) error {
+	al, err := loadAniList()
+	if err != nil {
+		return nil
+	}
+
+	cfg := LoadConfig()
+
+	entry := al.GetMediaListByMalId(cfg.SelectedID)
+	if entry == nil {
+		return fmt.Errorf("no entry selected")
+	}
+
+	if newUrl := ctx.Args().First(); newUrl != "" {
+		cfg.Websites[cfg.SelectedID] = newUrl
+		cfg.Save()
+
+		fmt.Print("Entry: ")
+		color.HiYellow("%v", entry.Title)
+		fmt.Print("URL: ")
+		color.HiRed("%v", cfg.Websites[cfg.SelectedID])
+
+		return nil
+	}
+
+	if ctx.Bool("clear") {
+		delete(cfg.Websites, cfg.SelectedID)
+		cfg.Save()
+
+		fmt.Println("Entry cleared")
+		return nil
+	}
+
+	if entryUrl, ok := cfg.Websites[cfg.SelectedID]; ok {
+		if path := cfg.BrowserPath; path == "" {
+			open.Start(entryUrl)
+		} else {
+			open.StartWith(entryUrl, path)
+		}
+
+		fmt.Println("Opened website for:")
+		alPrintEntryDetails(entry)
+		fmt.Fprintf(color.Output, "URL: %v\n", color.CyanString("%v", entryUrl))
+	} else {
+		fmt.Println("Nothing to open")
+	}
+
+	return nil
+}
+
+func alPrintWebsites(ctx *cli.Context) error {
+	al, err := loadAniList()
+	if err != nil {
+		return err
+	}
+
+	cfg := LoadConfig()
+
+	for k, v := range cfg.Websites {
+		entryUrl := fmt.Sprintf("\033[3%d;%dm%s\033[0m ", 3, 1, v)
+
+		var title string
+		if entry := al.GetMediaListByMalId(k); entry != nil {
+			title = entry.Title.UserPreferred
+		}
+
+		fmt.Fprintf(color.Output, "%6d (%s): %s\n", k, title, entryUrl)
+	}
+
 	return nil
 }

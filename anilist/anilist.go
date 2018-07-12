@@ -145,3 +145,14 @@ func (c *MediaListCollection) GetMediaListById(listId int) *MediaList {
 	}
 	return nil
 }
+
+func (c *MediaListCollection) GetMediaListByMalId(malId int) *MediaList {
+	for _, list := range c.Lists {
+		for _, entry := range list.Entries {
+			if entry.IdMal == malId {
+				return &entry
+			}
+		}
+	}
+	return nil
+}

@@ -10,6 +10,7 @@ import (
 	"time"
 	"os"
 	"encoding/json"
+	"github.com/aqatl/mal/anilist"
 )
 
 func basicAuth(username, password string) string {
@@ -99,6 +100,29 @@ func printEntryDetailsAfterUpdatedEpisodes(entry *mal.Anime, epsBefore int) {
 		episodesAfter,
 		score,
 		status,
+	)
+}
+
+func alPrintEntryDetails(entry *anilist.MediaList) {
+	title := color.HiYellowString("%s", entry.Title.UserPreferred)
+	episodes := color.HiRedString("%d/%d", entry.Progress,
+		entry.Episodes)
+	score := color.HiRedString("%d", entry.Score)
+	status := color.HiRedString("%v", entry.Status)
+	lastUpdated := color.HiRedString("%v", time.Unix(int64(entry.UpdatedAt), 0))
+
+	fmt.Fprintf(
+		color.Output,
+		"Title: %s\n"+
+			"Episodes: %s\n"+
+			"Score: %s\n"+
+			"Status: %v\n"+
+			"Last updated: %v\n",
+		title,
+		episodes,
+		score,
+		status,
+		lastUpdated,
 	)
 }
 

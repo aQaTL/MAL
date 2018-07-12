@@ -1,5 +1,7 @@
 package anilist
 
+import "strings"
+
 type User struct {
 	Id                      int       `json:"id"`
 	Name                    string    `json:"name"`
@@ -31,7 +33,7 @@ type MediaListGroup struct {
 
 type MediaList struct {
 	ListId    int    `json:"id"`
-	Status    string `json:"status"`
+	Status    MediaListStatus `json:"status"`
 	Score     int    `json:"score"`
 	Progress  int    `json:"progress"`
 	UpdatedAt int    `json:"updatedAt"`
@@ -102,3 +104,7 @@ const (
 	Paused    MediaListStatus = "PAUSED"
 	Repeating MediaListStatus = "REPEATING"
 )
+
+func (status MediaListStatus) String() string {
+	return string(status[0]) + strings.ToLower(string(status[1:]))
+}
