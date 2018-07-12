@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	"sort"
+	"net/url"
+	"github.com/skratchdot/open-golang/open"
 )
 
 func AniListApp(app *cli.App) *cli.App {
@@ -42,6 +44,20 @@ func AniListApp(app *cli.App) *cli.App {
 			Category: "Action",
 			Usage:    "Open interactive torrent search",
 			Action:   alNyaaCui,
+		},
+		cli.Command{
+			Name:      "nyaa-web",
+			Aliases:   []string{"nw"},
+			Category:  "Action",
+			Usage:     "Open torrent search in browser",
+			UsageText: "mal nyaa-web",
+			Action:    alNyaaWebsite,
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "alt",
+					Usage: "choose an alternative title",
+				},
+			},
 		},
 	}
 
@@ -116,4 +132,73 @@ func switchToMal(ctx *cli.Context) error {
 	}
 	fmt.Println("App mode switched to MyAnimeList")
 	return nil
+}
+
+func alNyaaWebsite(ctx *cli.Context) error {
+	al, err := loadAniList()
+	if err != nil {
+		return err
+	}
+	cfg := LoadConfig()
+
+	entry := al.GetMediaListById(cfg.ALSelectedID)
+	if entry == nil {
+		return fmt.Errorf("no entry selected")
+	}
+
+	var searchTerm string
+	if ctx.Bool("alt") {
+		if searchTerm = alChooseAltSearchTerm(entry); searchTerm == "" {
+			return fmt.Errorf("no alternative titles")
+		}
+	} else {
+		searchTerm = entry.Title.Romaji
+	}
+
+	address := "https://nyaa.si/?f=0&c=1_2&q=" + url.QueryEscape(searchTerm)
+	if path := cfg.BrowserPath; path == "" {
+		open.Start(address)
+	} else {
+		open.StartWith(address, path)
+	}
+
+	fmt.Println("Searched for:")
+	fmt.Println(entry.Title.Romaji)
+	return nil
+}
+
+func alChooseAltSearchTerm(entry *anilist.MediaList) string {
+	alts := make([]string, 0, 3 + len(entry.Synonyms))
+	if t := entry.Title.English; t != "" {
+		alts = append(alts, t)
+	}
+	if t := entry.Title.Native; t != "" {
+		alts = append(alts, t)
+	}
+	if t := entry.Title.Romaji; t != "" {
+		alts = append(alts, t)
+	}
+	alts = append(alts, entry.Synonyms...)
+
+	if length := len(alts); length == 1 {
+		return alts[0]
+	} else if length == 0 {
+		return ""
+	}
+
+	fmt.Printf("Select desired title\n\n")
+	for i, synonym := range alts {
+		fmt.Printf("%2d. %s\n", i+1, synonym)
+	}
+
+	idx := 0
+	scan := func() {
+		fmt.Scan(&idx)
+	}
+	for scan(); idx <= 0 || idx > len(alts); {
+		fmt.Print("\rInvalid input. Try again: ")
+		scan()
+	}
+
+	return alts[idx-1]
 }
