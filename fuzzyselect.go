@@ -136,10 +136,10 @@ func saveSelection(cfg *Config, entry *mal.Anime) {
 	cfg.Save()
 
 	fmt.Println("Selected entry:")
-	printEntryDetails(entry)
+	malPrintEntryDetails(entry)
 }
 
-func alSaveSelection(cfg *Config, entry *anilist.MediaList) {
+func alSaveSelection(cfg *Config, entry *anilist.MediaListEntry) {
 	cfg.ALSelectedID = entry.ListId
 	cfg.Save()
 

@@ -2,15 +2,15 @@ package main
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"github.com/aqatl/mal/anilist"
 	"github.com/aqatl/mal/mal"
 	"github.com/fatih/color"
 	"log"
+	"os"
 	"os/user"
 	"time"
-	"os"
-	"encoding/json"
-	"github.com/aqatl/mal/anilist"
 )
 
 func basicAuth(username, password string) string {
@@ -57,13 +57,12 @@ func chooseStrFromSlice(alts []string) string {
 	return alts[idx-1]
 }
 
-func printEntryDetails(entry *mal.Anime) {
-	title := color.HiYellowString("%s", entry.Title)
-	episodes := color.HiRedString("%d/%d", entry.WatchedEpisodes,
-		entry.Episodes)
-	score := color.HiRedString("%d", entry.MyScore)
-	status := color.HiRedString("%v", entry.MyStatus)
-	lastUpdated := color.HiRedString("%v", time.Unix(entry.LastUpdated, 0))
+func printEntryDetails(title, status string, watchedEps, eps, score int, lastUpdated time.Time) {
+	titleStr := color.HiYellowString("%s", title)
+	episodesStr := color.HiRedString("%d/%d", watchedEps, eps)
+	scoreStr := color.HiRedString("%d", score)
+	statusStr := color.HiRedString("%s", status)
+	lastUpdatedStr := color.HiRedString("%v", lastUpdated)
 
 	fmt.Fprintf(
 		color.Output,
@@ -72,58 +71,77 @@ func printEntryDetails(entry *mal.Anime) {
 			"Score: %s\n"+
 			"Status: %v\n"+
 			"Last updated: %v\n",
-		title,
-		episodes,
-		score,
-		status,
-		lastUpdated,
+		titleStr,
+		episodesStr,
+		scoreStr,
+		statusStr,
+		lastUpdatedStr,
 	)
 }
 
-func printEntryDetailsAfterUpdatedEpisodes(entry *mal.Anime, epsBefore int) {
-	title := color.HiYellowString("%s", entry.Title)
-	episodesBefore := color.HiRedString("%d/%d", epsBefore,
-		entry.Episodes)
-	episodesAfter := color.HiRedString("%d/%d", entry.WatchedEpisodes,
-		entry.Episodes)
-	score := color.HiRedString("%d", entry.MyScore)
-	status := color.HiRedString("%v", entry.MyStatus)
+func printEntryDetailsAfterUpdatedEpisodes(title, status string, epsBefore, epsNow, eps, score int, lastUpdated time.Time) {
+	titleStr := color.HiYellowString("%s", title)
+	episodesBeforeStr := color.HiRedString("%d/%d", epsBefore, eps)
+	episodesAfterStr := color.HiRedString("%d/%d", epsNow, eps)
+	scoreStr := color.HiRedString("%d", score)
+	statusStr := color.HiRedString("%s", status)
+	lastUpdatedStr := color.HiRedString("%v", lastUpdated)
 
 	fmt.Fprintf(
 		color.Output,
 		"Title: %s\n"+
 			"Episodes: %s -> %s\n"+
 			"Score: %s\n"+
-			"Status: %v\n",
-		title,
-		episodesBefore,
-		episodesAfter,
-		score,
-		status,
+			"Status: %v\n"+
+			"Last updated: %v\n",
+		titleStr,
+		episodesBeforeStr,
+		episodesAfterStr,
+		scoreStr,
+		statusStr,
+		lastUpdatedStr,
 	)
 }
 
-func alPrintEntryDetails(entry *anilist.MediaList) {
-	title := color.HiYellowString("%s", entry.Title.UserPreferred)
-	episodes := color.HiRedString("%d/%d", entry.Progress,
-		entry.Episodes)
-	score := color.HiRedString("%d", entry.Score)
-	status := color.HiRedString("%v", entry.Status)
-	lastUpdated := color.HiRedString("%v", time.Unix(int64(entry.UpdatedAt), 0))
+func malPrintEntryDetails(entry *mal.Anime) {
+	printEntryDetails(
+		entry.Title,
+		entry.MyStatus.String(),
+		entry.WatchedEpisodes,
+		entry.Episodes,
+		int(entry.MyScore),
+		time.Unix(entry.LastUpdated, 0))
+}
 
-	fmt.Fprintf(
-		color.Output,
-		"Title: %s\n"+
-			"Episodes: %s\n"+
-			"Score: %s\n"+
-			"Status: %v\n"+
-			"Last updated: %v\n",
-		title,
-		episodes,
-		score,
-		status,
-		lastUpdated,
-	)
+func malPrintEntryDetailsAfterUpdatedEpisodes(entry *mal.Anime, epsBefore int) {
+	printEntryDetailsAfterUpdatedEpisodes(
+		entry.Title,
+		entry.MyStatus.String(),
+		epsBefore,
+		entry.WatchedEpisodes,
+		entry.Episodes,
+		int(entry.MyScore),
+		time.Unix(entry.LastUpdated, 0))
+}
+
+func alPrintEntryDetails(entry *anilist.MediaListEntry) {
+	printEntryDetails(entry.Title.UserPreferred,
+		entry.Status.String(),
+		entry.Progress,
+		entry.Episodes,
+		entry.Score,
+		time.Unix(int64(entry.UpdatedAt), 0))
+}
+
+func alPrintEntryDetailsAfterUpdatedEpisodes(entry *anilist.MediaListEntry, epsBefore int) {
+	printEntryDetailsAfterUpdatedEpisodes(
+		entry.Title.UserPreferred,
+		entry.Status.String(),
+		epsBefore,
+		entry.Progress,
+		entry.Episodes,
+		entry.Score,
+		time.Unix(int64(entry.UpdatedAt), 0))
 }
 
 //Returns true if file was loaded correctly

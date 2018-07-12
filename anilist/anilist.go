@@ -46,6 +46,19 @@ func (al *AniList) QueryAuthenticatedUser() error {
 	return gqlErrorsHandler(graphQLRequestParsed(queryAuthenticatedUser, nil, &al.Token, viewer))
 }
 
+func (al *AniList) SaveMediaListEntry(entry *MediaListEntry) error {
+	vars := make(map[string]interface{})
+	vars["listId"] = entry.ListId
+	vars["mediaId"] = entry.Id
+	vars["status"] = entry.Status
+	vars["progress"] = entry.Progress
+	vars["score"] = entry.Score
+	entryData := &struct {
+		*MediaListEntry `json:"SaveMediaListEntry"`
+	}{entry}
+	return gqlErrorsHandler(graphQLRequestParsed(saveMediaListEntry, vars, &al.Token, entryData))
+}
+
 func gqlErrorsHandler(gqlErrs []GqlError, err error) error {
 	if err != nil {
 		return err
@@ -135,22 +148,22 @@ func graphQLRequest(query string, vars map[string]interface{}, t *oauth2.OAuthTo
 }
 
 
-func (c *MediaListCollection) GetMediaListById(listId int) *MediaList {
-	for _, list := range c.Lists {
-		for _, entry := range list.Entries {
-			if entry.ListId == listId {
-				return &entry
+func (c *MediaListCollection) GetMediaListById(listId int) *MediaListEntry {
+	for i := 0; i < len(c.Lists); i++ {
+		for j := 0; j < len(c.Lists[i].Entries); j++ {
+			if c.Lists[i].Entries[j].ListId == listId {
+				return &c.Lists[i].Entries[j]
 			}
 		}
 	}
 	return nil
 }
 
-func (c *MediaListCollection) GetMediaListByMalId(malId int) *MediaList {
-	for _, list := range c.Lists {
-		for _, entry := range list.Entries {
-			if entry.IdMal == malId {
-				return &entry
+func (c *MediaListCollection) GetMediaListByMalId(malId int) *MediaListEntry {
+	for i := 0; i < len(c.Lists); i++ {
+		for j := 0; j < len(c.Lists[i].Entries); j++ {
+			if c.Lists[i].Entries[j].IdMal == malId {
+				return &c.Lists[i].Entries[j]
 			}
 		}
 	}

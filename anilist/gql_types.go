@@ -24,21 +24,21 @@ type MediaListCollection struct {
 }
 
 type MediaListGroup struct {
-	Entries              []MediaList     `json:"entries"`
-	Name                 string          `json:"name"`
-	IsCustomList         bool            `json:"isCustomList"`
-	IsSplitCompletedList bool            `json:"isSplitCompletedList"`
-	Status               MediaListStatus `json:"status"`
+	Entries              []MediaListEntry `json:"entries"`
+	Name                 string           `json:"name"`
+	IsCustomList         bool             `json:"isCustomList"`
+	IsSplitCompletedList bool             `json:"isSplitCompletedList"`
+	Status               MediaListStatus  `json:"status"`
 }
 
-type MediaList struct {
-	ListId    int    `json:"id"`
+type MediaListEntry struct {
+	ListId    int             `json:"id"`
 	Status    MediaListStatus `json:"status"`
-	Score     int    `json:"score"`
-	Progress  int    `json:"progress"`
-	UpdatedAt int    `json:"updatedAt"`
+	Score     int             `json:"score"`
+	Progress  int             `json:"progress"`
+	UpdatedAt int             `json:"updatedAt"`
 
-	Media     `json:"media"`
+	Media `json:"media"`
 }
 
 type Media struct {

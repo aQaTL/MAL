@@ -431,7 +431,7 @@ func setEntryEpisodes(ctx *cli.Context) error {
 	}
 
 	fmt.Println("Updated successfully")
-	printEntryDetailsAfterUpdatedEpisodes(selectedEntry, epsBefore)
+	malPrintEntryDetailsAfterUpdatedEpisodes(selectedEntry, epsBefore)
 
 	cacheList(list)
 
@@ -466,7 +466,7 @@ func setEntryScore(ctx *cli.Context) error {
 	}
 
 	fmt.Println("Updated successfully")
-	printEntryDetails(selectedEntry)
+	malPrintEntryDetails(selectedEntry)
 
 	cacheList(list)
 
@@ -498,7 +498,7 @@ func setEntryStatus(ctx *cli.Context) error {
 	}
 
 	fmt.Println("Updated successfully")
-	printEntryDetails(selectedEntry)
+	malPrintEntryDetails(selectedEntry)
 
 	cacheList(list)
 
@@ -525,7 +525,7 @@ func setEntryStatusCompleted(ctx *cli.Context) error {
 	}
 
 	fmt.Println("Updated successfully")
-	printEntryDetails(selectedEntry)
+	malPrintEntryDetails(selectedEntry)
 
 	cacheList(list)
 
@@ -589,7 +589,7 @@ func selectById(ctx *cli.Context) error {
 	cfg.Save()
 
 	fmt.Println("Selected entry:")
-	printEntryDetails(entry)
+	malPrintEntryDetails(entry)
 
 	return nil
 }
@@ -645,7 +645,7 @@ func selectByTitle(ctx *cli.Context) error {
 	cfg.Save()
 
 	fmt.Println("Selected entry:")
-	printEntryDetails(selectedEntry)
+	malPrintEntryDetails(selectedEntry)
 
 	return nil
 }
@@ -663,7 +663,7 @@ func showSelectedEntry(ctx *cli.Context) error {
 	}
 
 	fmt.Println("Selected entry:")
-	printEntryDetails(selEntry)
+	malPrintEntryDetails(selEntry)
 
 	return nil
 }
@@ -709,7 +709,7 @@ func openWebsite(ctx *cli.Context) error {
 		}
 
 		fmt.Println("Opened website for:")
-		printEntryDetails(entry)
+		malPrintEntryDetails(entry)
 		fmt.Fprintf(color.Output, "URL: %v\n", color.CyanString("%v", entryUrl))
 	} else {
 		fmt.Println("Nothing to open")
@@ -751,7 +751,7 @@ func nyaaWebsite(ctx *cli.Context) error {
 	}
 
 	fmt.Println("Searched for:")
-	printEntryDetails(entry)
+	malPrintEntryDetails(entry)
 
 	return nil
 }
@@ -823,7 +823,7 @@ func openMalPage(ctx *cli.Context) error {
 		open.StartWith(args, path)
 	}
 	fmt.Println("Opened website for:")
-	printEntryDetails(list.GetByID(cfg.SelectedID))
+	malPrintEntryDetails(list.GetByID(cfg.SelectedID))
 
 	return nil
 }

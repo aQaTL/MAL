@@ -8,6 +8,7 @@ import (
 	"sort"
 	"net/url"
 	"github.com/skratchdot/open-golang/open"
+	"strconv"
 )
 
 func AniListApp(app *cli.App) *cli.App {
@@ -29,6 +30,15 @@ func AniListApp(app *cli.App) *cli.App {
 			Usage:     "Switches app mode to MyAnimeList",
 			UsageText: "mal mal",
 			Action:    switchToMal,
+		},
+		cli.Command{
+			Name:     "eps",
+			Aliases:  []string{"episodes"},
+			Category: "Update",
+			Usage: "Set the watched episodes value. " +
+				"If n not specified, the number will be increased by one",
+			UsageText: "mal eps <n>",
+			Action:    alSetEntryEpisodes,
 		},
 		cli.Command{
 			Name:      "fuzzy-select",
@@ -112,7 +122,7 @@ func aniListDefaultAction(ctx *cli.Context) error {
 	fmt.Printf("No%64s%8s%6s\n", "Title", "Eps", "Score")
 	fmt.Println("================================================================================")
 	pattern := "%2d%64.64s%8s%6d\n"
-	var entry *anilist.MediaList
+	var entry *anilist.MediaListEntry
 	for i := visibleEntries - 1; i >= 0; i-- {
 		entry = &list.Entries[i]
 		if entry.ListId == cfg.ALSelectedID {
@@ -155,6 +165,70 @@ func switchToMal(ctx *cli.Context) error {
 	fmt.Println("App mode switched to MyAnimeList")
 	return nil
 }
+
+func alSetEntryEpisodes(ctx *cli.Context) error {
+	al, err := loadAniList()
+	if err != nil {
+		return err
+	}
+	cfg := LoadConfig()
+	if cfg.ALSelectedID == 0 {
+		fmt.Println("No entry selected")
+	}
+
+	entry := al.GetMediaListById(cfg.ALSelectedID)
+	if entry == nil {
+		return fmt.Errorf("no entry found")
+	}
+
+	epsBefore := entry.Progress
+
+	if arg := ctx.Args().First(); arg != "" {
+		n, err := strconv.Atoi(arg)
+		if err != nil {
+			return fmt.Errorf("n must be a non-negative integer")
+		}
+		if n < 0 {
+			return fmt.Errorf("n can't be lower than 0")
+		}
+		entry.Progress = n
+	} else {
+		entry.Progress++
+	}
+
+	alStatusAutoUpdate(cfg, entry)
+
+	if err = al.SaveMediaListEntry(entry); err != nil {
+		return err
+	}
+	if err = saveAniListAnimeLists(al); err != nil {
+		return err
+	}
+
+	fmt.Println("Updated successfully")
+	alPrintEntryDetailsAfterUpdatedEpisodes(entry, epsBefore)
+
+	return nil
+}
+
+func alStatusAutoUpdate(cfg *Config, entry *anilist.MediaListEntry) {
+	if cfg.StatusAutoUpdateMode == Off || entry.Episodes == 0 {
+		return
+	}
+
+	if (cfg.StatusAutoUpdateMode == Normal && entry.Progress >= entry.Episodes) ||
+		(cfg.StatusAutoUpdateMode == AfterThreshold && entry.Progress > entry.Episodes) {
+		entry.Status = anilist.Completed
+		entry.Progress = entry.Episodes
+		return
+	}
+
+	if entry.Status == anilist.Completed && entry.Progress < entry.Episodes {
+		entry.Status = anilist.Current
+		return
+	}
+}
+
 
 func alNyaaWebsite(ctx *cli.Context) error {
 	al, err := loadAniList()
@@ -209,32 +283,32 @@ func alOpenWebsite(ctx *cli.Context) error {
 
 	cfg := LoadConfig()
 
-	entry := al.GetMediaListByMalId(cfg.SelectedID)
+	entry := al.GetMediaListById(cfg.ALSelectedID)
 	if entry == nil {
 		return fmt.Errorf("no entry selected")
 	}
 
 	if newUrl := ctx.Args().First(); newUrl != "" {
-		cfg.Websites[cfg.SelectedID] = newUrl
+		cfg.Websites[entry.IdMal] = newUrl
 		cfg.Save()
 
 		fmt.Print("Entry: ")
 		color.HiYellow("%v", entry.Title)
 		fmt.Print("URL: ")
-		color.HiRed("%v", cfg.Websites[cfg.SelectedID])
+		color.HiRed("%v", cfg.Websites[entry.IdMal])
 
 		return nil
 	}
 
 	if ctx.Bool("clear") {
-		delete(cfg.Websites, cfg.SelectedID)
+		delete(cfg.Websites, entry.IdMal)
 		cfg.Save()
 
 		fmt.Println("Entry cleared")
 		return nil
 	}
 
-	if entryUrl, ok := cfg.Websites[cfg.SelectedID]; ok {
+	if entryUrl, ok := cfg.Websites[entry.IdMal]; ok {
 		if path := cfg.BrowserPath; path == "" {
 			open.Start(entryUrl)
 		} else {

@@ -75,3 +75,15 @@ query {
 	}
 }
 `
+
+var saveMediaListEntry = `
+mutation ($listId: Int, $mediaId: Int, $status: MediaListStatus, $progress: Int, $score: Float) {
+	SaveMediaListEntry (id: $listId, mediaId: $mediaId, status: $status, progress: $progress, score: $score) {
+		id
+		status
+		progress
+		score
+		updatedAt
+	}
+}
+`
