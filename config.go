@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/aqatl/mal/anilist"
 	"github.com/aqatl/mal/mal"
 	"log"
 	"os"
@@ -14,6 +15,7 @@ type Config struct {
 	MaxVisibleEntries    int
 	Websites             map[int]string
 	Status               mal.MyStatus
+	ALStatus             anilist.MediaListStatus
 	StatusAutoUpdateMode StatusAutoUpdateMode
 	Sorting              Sorting
 	LastUpdate           time.Time
@@ -61,9 +63,10 @@ func ParseSorting(sort string) (Sorting, error) {
 
 func LoadConfig() (c *Config) {
 	c = new(Config)
-	c.MaxVisibleEntries = 10
+	c.MaxVisibleEntries = 20
 	c.Websites = make(map[int]string)
 	c.Status = mal.All
+	c.ALStatus = anilist.Current
 	c.StatusAutoUpdateMode = Off
 	c.Sorting = ByLastUpdated
 	c.TorrentClientPath = "qbittorrent"

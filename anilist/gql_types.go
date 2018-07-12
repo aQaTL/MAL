@@ -22,11 +22,11 @@ type MediaListCollection struct {
 }
 
 type MediaListGroup struct {
-	Entries              []MediaList `json:"entries"`
-	Name                 string      `json:"name"`
-	IsCustomList         bool        `json:"isCustomList"`
-	IsSplitCompletedList bool        `json:"isSplitCompletedList"`
-	Status               string      `json:"status"`
+	Entries              []MediaList     `json:"entries"`
+	Name                 string          `json:"name"`
+	IsCustomList         bool            `json:"isCustomList"`
+	IsSplitCompletedList bool            `json:"isSplitCompletedList"`
+	Status               MediaListStatus `json:"status"`
 }
 
 type MediaList struct {
@@ -88,3 +88,15 @@ type Location struct {
 	Line   int `json:"line"`
 	Column int `json:"column"`
 }
+
+type MediaListStatus string
+
+const (
+	All       MediaListStatus = ""
+	Current   MediaListStatus = "CURRENT"
+	Planning  MediaListStatus = "PLANNING"
+	Completed MediaListStatus = "COMPLETED"
+	Dropped   MediaListStatus = "DROPPED"
+	Paused    MediaListStatus = "PAUSED"
+	Repeating MediaListStatus = "REPEATING"
+)

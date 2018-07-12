@@ -22,6 +22,7 @@ func AniListApp(app *cli.App) *cli.App {
 	app.Commands = []cli.Command{
 		cli.Command{
 			Name:      "mal",
+			Aliases:   []string{"s"},
 			Usage:     "Switches app mode to MyAnimeList",
 			UsageText: "mal mal",
 			Action:    switchToMal,
@@ -42,7 +43,7 @@ func aniListDefaultAction(ctx *cli.Context) error {
 
 	var list anilist.MediaListGroup
 	for i := range al.Lists {
-		if al.Lists[i].Status == "CURRENT" {
+		if al.Lists[i].Status == cfg.ALStatus {
 			list = al.Lists[i]
 		}
 	}
@@ -67,7 +68,7 @@ func aniListDefaultAction(ctx *cli.Context) error {
 	pattern := "%2d%64.64s%8s%6d\n"
 	for _, entry := range visibleList {
 		if entry.IdMal == cfg.SelectedID {
-			color.HiYellow(pattern,	i, entry.Title.UserPreferred,
+			color.HiYellow(pattern, i, entry.Title.UserPreferred,
 				fmt.Sprintf("%d/%d", entry.Progress, entry.Episodes),
 				entry.Score)
 		} else {
@@ -85,5 +86,9 @@ func switchToMal(ctx *cli.Context) error {
 	appCfg := AppConfig{}
 	LoadJsonFile(AppConfigFile, &appCfg)
 	appCfg.Mode = MalMode
-	return SaveJsonFile(AppConfigFile, &appCfg)
+	if err := SaveJsonFile(AppConfigFile, &appCfg); err != nil {
+		return err
+	}
+	fmt.Println("App mode switched to MyAnimeList")
+	return nil
 }

@@ -60,7 +60,7 @@ func MalApp(app *cli.App) *cli.App {
 	app.Commands = []cli.Command{
 		cli.Command{
 			Name:      "anilist",
-			Aliases:   []string{"al"},
+			Aliases:   []string{"al", "s"},
 			Usage:     "Switches app mode to AniList",
 			UsageText: "mal anilist",
 			Action:    switchToAniList,
@@ -384,7 +384,11 @@ func switchToAniList(ctx *cli.Context) error {
 	appCfg := AppConfig{}
 	LoadJsonFile(AppConfigFile, &appCfg)
 	appCfg.Mode = AniListMode
-	return SaveJsonFile(AppConfigFile, &appCfg)
+	if err := SaveJsonFile(AppConfigFile, &appCfg); err != nil {
+		return nil
+	}
+	fmt.Println("App mode switched to AniList")
+	return nil
 }
 
 func setEntryEpisodes(ctx *cli.Context) error {
