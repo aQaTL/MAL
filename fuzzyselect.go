@@ -139,14 +139,6 @@ func saveSelection(cfg *Config, entry *mal.Anime) {
 	malPrintEntryDetails(entry)
 }
 
-func alSaveSelection(cfg *Config, entry *anilist.MediaListEntry) {
-	cfg.ALSelectedID = entry.ListId
-	cfg.Save()
-
-	fmt.Println("Selected entry:")
-	alPrintEntryDetails(entry)
-}
-
 const (
 	FsgInputView     = "fsgInputView"
 	FsgOutputView    = "fsgOutputView"

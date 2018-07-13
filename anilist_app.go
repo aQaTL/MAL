@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 )
 
 func AniListApp(app *cli.App) *cli.App {
@@ -55,12 +56,12 @@ func AniListApp(app *cli.App) *cli.App {
 			Action:    alSetEntryScore,
 		},
 		cli.Command{
-			Name:      "fuzzy-select",
-			Aliases:   []string{"fsel"},
+			Name:      "sel",
+			Aliases:   []string{"select"},
 			Category:  "Config",
-			Usage:     "Interactive fuzzy search through your list",
-			UsageText: "mal fsel [search string (optional)]",
-			Action:    alFuzzySelectEntry,
+			Usage:     "Select an entry",
+			UsageText: "mal sel [entry title]",
+			Action:    alSelectEntry,
 		},
 		cli.Command{
 			Name:     "nyaa",
@@ -296,6 +297,38 @@ func alSetEntryScore(ctx *cli.Context) error {
 	alPrintEntryDetails(entry)
 	return nil
 }
+
+func alSelectEntry(ctx *cli.Context) error {
+	al, err := loadAniList()
+	if err != nil {
+		return err
+	}
+	cfg := LoadConfig()
+
+	searchTerm := strings.ToLower(strings.Join(ctx.Args(), " "))
+	if searchTerm == "" {
+		return alFuzzySelectEntry(ctx)
+	}
+
+	for _, entry := range al.List {
+		title := entry.Title.Romaji + " " + entry.Title.English + " " + entry.Title.Native
+		if strings.Contains(strings.ToLower(title), searchTerm) {
+			alSaveSelection(cfg, &entry)
+			return nil
+		}
+	}
+
+	return alFuzzySelectEntry(ctx)
+}
+
+func alSaveSelection(cfg *Config, entry *anilist.MediaListEntry) {
+	cfg.ALSelectedID = entry.ListId
+	cfg.Save()
+
+	fmt.Println("Selected entry:")
+	alPrintEntryDetails(entry)
+}
+
 
 func alNyaaWebsite(ctx *cli.Context) error {
 	al, err := loadAniList()
