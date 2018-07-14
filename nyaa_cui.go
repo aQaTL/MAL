@@ -69,6 +69,7 @@ func startNyaaCui(cfg *Config, searchTerm string) error {
 		return fmt.Errorf("gocui error: %v", err)
 	}
 	nc := &nyaaCui{
+		Gui: gui,
 		Cfg: cfg,
 
 		SearchTerm: searchTerm,
@@ -101,6 +102,7 @@ const (
 )
 
 type nyaaCui struct {
+	Gui *gocui.Gui
 	Cfg *Config
 
 	SearchTerm string
@@ -145,7 +147,7 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 		v.SelFgColor = gocui.ColorBlack
 		v.Highlight = true
 		v.Editable = true
-		v.Editor = gocui.EditorFunc(nc.Editor(gui))
+		v.Editor = gocui.EditorFunc(nc.GetEditor())
 
 		gui.SetCurrentView(ncResultsView)
 		nc.ResultsView = v
@@ -179,8 +181,7 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 	return nil
 }
 
-func (nc *nyaaCui) Editor(gui *gocui.Gui) func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
-	//TODO it's too big
+func (nc *nyaaCui) GetEditor() func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
 	return func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
 		switch {
 		case key == gocui.KeyArrowDown || ch == 'j':
@@ -196,86 +197,13 @@ func (nc *nyaaCui) Editor(gui *gocui.Gui) func(v *gocui.View, key gocui.Key, ch 
 			_, y := v.Cursor()
 			_, oy := v.Origin()
 			y += oy
-			if y >= len(nc.Results) {
-				return
-			}
-
-			link := ""
-			if entry := nc.Results[y]; entry.MagnetLink != "" {
-				link = entry.MagnetLink
-			} else if entry.TorrentLink != "" {
-				link = entry.TorrentLink
-			} else {
-				dialog.JustShowOkDialog(gui, "Error", "No link found")
-				return
-			}
-
-			if err := nc.Download(link); err != nil {
-				gui.Update(func(gui *gocui.Gui) error {
-					return err
-				})
-			}
+			nc.Download(y)
 		case ch == 'l':
-			if nc.LoadedPages >= nc.MaxPages {
-				return
-			}
-			nc.LoadedPages++
-			go func() {
-				resultPage, _ := nyaa_scraper.SearchSpecificPage(
-					nc.SearchTerm,
-					nc.Category,
-					nc.Filter,
-					nc.LoadedPages,
-				)
-				nc.Results = append(nc.Results, resultPage.Results...)
-				gui.Update(func(gui *gocui.Gui) error {
-					_, oy := nc.ResultsView.Origin()
-					_, y := nc.ResultsView.Cursor()
-
-					gui.DeleteView(ncInfoView)
-					gui.DeleteView(ncResultsView)
-
-					nc.Layout(gui)
-					nc.ResultsView.SetOrigin(0, oy)
-					nc.ResultsView.SetCursor(0, y)
-
-					return nil
-				})
-			}()
+			nc.LoadNextPage()
 		case ch == 'c':
-			categories := make([]fmt.Stringer, len(nyaa_scraper.Categories))
-			for i := range categories {
-				categories[i] = nyaa_scraper.Categories[i]
-			}
-			selIdxChan, cleanUp, err := dialog.ListSelect(gui, "Select category", categories)
-			if err != nil {
-				gocuiReturnError(gui, err)
-			}
-			go func() {
-				idx, ok := <-selIdxChan
-				gui.Update(cleanUp)
-				if ok {
-					nc.Category = nyaa_scraper.Categories[idx]
-					nc.Reload(gui)
-				}
-			}()
+			nc.ChangeCategory()
 		case ch == 'f':
-			filters := make([]fmt.Stringer, len(nyaa_scraper.Filters))
-			for i := range filters {
-				filters[i] = nyaa_scraper.Filters[i]
-			}
-			selIdxChan, cleanUp, err := dialog.ListSelect(gui, "Select filter", filters)
-			if err != nil {
-				gocuiReturnError(gui, err)
-			}
-			go func() {
-				idx, ok := <-selIdxChan
-				gui.Update(cleanUp)
-				if ok {
-					nc.Filter = nyaa_scraper.Filters[idx]
-					nc.Reload(gui)
-				}
-			}()
+			nc.ChangeFilter()
 		}
 	}
 }
@@ -312,12 +240,95 @@ func (nc *nyaaCui) Reload(gui *gocui.Gui) {
 	}()
 }
 
-func (nc *nyaaCui) Download(link string) error {
+func (nc *nyaaCui) Download(yIdx int) {
+	if yIdx >= len(nc.Results) {
+		return
+	}
+
+	link := ""
+	if entry := nc.Results[yIdx]; entry.MagnetLink != "" {
+		link = entry.MagnetLink
+	} else if entry.TorrentLink != "" {
+		link = entry.TorrentLink
+	} else {
+		dialog.JustShowOkDialog(nc.Gui, "Error", "No link found")
+		return
+	}
+
 	link = "\"" + link + "\""
 	cmd := exec.Command(nc.Cfg.TorrentClientPath, nc.Cfg.TorrentClientArgs...)
 	cmd.Args = append(cmd.Args, link)
 	cmd.Args = cmd.Args[1:] //Why they include app name in the arguments???
-	return cmd.Start()
+	if err := cmd.Start(); err != nil {
+		gocuiReturnError(nc.Gui, err)
+	}
+}
+
+func (nc *nyaaCui) LoadNextPage() {
+	if nc.LoadedPages >= nc.MaxPages {
+		return
+	}
+	nc.LoadedPages++
+	go func() {
+		resultPage, _ := nyaa_scraper.SearchSpecificPage(
+			nc.SearchTerm,
+			nc.Category,
+			nc.Filter,
+			nc.LoadedPages,
+		)
+		nc.Results = append(nc.Results, resultPage.Results...)
+		nc.Gui.Update(func(gui *gocui.Gui) error {
+			_, oy := nc.ResultsView.Origin()
+			_, y := nc.ResultsView.Cursor()
+
+			gui.DeleteView(ncInfoView)
+			gui.DeleteView(ncResultsView)
+
+			nc.Layout(gui)
+			nc.ResultsView.SetOrigin(0, oy)
+			nc.ResultsView.SetCursor(0, y)
+
+			return nil
+		})
+	}()
+}
+
+func (nc *nyaaCui) ChangeCategory() {
+	categories := make([]fmt.Stringer, len(nyaa_scraper.Categories))
+	for i := range categories {
+		categories[i] = nyaa_scraper.Categories[i]
+	}
+	selIdxChan, cleanUp, err := dialog.ListSelect(nc.Gui, "Select category", categories)
+	if err != nil {
+		gocuiReturnError(nc.Gui, err)
+	}
+	go func() {
+		idx, ok := <-selIdxChan
+		nc.Gui.Update(cleanUp)
+		if ok {
+			nc.Category = nyaa_scraper.Categories[idx]
+			nc.Reload(nc.Gui)
+		}
+	}()
+}
+
+func (nc *nyaaCui) ChangeFilter() {
+	filters := make([]fmt.Stringer, len(nyaa_scraper.Filters))
+	for i := range filters {
+		filters[i] = nyaa_scraper.Filters[i]
+	}
+	selIdxChan, cleanUp, err := dialog.ListSelect(nc.Gui, "Select filter", filters)
+	if err != nil {
+		gocuiReturnError(nc.Gui, err)
+	}
+	go func() {
+		idx, ok := <-selIdxChan
+		nc.Gui.Update(cleanUp)
+		if ok {
+			nc.Filter = nyaa_scraper.Filters[idx]
+			nc.Reload(nc.Gui)
+		}
+	}()
 }
 
 func (nc *nyaaCui) setGuiKeyBindings(gui *gocui.Gui) {
