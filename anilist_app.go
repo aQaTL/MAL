@@ -70,6 +70,12 @@ func AniListApp(app *cli.App) *cli.App {
 			Category: "Action",
 			Usage:    "Open interactive torrent search",
 			Action:   alNyaaCui,
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "alt",
+					Usage: "choose an alternative title",
+				},
+			},
 		},
 		cli.Command{
 			Name:      "nyaa-web",
@@ -319,6 +325,7 @@ func alSelectEntry(ctx *cli.Context) error {
 		return alFuzzySelectEntry(ctx)
 	}
 
+	//TODO handle multiple matches
 	for _, entry := range al.List {
 		title := entry.Title.Romaji + " " + entry.Title.English + " " + entry.Title.Native
 		if strings.Contains(strings.ToLower(title), searchTerm) {

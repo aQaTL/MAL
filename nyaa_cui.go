@@ -9,6 +9,7 @@ import (
 	"github.com/urfave/cli"
 	"math"
 	"os/exec"
+	"strings"
 )
 
 func malNyaaCui(ctx *cli.Context) error {
@@ -36,7 +37,29 @@ func alNyaaCui(ctx *cli.Context) error {
 	if entry == nil {
 		return fmt.Errorf("no entry found")
 	}
-	return startNyaaCui(cfg, entry.Title.Romaji)
+
+	searchTerm := entry.Title.UserPreferred
+	if ctx.Bool("alt") {
+		alts := make([]string, 0, 3+len(entry.Synonyms))
+		if t := entry.Title.English; t != "" {
+			alts = append(alts, t)
+		}
+		if t := entry.Title.Native; t != "" {
+			alts = append(alts, t)
+		}
+		if t := entry.Title.Romaji; t != "" {
+			alts = append(alts, t)
+		}
+		alts = append(alts, entry.Synonyms...)
+		fmt.Printf("Select desired title\n\n")
+		if searchTerm = chooseStrFromSlice(alts); searchTerm == "" {
+			return fmt.Errorf("no alternative titles")
+		}
+	} else if ctx.NArg() > 0 {
+		searchTerm = strings.Join(ctx.Args(), " ")
+	}
+
+	return startNyaaCui(cfg, searchTerm)
 }
 
 func startNyaaCui(cfg *Config, searchTerm string) error {
