@@ -92,6 +92,11 @@ type nyaaCui struct {
 	ResultsView *gocui.View
 }
 
+var red = color.New(color.FgRed).SprintFunc()
+var cyan = color.New(color.FgCyan).SprintFunc()
+var blue = color.New(color.FgBlue).SprintFunc()
+var green = color.New(color.FgGreen).SprintFunc()
+
 func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 	w, h := gui.Size()
 	if v, err := gui.SetView(ncInfoView, 0, 0, w-1, 2); err != nil {
@@ -124,13 +129,13 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 
 		//TODO Better/clearer results printing
 		for _, result := range nc.Results {
-			fmt.Fprintf(v, "%s %s %v %d %d %d\n",
+			fmt.Fprintln(v,
 				result.Title,
-				result.Size,
-				result.DateAdded,
-				result.Seeders,
-				result.Leechers,
-				result.CompletedDownloads,
+				red(result.Size),
+				cyan(result.DateAdded.Format("15:04:05 02-01-2006 MST")),
+				green(result.Seeders),
+				red(result.Leechers),
+				blue(result.CompletedDownloads),
 			)
 		}
 	}
