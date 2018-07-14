@@ -325,10 +325,13 @@ func alSelectEntry(ctx *cli.Context) error {
 		return alFuzzySelectEntry(ctx)
 	}
 
-	//TODO handle multiple matches
+	matches := 0
 	for _, entry := range al.List {
 		title := entry.Title.Romaji + " " + entry.Title.English + " " + entry.Title.Native
 		if strings.Contains(strings.ToLower(title), searchTerm) {
+			if matches++; matches > 0 {
+				break
+			}
 			alSaveSelection(cfg, &entry)
 			return nil
 		}
