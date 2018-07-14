@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func AniListApp(app *cli.App) *cli.App {
@@ -105,6 +106,14 @@ func AniListApp(app *cli.App) *cli.App {
 					Action:    alPrintWebsites,
 				},
 			},
+		},
+		cli.Command{
+			Name:      "airing",
+			Aliases:   []string{"broadcast"},
+			Category:  "Action",
+			Usage:     "Print airing time of next episode",
+			UsageText: "mal broadcast",
+			Action:    alNextAiringEpisode,
 		},
 	}
 
@@ -329,7 +338,6 @@ func alSaveSelection(cfg *Config, entry *anilist.MediaListEntry) {
 	alPrintEntryDetails(entry)
 }
 
-
 func alNyaaWebsite(ctx *cli.Context) error {
 	al, err := loadAniList()
 	if err != nil {
@@ -444,5 +452,50 @@ func alPrintWebsites(ctx *cli.Context) error {
 		fmt.Fprintf(color.Output, "%6d (%s): %s\n", k, title, entryUrl)
 	}
 
+	return nil
+}
+
+func alNextAiringEpisode(ctx *cli.Context) error {
+	al, entry, cfg, err := loadAniListFull()
+	if err != nil {
+		return err
+	}
+
+	episode := entry.Progress
+	if cfg.StatusAutoUpdateMode != AfterThreshold && entry.Progress < entry.Episodes {
+		episode++
+	}
+	schedule, err := anilist.QueryAiringSchedule(entry.Id, episode, al.Token)
+	if err != nil {
+		return err
+	}
+
+	airingAt := time.Unix(int64(schedule.AiringAt), 0)
+
+	yellow := color.New(color.FgHiYellow).SprintFunc()
+	red := color.New(color.FgHiRed).SprintFunc()
+	cyan := color.New(color.FgHiCyan).SprintFunc()
+	fmt.Fprintf(
+		color.Output,
+		"Title: %s\n"+
+			"Episode: %s\n"+
+			"Airing at: %s\n",
+			yellow(entry.Title.UserPreferred),
+		red(schedule.Episode),
+		cyan(airingAt.Format("15:04:05 02-01-2006 MST")),
+	)
+
+	tua := schedule.TimeUntilAiring
+	if tua < 0 {
+		tua *= -1
+	}
+	timeUntilAiring, err := time.ParseDuration(strconv.Itoa(tua) + "s")
+	if err != nil {
+		fmt.Println(err)
+	} else if schedule.TimeUntilAiring < 0 {
+		fmt.Fprintln(color.Output, "Episode aired", cyan(timeUntilAiring), "ago")
+	} else {
+		fmt.Fprintln(color.Output, "Time until airing:", cyan(timeUntilAiring))
+	}
 	return nil
 }

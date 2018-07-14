@@ -51,6 +51,17 @@ func SaveMediaListEntry(entry *MediaListEntry, token oauth2.OAuthToken) error {
 	return gqlErrorsHandler(graphQLRequestParsed(saveMediaListEntry, vars, token, entryData))
 }
 
+func QueryAiringSchedule(mediaId, episode int, token oauth2.OAuthToken) (AiringSchedule, error) {
+	vars := make(map[string]interface{})
+	vars["mediaId"] = mediaId
+	vars["episode"] = episode
+	data := &struct{
+		AiringSchedule `json:"AiringSchedule"`
+	}{AiringSchedule{}}
+	err := gqlErrorsHandler(graphQLRequestParsed(queryAiringSchedule, vars, token, data))
+	return data.AiringSchedule, err
+}
+
 func gqlErrorsHandler(gqlErrs []GqlError, err error) error {
 	if err != nil {
 		return err

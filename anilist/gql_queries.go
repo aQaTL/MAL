@@ -87,3 +87,15 @@ mutation ($listId: Int, $mediaId: Int, $status: MediaListStatus, $progress: Int,
 	}
 }
 `
+
+var queryAiringSchedule = `
+query ($mediaId: Int, $episode: Int) {
+	AiringSchedule(mediaId: $mediaId, episode: $episode) {
+		id
+		airingAt
+		timeUntilAiring
+		episode
+		mediaId
+	}
+}
+`
