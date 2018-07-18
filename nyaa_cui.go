@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
+	"math"
+	"os/exec"
+	"strings"
+
 	"github.com/aqatl/mal/dialog"
 	"github.com/aqatl/mal/nyaa_scraper"
 	"github.com/fatih/color"
 	"github.com/jroimartin/gocui"
 	"github.com/urfave/cli"
-	"math"
-	"os/exec"
-	"strings"
 )
 
 func malNyaaCui(ctx *cli.Context) error {
@@ -23,7 +24,11 @@ func malNyaaCui(ctx *cli.Context) error {
 	if entry == nil {
 		return fmt.Errorf("no entry found")
 	}
-	return startNyaaCui(cfg, entry.Title)
+	return startNyaaCui(
+		cfg,
+		entry.Title,
+		fmt.Sprintf("%s %d/%d", entry.Title, entry.WatchedEpisodes, entry.Episodes),
+	)
 }
 
 func alNyaaCui(ctx *cli.Context) error {
@@ -59,10 +64,14 @@ func alNyaaCui(ctx *cli.Context) error {
 		searchTerm = strings.Join(ctx.Args(), " ")
 	}
 
-	return startNyaaCui(cfg, searchTerm)
+	return startNyaaCui(
+		cfg,
+		searchTerm,
+		fmt.Sprintf("%s %d/%d", searchTerm, entry.Progress, entry.Episodes),
+	)
 }
 
-func startNyaaCui(cfg *Config, searchTerm string) error {
+func startNyaaCui(cfg *Config, searchTerm, displayedInfo string) error {
 	gui, err := gocui.NewGui(gocui.Output256)
 	defer gui.Close()
 	if err != nil {
@@ -72,9 +81,10 @@ func startNyaaCui(cfg *Config, searchTerm string) error {
 		Gui: gui,
 		Cfg: cfg,
 
-		SearchTerm: searchTerm,
-		Category:   nyaa_scraper.AnimeEnglishTranslated,
-		Filter:     nyaa_scraper.NoFilter,
+		SearchTerm:    searchTerm,
+		DisplayedInfo: displayedInfo,
+		Category:      nyaa_scraper.AnimeEnglishTranslated,
+		Filter:        nyaa_scraper.NoFilter,
 	}
 	gui.SetManager(nc)
 	nc.setGuiKeyBindings(gui)
@@ -105,9 +115,10 @@ type nyaaCui struct {
 	Gui *gocui.Gui
 	Cfg *Config
 
-	SearchTerm string
-	Category   nyaa_scraper.NyaaCategory
-	Filter     nyaa_scraper.NyaaFilter
+	SearchTerm    string
+	DisplayedInfo string
+	Category      nyaa_scraper.NyaaCategory
+	Filter        nyaa_scraper.NyaaFilter
 
 	Results     []nyaa_scraper.NyaaEntry
 	MaxResults  int
@@ -133,7 +144,7 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 		v.Editable = false
 
 		fmt.Fprintf(v, "[%s]: displaying %d out of %d results",
-			nc.SearchTerm, len(nc.Results), nc.MaxResults)
+			nc.DisplayedInfo, len(nc.Results), nc.MaxResults)
 	}
 
 	if v, err := gui.SetView(ncResultsView, 0, 3, w-1, h-4); err != nil {
