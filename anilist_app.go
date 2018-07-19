@@ -2,15 +2,17 @@ package main
 
 import (
 	"fmt"
-	"github.com/aqatl/mal/anilist"
-	"github.com/fatih/color"
-	"github.com/skratchdot/open-golang/open"
-	"github.com/urfave/cli"
 	"net/url"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/aqatl/mal/anilist"
+	"github.com/fatih/color"
+	"github.com/skratchdot/open-golang/open"
+	"github.com/urfave/cli"
+	"github.com/aqatl/mal/mal"
 )
 
 func AniListApp(app *cli.App) *cli.App {
@@ -120,6 +122,13 @@ func AniListApp(app *cli.App) *cli.App {
 			Usage:     "Print airing time of next episode",
 			UsageText: "mal broadcast",
 			Action:    alNextAiringEpisode,
+		},
+		cli.Command{
+			Name:      "music",
+			Category:  "Action",
+			Usage:     "Print opening and ending themes",
+			UsageText: "mal music",
+			Action:    alPrintMusic,
 		},
 	}
 
@@ -490,7 +499,7 @@ func alNextAiringEpisode(ctx *cli.Context) error {
 		"Title: %s\n"+
 			"Episode: %s\n"+
 			"Airing at: %s\n",
-			yellow(entry.Title.UserPreferred),
+		yellow(entry.Title.UserPreferred),
 		red(schedule.Episode),
 		cyan(airingAt.Format("15:04:05 02-01-2006 MST")),
 	)
@@ -507,5 +516,30 @@ func alNextAiringEpisode(ctx *cli.Context) error {
 	} else {
 		fmt.Fprintln(color.Output, "Time until airing:", cyan(timeUntilAiring))
 	}
+	return nil
+}
+
+func alPrintMusic(ctx *cli.Context) error {
+	_, entry, _, err := loadAniListFull()
+	if err != nil {
+		return err
+	}
+
+	details, err := mal.FetchDetailsWithAnimation(&mal.Client{}, &mal.Anime{ID: entry.IdMal})
+
+	printThemes := func(themes []string) {
+		for _, theme := range themes {
+			fmt.Fprintf(
+				color.Output, "  %s\n",
+				color.HiYellowString("%s", strings.TrimSpace(theme)))
+		}
+	}
+
+	fmt.Fprintln(color.Output, "Openings:")
+	printThemes(details.OpeningThemes)
+
+	fmt.Fprintln(color.Output, "\nEndings:")
+	printThemes(details.EndingThemes)
+
 	return nil
 }
