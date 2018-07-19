@@ -241,7 +241,7 @@ func alSetEntryEpisodes(ctx *cli.Context) error {
 
 	alStatusAutoUpdate(cfg, entry)
 
-	if err = anilist.SaveMediaListEntry(entry, al.Token); err != nil {
+	if err = anilist.SaveMediaListEntryWaitAnimation(entry, al.Token); err != nil {
 		return err
 	}
 	if err = saveAniListAnimeLists(al); err != nil {
@@ -285,7 +285,7 @@ func alSetEntryStatus(ctx *cli.Context) error {
 
 	entry.Status = status
 
-	if err = anilist.SaveMediaListEntry(entry, al.Token); err != nil {
+	if err = anilist.SaveMediaListEntryWaitAnimation(entry, al.Token); err != nil {
 		return err
 	}
 	if err = saveAniListAnimeLists(al); err != nil {
@@ -310,7 +310,7 @@ func alSetEntryScore(ctx *cli.Context) error {
 
 	entry.Score = score
 
-	if err = anilist.SaveMediaListEntry(entry, al.Token); err != nil {
+	if err = anilist.SaveMediaListEntryWaitAnimation(entry, al.Token); err != nil {
 		return err
 	}
 	if err = saveAniListAnimeLists(al); err != nil {
@@ -484,7 +484,7 @@ func alNextAiringEpisode(ctx *cli.Context) error {
 	if cfg.StatusAutoUpdateMode != AfterThreshold && entry.Progress < entry.Episodes {
 		episode++
 	}
-	schedule, err := anilist.QueryAiringSchedule(entry.Id, episode, al.Token)
+	schedule, err := anilist.QueryAiringScheduleWaitAnimation(entry.Id, episode, al.Token)
 	if err != nil {
 		return err
 	}

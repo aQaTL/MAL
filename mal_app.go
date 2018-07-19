@@ -14,6 +14,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/skratchdot/open-golang/open"
 	"github.com/urfave/cli"
+	"github.com/aqatl/cliwait"
 )
 
 func MalApp(app *cli.App) *cli.App {
@@ -544,7 +545,7 @@ func deleteEntry(ctx *cli.Context) error {
 		return fmt.Errorf("no entry selected")
 	}
 
-	mal.DoFuncWithWaitAnimation("Deleting entry", func() {
+	cliwait.DoFuncWithWaitAnimation("Deleting entry", func() {
 		err = c.Delete(entry)
 	})
 	if err != nil {

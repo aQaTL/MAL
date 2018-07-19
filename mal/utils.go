@@ -4,10 +4,7 @@ import (
 	"strings"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	"time"
-	"github.com/fatih/color"
-	"bufio"
-	"os"
+	"github.com/aqatl/cliwait"
 )
 
 func ParseStatus(status string) MyStatus {
@@ -41,39 +38,10 @@ func isTextEqualFilterFunc(text string) func(i int, s *goquery.Selection) bool {
 	}
 }
 
-func DoFuncWithWaitAnimation(text string, f func()) {
-	done := make(chan struct{})
-	go func() {
-		f()
-		done <- struct{}{}
-	}()
-
-	ticker := time.NewTicker(100 * time.Millisecond)
-	defer ticker.Stop()
-
-	green := color.New(color.FgHiGreen).FprintFunc()
-	clockStates := [...]string{"-", "\\", "|", "/"}
-	currClockState := 0
-
-	stdout := bufio.NewWriter(os.Stdout)
-	for {
-		select {
-		case <-ticker.C:
-			green(color.Output, fmt.Sprintf("\r%s %s", text, clockStates[currClockState]))
-			stdout.Flush()
-			currClockState = (currClockState + 1) % len(clockStates)
-		case <-done:
-			fmt.Fprintf(color.Output, "\r%s\r", strings.Repeat(" ", len(text)+4))
-			stdout.Flush()
-			return
-		}
-	}
-}
-
 func FetchDetailsWithAnimation(c *Client, entry *Anime) (*AnimeDetails, error) {
 	var details *AnimeDetails
 	var err error
-	DoFuncWithWaitAnimation("Fetching details", func() {
+	cliwait.DoFuncWithWaitAnimation("Fetching details", func() {
 		details, err = c.FetchDetails(entry)
 	})
 	return details, err
@@ -82,7 +50,7 @@ func FetchDetailsWithAnimation(c *Client, entry *Anime) (*AnimeDetails, error) {
 
 func UpdateEntryWithAnimation(c *Client, entry *Anime) (error) {
 	var err error
-	DoFuncWithWaitAnimation("Updating entry", func() {
+	cliwait.DoFuncWithWaitAnimation("Updating entry", func() {
 		err = c.Update(entry)
 	})
 	return err

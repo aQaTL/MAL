@@ -14,6 +14,7 @@ import (
 	"strings"
 	"io/ioutil"
 	"golang.org/x/crypto/ssh/terminal"
+	"github.com/aqatl/cliwait"
 )
 
 func checkDataDir() {
@@ -64,7 +65,7 @@ func loadData(c *mal.Client, ctx *cli.Context) (mal.AnimeList, error) {
 	if ctx.GlobalBool("refresh") || cacheNotExist() {
 		{
 			var err error
-			mal.DoFuncWithWaitAnimation("Fetching your list", func() {
+			cliwait.DoFuncWithWaitAnimation("Fetching your list", func() {
 				list, err = c.AnimeList(mal.All)
 			})
 			return nil, fmt.Errorf("error fetching your list\n%v", err)
