@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/aqatl/mal/anilist"
+	"github.com/aqatl/mal/mal"
 	"github.com/fatih/color"
 	"github.com/skratchdot/open-golang/open"
 	"github.com/urfave/cli"
-	"github.com/aqatl/mal/mal"
 )
 
 func AniListApp(app *cli.App) *cli.App {
@@ -334,16 +334,20 @@ func alSelectEntry(ctx *cli.Context) error {
 		return alFuzzySelectEntry(ctx)
 	}
 
-	matches := 0
-	for _, entry := range al.List {
+	var matchedEntry *anilist.MediaListEntry = nil
+	for i, entry := range al.List {
 		title := entry.Title.Romaji + " " + entry.Title.English + " " + entry.Title.Native
 		if strings.Contains(strings.ToLower(title), searchTerm) {
-			if matches++; matches > 0 {
+			if matchedEntry != nil {
+				matchedEntry = nil
 				break
 			}
-			alSaveSelection(cfg, &entry)
-			return nil
+			matchedEntry = &al.List[i]
 		}
+	}
+	if matchedEntry != nil {
+		alSaveSelection(cfg, matchedEntry)
+		return nil
 	}
 
 	return alFuzzySelectEntry(ctx)
