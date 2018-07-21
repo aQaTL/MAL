@@ -29,6 +29,11 @@ func AniListApp(app *cli.App) *cli.App {
 			Name:  "all, a",
 			Usage: "display all entries; same as --max -1",
 		},
+		cli.StringFlag{
+			Name: "status",
+			Usage: "display entries only with given status " +
+				"[watching|planning|completed|repeating|paused|dropped]",
+		},
 	}
 
 	app.Commands = []cli.Command{
@@ -147,7 +152,11 @@ func aniListDefaultAction(ctx *cli.Context) error {
 		return err
 	}
 	cfg := LoadConfig()
-	list := alGetList(al, cfg.ALStatus)
+	status := cfg.ALStatus
+	if statusFlag := ctx.String("status"); statusFlag != "" {
+		status = anilist.ParseStatus(statusFlag)
+	}
+	list := alGetList(al, status)
 
 	sort.Slice(list, func(i, j int) bool {
 		return list[i].UpdatedAt > list[j].UpdatedAt
