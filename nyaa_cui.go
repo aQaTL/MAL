@@ -32,7 +32,7 @@ func malNyaaCui(ctx *cli.Context) error {
 }
 
 func alNyaaCui(ctx *cli.Context) error {
-	al, err := loadAniList()
+	al, err := loadAniList(ctx)
 	if err != nil {
 		return err
 	}

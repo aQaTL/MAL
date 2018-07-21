@@ -58,7 +58,7 @@ func fuzzySelectEntry(ctx *cli.Context) error {
 }
 
 func alFuzzySelectEntry(ctx *cli.Context) error {
-	al, err := loadAniList()
+	al, err := loadAniList(ctx)
 	if err != nil {
 		return err
 	}

@@ -6,6 +6,8 @@ import (
 	"github.com/aqatl/mal/oauth2"
 	"os"
 	"time"
+	"fmt"
+	"github.com/urfave/cli"
 )
 
 type AniList struct {
@@ -34,7 +36,37 @@ func (l List) GetMediaListByMalId(malId int) *anilist.MediaListEntry {
 	return nil
 }
 
-func loadAniList() (*AniList, error) {
+func alGetList(al *AniList, status anilist.MediaListStatus) List {
+	if status == anilist.All {
+		return al.List
+	} else {
+		list := make(List, 0)
+		for i := range al.List {
+			if al.List[i].Status == status {
+				list = append(list, al.List[i])
+			}
+		}
+		return list
+	}
+}
+
+func loadAniListFull(ctx *cli.Context) (al *AniList, entry *anilist.MediaListEntry, cfg *Config, err error) {
+	al, err = loadAniList(ctx)
+	if err != nil {
+		return
+	}
+	cfg = LoadConfig()
+	if cfg.ALSelectedID == 0 {
+		fmt.Println("No entry selected")
+	}
+	entry = al.GetMediaListById(cfg.ALSelectedID)
+	if entry == nil {
+		err = fmt.Errorf("no entry found")
+	}
+	return
+}
+
+func loadAniList(ctx *cli.Context) (*AniList, error) {
 	token, err := loadOAuthToken()
 	if err != nil {
 		return nil, err
@@ -44,10 +76,11 @@ func loadAniList() (*AniList, error) {
 	if err := loadAniListUser(al); err != nil {
 		return nil, err
 	}
-	if err = loadAniListAnimeLists(al); err != nil {
-		return nil, err
+	if ctx.Bool("refresh") {
+		err = fetchAniListAnimeLists(al)
+	} else {
+		err = loadAniListAnimeLists(al)
 	}
-
 	return al, nil
 }
 
@@ -131,7 +164,11 @@ func loadAniListAnimeLists(al *AniList) error {
 	if !os.IsNotExist(err) {
 		return err
 	}
-	lists, err := anilist.QueryUserLists(al.User.Id, al.Token)
+	return fetchAniListAnimeLists(al)
+}
+
+func fetchAniListAnimeLists(al *AniList) error {
+	lists, err := anilist.QueryUserListsWaitAnimation(al.User.Id, al.Token)
 	for i := range lists {
 		al.List = append(al.List, lists[i].Entries...)
 	}
@@ -139,7 +176,7 @@ func loadAniListAnimeLists(al *AniList) error {
 		if al.Token, err = requestAniListToken(); err != nil {
 			return err
 		}
-		lists, err = anilist.QueryUserLists(al.User.Id, al.Token)
+		lists, err = anilist.QueryUserListsWaitAnimation(al.User.Id, al.Token)
 		for i := range lists {
 			al.List = append(al.List, lists[i].Entries...)
 		}

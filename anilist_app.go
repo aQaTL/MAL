@@ -17,6 +17,10 @@ import (
 
 func AniListApp(app *cli.App) *cli.App {
 	app.Flags = []cli.Flag{
+		cli.BoolFlag{
+			Name:  "r, refresh",
+			Usage: "refreshes cached list",
+		},
 		cli.IntFlag{
 			Name:  "max",
 			Usage: "visible entries threshold",
@@ -138,7 +142,7 @@ func AniListApp(app *cli.App) *cli.App {
 }
 
 func aniListDefaultAction(ctx *cli.Context) error {
-	al, err := loadAniList()
+	al, err := loadAniList(ctx)
 	if err != nil {
 		return err
 	}
@@ -178,36 +182,6 @@ func aniListDefaultAction(ctx *cli.Context) error {
 	return nil
 }
 
-func alGetList(al *AniList, status anilist.MediaListStatus) List {
-	if status == anilist.All {
-		return al.List
-	} else {
-		list := make(List, 0)
-		for i := range al.List {
-			if al.List[i].Status == status {
-				list = append(list, al.List[i])
-			}
-		}
-		return list
-	}
-}
-
-func loadAniListFull() (al *AniList, entry *anilist.MediaListEntry, cfg *Config, err error) {
-	al, err = loadAniList()
-	if err != nil {
-		return
-	}
-	cfg = LoadConfig()
-	if cfg.ALSelectedID == 0 {
-		fmt.Println("No entry selected")
-	}
-	entry = al.GetMediaListById(cfg.ALSelectedID)
-	if entry == nil {
-		err = fmt.Errorf("no entry found")
-	}
-	return
-}
-
 func switchToMal(ctx *cli.Context) error {
 	appCfg := AppConfig{}
 	LoadJsonFile(AppConfigFile, &appCfg)
@@ -220,7 +194,7 @@ func switchToMal(ctx *cli.Context) error {
 }
 
 func alSetEntryEpisodes(ctx *cli.Context) error {
-	al, entry, cfg, err := loadAniListFull()
+	al, entry, cfg, err := loadAniListFull(ctx)
 	if err != nil {
 		return err
 	}
@@ -272,7 +246,7 @@ func alStatusAutoUpdate(cfg *Config, entry *anilist.MediaListEntry) {
 }
 
 func alSetEntryStatus(ctx *cli.Context) error {
-	al, entry, _, err := loadAniListFull()
+	al, entry, _, err := loadAniListFull(ctx)
 	if err != nil {
 		return err
 	}
@@ -298,7 +272,7 @@ func alSetEntryStatus(ctx *cli.Context) error {
 }
 
 func alSetEntryScore(ctx *cli.Context) error {
-	al, entry, _, err := loadAniListFull()
+	al, entry, _, err := loadAniListFull(ctx)
 	if err != nil {
 		return err
 	}
@@ -323,7 +297,7 @@ func alSetEntryScore(ctx *cli.Context) error {
 }
 
 func alSelectEntry(ctx *cli.Context) error {
-	al, err := loadAniList()
+	al, err := loadAniList(ctx)
 	if err != nil {
 		return err
 	}
@@ -362,7 +336,7 @@ func alSaveSelection(cfg *Config, entry *anilist.MediaListEntry) {
 }
 
 func alNyaaWebsite(ctx *cli.Context) error {
-	al, err := loadAniList()
+	al, err := loadAniList(ctx)
 	if err != nil {
 		return err
 	}
@@ -407,7 +381,7 @@ func alNyaaWebsite(ctx *cli.Context) error {
 }
 
 func alOpenWebsite(ctx *cli.Context) error {
-	al, err := loadAniList()
+	al, err := loadAniList(ctx)
 	if err != nil {
 		return nil
 	}
@@ -457,7 +431,7 @@ func alOpenWebsite(ctx *cli.Context) error {
 }
 
 func alPrintWebsites(ctx *cli.Context) error {
-	al, err := loadAniList()
+	al, err := loadAniList(ctx)
 	if err != nil {
 		return err
 	}
@@ -479,7 +453,7 @@ func alPrintWebsites(ctx *cli.Context) error {
 }
 
 func alNextAiringEpisode(ctx *cli.Context) error {
-	al, entry, cfg, err := loadAniListFull()
+	al, entry, cfg, err := loadAniListFull(ctx)
 	if err != nil {
 		return err
 	}
@@ -524,7 +498,7 @@ func alNextAiringEpisode(ctx *cli.Context) error {
 }
 
 func alPrintMusic(ctx *cli.Context) error {
-	_, entry, _, err := loadAniListFull()
+	_, entry, _, err := loadAniListFull(ctx)
 	if err != nil {
 		return err
 	}
