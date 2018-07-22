@@ -45,19 +45,8 @@ func alNyaaCui(ctx *cli.Context) error {
 
 	searchTerm := entry.Title.UserPreferred
 	if ctx.Bool("alt") {
-		alts := make([]string, 0, 3+len(entry.Synonyms))
-		if t := entry.Title.English; t != "" {
-			alts = append(alts, t)
-		}
-		if t := entry.Title.Native; t != "" {
-			alts = append(alts, t)
-		}
-		if t := entry.Title.Romaji; t != "" {
-			alts = append(alts, t)
-		}
-		alts = append(alts, entry.Synonyms...)
 		fmt.Printf("Select desired title\n\n")
-		if searchTerm = chooseStrFromSlice(alts); searchTerm == "" {
+		if searchTerm = chooseStrFromSlice(sliceOfEntryTitles(entry)); searchTerm == "" {
 			return fmt.Errorf("no alternative titles")
 		}
 	} else if ctx.NArg() > 0 {

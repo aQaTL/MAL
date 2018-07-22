@@ -13,6 +13,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/skratchdot/open-golang/open"
 	"github.com/urfave/cli"
+	"github.com/atotto/clipboard"
 )
 
 func AniListApp(app *cli.App) *cli.App {
@@ -138,6 +139,13 @@ func AniListApp(app *cli.App) *cli.App {
 			Usage:     "Print opening and ending themes",
 			UsageText: "mal music",
 			Action:    alPrintMusic,
+		},
+		cli.Command{
+			Name:      "copy",
+			Category:  "Action",
+			Usage:     "Copy selected value into system clipboard",
+			UsageText: "mal copy [title|url]",
+			Action:    alCopyIntoClipboard,
 		},
 	}
 
@@ -358,19 +366,8 @@ func alNyaaWebsite(ctx *cli.Context) error {
 
 	var searchTerm string
 	if ctx.Bool("alt") {
-		alts := make([]string, 0, 3+len(entry.Synonyms))
-		if t := entry.Title.English; t != "" {
-			alts = append(alts, t)
-		}
-		if t := entry.Title.Native; t != "" {
-			alts = append(alts, t)
-		}
-		if t := entry.Title.Romaji; t != "" {
-			alts = append(alts, t)
-		}
-		alts = append(alts, entry.Synonyms...)
 		fmt.Printf("Select desired title\n\n")
-		if searchTerm = chooseStrFromSlice(alts); searchTerm == "" {
+		if searchTerm = chooseStrFromSlice(sliceOfEntryTitles(entry)); searchTerm == "" {
 			return fmt.Errorf("no alternative titles")
 		}
 	} else {
@@ -529,4 +526,36 @@ func alPrintMusic(ctx *cli.Context) error {
 	printThemes(details.EndingThemes)
 
 	return nil
+}
+
+func alCopyIntoClipboard(ctx *cli.Context) error {
+	_, entry, cfg, err := loadAniListFull(ctx)
+	if err != nil {
+		return err
+	}
+
+	var text string
+
+	switch strings.ToLower(ctx.Args().First()) {
+	case "title":
+		alts := sliceOfEntryTitles(entry)
+		fmt.Printf("Select desired title\n\n")
+		if text = chooseStrFromSlice(alts); text == "" {
+			return fmt.Errorf("no alternative titles")
+		}
+	case "url":
+		entryUrl, ok := cfg.Websites[entry.IdMal]
+		if !ok {
+			return fmt.Errorf("no url to copy")
+		}
+		text = entryUrl
+	default:
+		return fmt.Errorf("usage: mal copy [title|url]")
+	}
+
+	if err = clipboard.WriteAll(text); err == nil {
+		fmt.Fprintln(color.Output, "Text", color.HiYellowString("%s", text), "copied into clipboard")
+	}
+
+	return err
 }

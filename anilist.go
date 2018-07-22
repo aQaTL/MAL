@@ -36,6 +36,21 @@ func (l List) GetMediaListByMalId(malId int) *anilist.MediaListEntry {
 	return nil
 }
 
+func sliceOfEntryTitles(entry *anilist.MediaListEntry) []string {
+	alts := make([]string, 0, 3+len(entry.Synonyms))
+	if t := entry.Title.English; t != "" {
+		alts = append(alts, t)
+	}
+	if t := entry.Title.Native; t != "" {
+		alts = append(alts, t)
+	}
+	if t := entry.Title.Romaji; t != "" {
+		alts = append(alts, t)
+	}
+	alts = append(alts, entry.Synonyms...)
+	return alts
+}
+
 func alGetList(al *AniList, status anilist.MediaListStatus) List {
 	if status == anilist.All {
 		return al.List
