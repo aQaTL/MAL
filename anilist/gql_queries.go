@@ -9,6 +9,7 @@ query UserList ($userID: Int) {
 				status
 				score(format: POINT_10)
 				progress
+				repeat
 				updatedAt
 				media {
 					id
@@ -22,25 +23,47 @@ query UserList ($userID: Int) {
 					type
 					format
 					status
-					description
-					startDate {
-						...FuzzyDateFields
-					}
-					endDate {
-						...FuzzyDateFields
-					}
 					season
 					episodes
 					duration
-					source
-					genres
 					synonyms
-					averageScore
-					popularity
-					nextAiringEpisode {
-						airingAt
-						episode
+				}
+			}
+			name
+			isCustomList
+			isSplitCompletedList
+			status
+		}
+	}
+}
+`
+
+var queryUserAnimeListFullDetails = `
+query UserList ($userID: Int) {
+	MediaListCollection (userId: $userID, type: ANIME) {
+		lists {
+			entries {
+				id
+				status
+				score(format: POINT_10)
+				progress
+				updatedAt
+				media {
+					id
+					idMal
+					title {
+						romaji
+						english
+						native
+						userPreferred
 					}
+					type
+					format
+					status
+					season
+					episodes
+					duration
+					synonyms
 				}
 			}
 			name

@@ -36,30 +36,59 @@ type MediaListEntry struct {
 	Status    MediaListStatus `json:"status"`
 	Score     int             `json:"score"`
 	Progress  int             `json:"progress"`
+	Repeat    int             `json:"repeat"`
 	UpdatedAt int             `json:"updatedAt"`
 
-	Media `json:"media"`
+	MediaDeficient `json:"media"`
 }
 
-type Media struct {
-	Id                int            `json:"id"`
-	IdMal             int            `json:"idMal"`
-	Title             MediaTitle     `json:"title"`
-	Type              string         `json:"type"`
-	Format            string         `json:"format"`
-	Status            string         `json:"status"`
-	Description       string         `json:"description"`
-	StartDate         FuzzyDate      `json:"startDate"`
-	EndDate           FuzzyDate      `json:"endDate"`
-	Season            string         `json:"season"`
-	Episodes          int            `json:"episodes"`
-	Duration          int            `json:"duration"`
-	Source            string         `json:"source"`
-	Genres            []string       `json:"genres"`
-	Synonyms          []string       `json:"synonyms"`
-	AverageScore      int            `json:"averageScore"`
-	Popularity        int            `json:"popularity"`
-	NextAiringEpisode AiringSchedule `json:"nextAiringEpisode"`
+type MediaDeficient struct {
+	Id       int        `json:"id"`
+	IdMal    int        `json:"idMal"`
+	Title    MediaTitle `json:"title"`
+	Type     string     `json:"type"`
+	Format   string     `json:"format"`
+	Status   string     `json:"status"`
+	Season   string     `json:"season"`
+	Episodes int        `json:"episodes"`
+	Duration int        `json:"duration"`
+	Synonyms []string   `json:"synonyms"`
+}
+
+type MediaFull struct {
+	Id                int             `json:"id"`
+	IdMal             int             `json:"idMal"`
+	Title             MediaTitle      `json:"title"`
+	Type              string          `json:"type"`
+	Format            string          `json:"format"`
+	Status            string          `json:"status"`
+	Description       string          `json:"description"`
+	StartDate         FuzzyDate       `json:"startDate"`
+	EndDate           FuzzyDate       `json:"endDate"`
+	Season            string          `json:"season"`
+	Episodes          int             `json:"episodes"`
+	Duration          int             `json:"duration"`
+	Chapters          int             `json:"chapters"`
+	Volumes           int             `json:"volumes"`
+	CountryOfOrigin   string          `json:"countryOfOrigin"`
+	IsLicensed        bool            `json:"isLicensed"`
+	Source            string          `json:"source"`
+	HashTag           string          `json:"hashtag"`
+	Trailer           MediaTrailer    `json:"trailer"`
+	UpdatedAt         int             `json:"updatedAt"`
+	CoverImage        MediaCoverImage `json:"coverImage"`
+	BannerImage       string          `json:"bannerImage"`
+	Genres            []string        `json:"genres"`
+	Synonyms          []string        `json:"synonyms"`
+	AverageScore      int             `json:"averageScore"`
+	MeanScore         int             `json:"meanScore"`
+	Popularity        int             `json:"popularity"`
+	Trending          int             `json:"trending"`
+	Tags              MediaTag        `json:"tags"`
+	IsFavourite       bool            `json:"isFavourite"`
+	IsAdult           bool            `json:"isAdult"`
+	NextAiringEpisode AiringSchedule  `json:"nextAiringEpisode"`
+	SiteUrl           string          `json:"siteUrl"`
 }
 
 type MediaTitle struct {
@@ -80,6 +109,27 @@ type AiringSchedule struct {
 	AiringAt        int `json:"airingAt"`
 	TimeUntilAiring int `json:"timeUntilAiring"`
 	Episode         int `json:"episode"`
+}
+
+type MediaTrailer struct {
+	Id string `json:"id"`
+	Site string `json:"site"`
+}
+
+type MediaCoverImage struct {
+	Large string `json:"large"`
+	Medium string `json:"medium"`
+}
+
+type MediaTag struct {
+	Id int `json:"id"`
+	Name string `json:"name"`
+	Description string `json:"description"`
+	Category string `json:"category"`
+	Rank int `json:"rank"`
+	IsGeneralSpoiler bool `json:"isGeneralSpoiler"`
+	IsMediaSpoiler bool `json:"isMediaSpoiler"`
+	IsAdult bool `json:"isAdult"`
 }
 
 type GqlError struct {

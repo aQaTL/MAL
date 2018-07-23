@@ -10,10 +10,11 @@ import (
 
 	"github.com/aqatl/mal/anilist"
 	"github.com/aqatl/mal/mal"
+	"github.com/atotto/clipboard"
 	"github.com/fatih/color"
 	"github.com/skratchdot/open-golang/open"
 	"github.com/urfave/cli"
-	"github.com/atotto/clipboard"
+	"github.com/hako/durafmt"
 )
 
 func AniListApp(app *cli.App) *cli.App {
@@ -124,6 +125,13 @@ func AniListApp(app *cli.App) *cli.App {
 					Action:    alPrintWebsites,
 				},
 			},
+		},
+		cli.Command{
+			Name:      "stats",
+			Category:  "Action",
+			Usage:     "Show your account statistics",
+			UsageText: "mal stats",
+			Action:    alStats,
 		},
 		cli.Command{
 			Name:      "airing",
@@ -454,6 +462,68 @@ func alPrintWebsites(ctx *cli.Context) error {
 
 		fmt.Fprintf(color.Output, "%6d (%s): %s\n", k, title, entryUrl)
 	}
+
+	return nil
+}
+
+func alStats(ctx *cli.Context) error {
+	al, err := loadAniList(ctx)
+	if err != nil {
+		return err
+	}
+
+	yellow := color.New(color.FgHiYellow).SprintFunc()
+	red := color.New(color.FgHiRed).SprintfFunc()
+	cyan := color.New(color.FgHiCyan).SprintfFunc()
+	magenta := color.New(color.FgHiMagenta).SprintfFunc()
+
+	lists := [6]List{
+		alGetList(al, anilist.Current),
+		alGetList(al, anilist.Planning),
+		alGetList(al, anilist.Completed),
+		alGetList(al, anilist.Repeating),
+		alGetList(al, anilist.Paused),
+		alGetList(al, anilist.Dropped),
+	}
+
+	totalShows := 0
+	totalTimeSpentWatching := 0
+	totalEpisodesWatched := 0
+	for _, list := range lists {
+		if len(list) == 0 {
+			continue
+		}
+		totalShows += len(list)
+		episodesWatched := 0
+		timeSpentWatching := 0
+		for _, entry := range list {
+			timeSpentWatching += (entry.Progress * entry.Duration) +
+				(entry.Repeat * entry.Episodes * entry.Duration)
+			episodesWatched += entry.Progress + entry.Episodes*entry.Repeat
+		}
+		totalTimeSpentWatching += timeSpentWatching
+		totalEpisodesWatched += episodesWatched
+
+		timeSpentWatchingFormatted, _ := durafmt.ParseString(fmt.Sprint(timeSpentWatching, "m"))
+
+		fmt.Fprintf(color.Output,
+			"%-9s: %s entries | %5s episodes | time spent watching: %s\n",
+			list[0].Status.String(),
+			red("%-3d", len(list)),
+			magenta("%-5d", episodesWatched),
+			cyan("%v", timeSpentWatchingFormatted))
+	}
+
+	totalTimeSpentWatchingDuration, _ := time.ParseDuration(
+		fmt.Sprint(totalTimeSpentWatching, "m"))
+
+	fmt.Println()
+	fmt.Fprintln(color.Output, "Total episodes watched:", red("%d", totalEpisodesWatched))
+	fmt.Fprintln(color.Output, "Total shows:", red("%d", totalShows))
+	fmt.Fprintf(color.Output,
+		"Total time spent watching: %s (%s days)",
+		yellow(durafmt.Parse(totalTimeSpentWatchingDuration).String()),
+		cyan("%d", int(totalTimeSpentWatchingDuration.Hours() / 24 + 0.5)))
 
 	return nil
 }

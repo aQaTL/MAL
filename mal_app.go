@@ -205,7 +205,7 @@ func MalApp(app *cli.App) *cli.App {
 			Category:  "Action",
 			Usage:     "Show your account statistics",
 			UsageText: "mal stats",
-			Action:    printStats,
+			Action:    malStats,
 		},
 		cli.Command{
 			Name:      "mal",
@@ -757,7 +757,7 @@ func nyaaWebsite(ctx *cli.Context) error {
 	return nil
 }
 
-func printStats(ctx *cli.Context) error {
+func malStats(ctx *cli.Context) error {
 	c, list, err := loadMAL(ctx)
 	if err != nil {
 		return err

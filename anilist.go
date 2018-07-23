@@ -96,7 +96,7 @@ func loadAniList(ctx *cli.Context) (*AniList, error) {
 	} else {
 		err = loadAniListAnimeLists(al)
 	}
-	return al, nil
+	return al, err
 }
 
 func loadOAuthToken() (oauth2.OAuthToken, error) {
