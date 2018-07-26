@@ -12,9 +12,9 @@ import (
 	"github.com/aqatl/mal/mal"
 	"github.com/atotto/clipboard"
 	"github.com/fatih/color"
+	"github.com/hako/durafmt"
 	"github.com/skratchdot/open-golang/open"
 	"github.com/urfave/cli"
-	"github.com/hako/durafmt"
 )
 
 func AniListApp(app *cli.App) *cli.App {
@@ -523,7 +523,7 @@ func alStats(ctx *cli.Context) error {
 	fmt.Fprintf(color.Output,
 		"Total time spent watching: %s (%s days)",
 		yellow(durafmt.Parse(totalTimeSpentWatchingDuration).String()),
-		cyan("%d", int(totalTimeSpentWatchingDuration.Hours() / 24 + 0.5)))
+		cyan("%d", int(totalTimeSpentWatchingDuration.Hours()/24+0.5)))
 
 	return nil
 }
@@ -562,7 +562,7 @@ func alNextAiringEpisode(ctx *cli.Context) error {
 	if tua < 0 {
 		tua *= -1
 	}
-	timeUntilAiring, err := time.ParseDuration(strconv.Itoa(tua) + "s")
+	timeUntilAiring, err := durafmt.ParseString(strconv.Itoa(tua) + "s")
 	if err != nil {
 		fmt.Println(err)
 	} else if schedule.TimeUntilAiring < 0 {
