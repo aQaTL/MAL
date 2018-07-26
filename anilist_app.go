@@ -188,7 +188,7 @@ func aniListDefaultAction(ctx *cli.Context) error {
 	}
 
 	fmt.Printf("No%64s%8s%6s\n", "Title", "Eps", "Score")
-	fmt.Println("================================================================================")
+	fmt.Println(strings.Repeat("=", 80))
 	pattern := "%2d%64.64s%8s%6d\n"
 	var entry *anilist.MediaListEntry
 	for i := visibleEntries - 1; i >= 0; i-- {
