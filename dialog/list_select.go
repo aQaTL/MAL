@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/jroimartin/gocui"
+	"reflect"
 	"strconv"
 )
 
@@ -11,50 +12,34 @@ const (
 	listSelectViewName = "listSelectViewName"
 )
 
-func ListSelect(gui *gocui.Gui, title string, list []fmt.Stringer) (
+func ListSelect(gui *gocui.Gui, title string, slice interface{}) (
 	<-chan int, CleanUpFunc, error,
 ) {
+	value := reflect.ValueOf(slice)
+	if k := value.Kind(); k != reflect.Slice && k != reflect.Array {
+		return nil, nil, fmt.Errorf("slice argument must be a slice or an array")
+	}
 	listW := 1
-	listH := len(list)
+	listH := value.Len()
 
-	buffer := bytes.Buffer{}
-
-	for i, str := range list {
-		idxLen, _ := buffer.WriteString(strconv.Itoa(i))
-		buffer.WriteByte('.')
-		strBytes := []byte(str.String())
-		if bLen := len(strBytes)+idxLen+1; bLen > listW {
+	buf := bytes.Buffer{}
+	for i := 0; i < value.Len(); i++ {
+		idxLen, _ := buf.WriteString(strconv.Itoa(i))
+		buf.WriteByte('.')
+		strBytes := []byte(fmt.Sprint(value.Index(i).Interface()))
+		if bLen := len(strBytes) + idxLen + 1; bLen > listW {
 			listW = bLen
 		}
-		buffer.Write(strBytes)
-		buffer.WriteRune('\n')
+		buf.Write(strBytes)
+		buf.WriteRune('\n')
 	}
 	listW += 2
 
 	cleanUp := cleanUpFunc(gui, listSelectViewName)
 	selectedIdx, v, err := listSelect(gui, title, listW, listH)
 	if v != nil {
-		buffer.WriteTo(v)
+		buf.WriteTo(v)
 	}
-	return selectedIdx, cleanUp, err
-}
-
-func ListSelectString(gui *gocui.Gui, title string, list []string) (
-	<-chan int, CleanUpFunc, error,
-) {
-	listW := longestStringLen(list) + 2
-	listH := len(list)
-
-	cleanUp := cleanUpFunc(gui, listSelectViewName)
-	selectedIdx, v, err := listSelect(gui, title, listW, listH)
-
-	if v != nil {
-		for i, str := range list {
-			fmt.Fprint(v, i, ".")
-			fmt.Fprintln(v, "", str)
-		}
-	}
-
 	return selectedIdx, cleanUp, err
 }
 
@@ -63,7 +48,7 @@ func listSelect(gui *gocui.Gui, title string, listW, listH int) (chan int, *gocu
 
 	//TODO wrap list if list is too wide (handle moving up & down correctly)
 	viewHeight := listH + 1
-	if maxHeight := int(float64(h)*0.8); listH > maxHeight {
+	if maxHeight := int(float64(h) * 0.8); listH > maxHeight {
 		viewHeight = maxHeight
 	}
 	x0, y0 := w/2-listW/2, h/2-viewHeight/2

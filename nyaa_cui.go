@@ -294,11 +294,7 @@ func (nc *nyaaCui) LoadNextPage() {
 }
 
 func (nc *nyaaCui) ChangeCategory() {
-	categories := make([]fmt.Stringer, len(nyaa_scraper.Categories))
-	for i := range categories {
-		categories[i] = nyaa_scraper.Categories[i]
-	}
-	selIdxChan, cleanUp, err := dialog.ListSelect(nc.Gui, "Select category", categories)
+	selIdxChan, cleanUp, err := dialog.ListSelect(nc.Gui, "Select category", nyaa_scraper.Categories)
 	if err != nil {
 		gocuiReturnError(nc.Gui, err)
 	}
@@ -313,11 +309,7 @@ func (nc *nyaaCui) ChangeCategory() {
 }
 
 func (nc *nyaaCui) ChangeFilter() {
-	filters := make([]fmt.Stringer, len(nyaa_scraper.Filters))
-	for i := range filters {
-		filters[i] = nyaa_scraper.Filters[i]
-	}
-	selIdxChan, cleanUp, err := dialog.ListSelect(nc.Gui, "Select filter", filters)
+	selIdxChan, cleanUp, err := dialog.ListSelect(nc.Gui, "Select filter", nyaa_scraper.Filters)
 	if err != nil {
 		gocuiReturnError(nc.Gui, err)
 	}
