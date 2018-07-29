@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/aqatl/mal/oauth2"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/aqatl/mal/oauth2"
+	"github.com/pkg/errors"
 )
 
 //TODO Anilist support
@@ -55,7 +56,7 @@ func QueryAiringSchedule(mediaId, episode int, token oauth2.OAuthToken) (AiringS
 	vars := make(map[string]interface{})
 	vars["mediaId"] = mediaId
 	vars["episode"] = episode
-	data := &struct{
+	data := &struct {
 		AiringSchedule `json:"AiringSchedule"`
 	}{AiringSchedule{}}
 	err := gqlErrorsHandler(graphQLRequestParsed(queryAiringSchedule, vars, token, data))
@@ -94,7 +95,9 @@ func printGqlErrs(gqlErrs []GqlError) {
 func graphQLRequestParsed(query string, vars map[string]interface{}, t oauth2.OAuthToken,
 	x interface{}) ([]GqlError, error) {
 	resp, err := graphQLRequest(query, vars, t)
-	defer resp.Body.Close()
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +122,9 @@ func graphQLRequestString(query string, vars map[string]interface{}, t oauth2.OA
 	string, error,
 ) {
 	resp, err := graphQLRequest(query, vars, t)
-	defer resp.Body.Close()
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return "", err
 	}

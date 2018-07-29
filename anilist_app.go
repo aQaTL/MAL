@@ -580,6 +580,9 @@ func alPrintMusic(ctx *cli.Context) error {
 	}
 
 	details, err := mal.FetchDetailsWithAnimation(&mal.Client{}, &mal.Anime{ID: entry.IdMal})
+	if err != nil {
+		return err
+	}
 
 	printThemes := func(themes []string) {
 		for _, theme := range themes {
