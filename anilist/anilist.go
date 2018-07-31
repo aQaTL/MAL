@@ -14,7 +14,8 @@ import (
 
 //TODO Anilist support
 
-const apiEndpoint = "https://graphql.anilist.co"
+const ApiEndpoint = "https://graphql.anilist.co"
+const ALDomain = "https://anilist.co"
 
 var InvalidToken = errors.New("Invalid token")
 
@@ -144,7 +145,7 @@ func graphQLRequest(query string, vars map[string]interface{}, t oauth2.OAuthTok
 		return nil, err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, apiEndpoint, &reqBody)
+	req, err := http.NewRequest(http.MethodPost, ApiEndpoint, &reqBody)
 	if err != nil {
 		return nil, err
 	}

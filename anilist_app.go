@@ -155,6 +155,14 @@ func AniListApp(app *cli.App) *cli.App {
 			UsageText: "mal copy [title|url]",
 			Action:    alCopyIntoClipboard,
 		},
+		cli.Command{
+			Name: "anilist",
+			Aliases: []string{"al"},
+			Category: "Action",
+			Usage: "Open selected entry's AniList site",
+			UsageText: "mal al",
+			Action: alOpenEntrySite,
+		},
 	}
 
 	app.Action = cli.ActionFunc(aniListDefaultAction)
@@ -631,4 +639,22 @@ func alCopyIntoClipboard(ctx *cli.Context) error {
 	}
 
 	return err
+}
+
+func alOpenEntrySite(ctx *cli.Context) error {
+	_, entry, cfg, err := loadAniListFull(ctx)
+	if err != nil {
+		return err
+	}
+
+	uri := fmt.Sprintf("%s/%s/%d", anilist.ALDomain, strings.ToLower(entry.Type), entry.Id)
+	if path := cfg.BrowserPath; path == "" {
+		open.Start(uri)
+	} else {
+		open.StartWith(uri, path)
+	}
+	fmt.Println("Opened website for:")
+	alPrintEntryDetails(entry)
+
+	return nil
 }
