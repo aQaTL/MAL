@@ -156,12 +156,12 @@ func AniListApp(app *cli.App) *cli.App {
 			Action:    alCopyIntoClipboard,
 		},
 		cli.Command{
-			Name: "anilist",
-			Aliases: []string{"al"},
-			Category: "Action",
-			Usage: "Open selected entry's AniList site",
+			Name:      "anilist",
+			Aliases:   []string{"al"},
+			Category:  "Action",
+			Usage:     "Open selected entry's AniList site",
 			UsageText: "mal al",
-			Action: alOpenEntrySite,
+			Action:    alOpenEntrySite,
 		},
 	}
 
@@ -242,6 +242,8 @@ func alSetEntryEpisodes(ctx *cli.Context) error {
 			return fmt.Errorf("n can't be lower than 0")
 		}
 		entry.Progress = n
+	} else if cfg.StatusAutoUpdateMode == AfterThreshold && entry.Progress == 0 {
+		entry.Progress += 2
 	} else {
 		entry.Progress++
 	}
