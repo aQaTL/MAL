@@ -193,6 +193,18 @@ func (nc *nyaaCui) GetEditor() func(v *gocui.View, key gocui.Key, ch rune, mod g
 			}
 		case key == gocui.KeyArrowUp || ch == 'k':
 			v.MoveCursor(0, -1, false)
+		case ch == 'g':
+			v.SetCursor(0, 0)
+			v.SetOrigin(0, 0)
+		case ch == 'G':
+			_, viewH := v.Size()
+			totalH := len(nc.Results)
+			if totalH <= viewH {
+				v.SetCursor(0, totalH-1)
+			} else {
+				v.SetOrigin(0, totalH-viewH)
+				v.SetCursor(0, viewH-1)
+			}
 		case ch == 'd':
 			_, y := v.Cursor()
 			_, oy := v.Origin()
