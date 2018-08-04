@@ -73,7 +73,7 @@ func startNyaaCui(cfg *Config, searchTerm, displayedInfo string) error {
 		SearchTerm:    searchTerm,
 		DisplayedInfo: displayedInfo,
 		Category:      nyaa_scraper.AnimeEnglishTranslated,
-		Filter:        nyaa_scraper.NoFilter,
+		Filter:        nyaa_scraper.TrustedOnly,
 	}
 	gui.SetManager(nc)
 	nc.setGuiKeyBindings(gui)
