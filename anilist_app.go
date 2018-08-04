@@ -40,7 +40,7 @@ func AniListApp(app *cli.App) *cli.App {
 
 	app.Commands = []cli.Command{
 		cli.Command{
-			Name:      "mal",
+			Name:      "switch",
 			Aliases:   []string{"s"},
 			Usage:     "Switches app mode to MyAnimeList",
 			UsageText: "mal mal",
@@ -162,6 +162,13 @@ func AniListApp(app *cli.App) *cli.App {
 			Usage:     "Open selected entry's AniList site",
 			UsageText: "mal al",
 			Action:    alOpenEntrySite,
+		},
+		cli.Command{
+			Name:      "mal",
+			Category:  "Action",
+			Usage:     "Open selected entry's MyAnimeList site",
+			UsageText: "mal mal",
+			Action:    alOpenMalSite,
 		},
 	}
 
@@ -655,6 +662,19 @@ func alOpenEntrySite(ctx *cli.Context) error {
 	} else {
 		open.StartWith(uri, path)
 	}
+	fmt.Println("Opened website for:")
+	alPrintEntryDetails(entry)
+
+	return nil
+}
+
+func alOpenMalSite(ctx *cli.Context) error {
+	_, entry, cfg, err := loadAniListFull(ctx)
+	if err != nil {
+		return err
+	}
+
+	openMalSite(cfg, entry.IdMal)
 	fmt.Println("Opened website for:")
 	alPrintEntryDetails(entry)
 

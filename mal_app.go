@@ -60,8 +60,8 @@ func MalApp(app *cli.App) *cli.App {
 
 	app.Commands = []cli.Command{
 		cli.Command{
-			Name:      "anilist",
-			Aliases:   []string{"al", "s"},
+			Name:      "switch",
+			Aliases:   []string{"s"},
 			Usage:     "Switches app mode to AniList",
 			UsageText: "mal anilist",
 			Action:    switchToAniList,
@@ -212,7 +212,7 @@ func MalApp(app *cli.App) *cli.App {
 			Category:  "Action",
 			Usage:     "Open MyAnimeList page of selected entry",
 			UsageText: "mal mal",
-			Action:    openMalPage,
+			Action:    malOpenMalSite,
 		},
 		cli.Command{
 			Name:      "details",
@@ -806,7 +806,7 @@ func malStats(ctx *cli.Context) error {
 	return nil
 }
 
-func openMalPage(ctx *cli.Context) error {
+func malOpenMalSite(ctx *cli.Context) error {
 	_, list, err := loadMAL(ctx)
 	if err != nil {
 		return err
@@ -818,15 +818,19 @@ func openMalPage(ctx *cli.Context) error {
 		return fmt.Errorf("no entry selected")
 	}
 
-	if path, args := cfg.BrowserPath, fmt.Sprintf(mal.AnimePage, cfg.SelectedID); path == "" {
-		open.Start(args)
-	} else {
-		open.StartWith(args, path)
-	}
+	openMalSite(cfg, cfg.SelectedID)
 	fmt.Println("Opened website for:")
 	malPrintEntryDetails(list.GetByID(cfg.SelectedID))
 
 	return nil
+}
+
+func openMalSite(cfg *Config, malId int) {
+	if path, args := cfg.BrowserPath, fmt.Sprintf(mal.AnimePage, malId); path == "" {
+		open.Start(args)
+	} else {
+		open.StartWith(args, path)
+	}
 }
 
 func printWebsites(ctx *cli.Context) error {
