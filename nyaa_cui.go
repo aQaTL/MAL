@@ -85,7 +85,7 @@ func startNyaaCui(cfg *Config, searchTerm, displayedInfo string) error {
 	gui.SelFgColor = gocui.ColorGreen
 
 	gui.Update(func(gui *gocui.Gui) error {
-		nc.Reload(gui)
+		nc.Reload()
 		return nil
 	})
 
@@ -128,17 +128,6 @@ var green = color.New(color.FgGreen).SprintFunc()
 
 func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 	w, h := gui.Size()
-	if v, err := gui.SetView(ncInfoView, 0, 0, w-1, 2); err != nil {
-		if err != gocui.ErrUnknownView {
-			return err
-		}
-
-		v.Title = "Info"
-		v.Editable = false
-
-		fmt.Fprintf(v, "[%s]: displaying %d out of %d results",
-			nc.DisplayedInfo, len(nc.Results), nc.MaxResults)
-	}
 
 	if v, err := gui.SetView(ncResultsView, 0, 3, w-1, h-4); err != nil {
 		if err != gocui.ErrUnknownView {
@@ -174,6 +163,18 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 		}
 	}
 
+	if v, err := gui.SetView(ncInfoView, 0, 0, w-1, 2); err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+
+		v.Title = "Info"
+		v.Editable = false
+
+		fmt.Fprintf(v, "[%s]: displaying %d out of %d results",
+			nc.DisplayedInfo, nc.DisplayedResults, nc.MaxResults)
+	}
+
 	if v, err := gui.SetView(ncShortcutsView, 0, h-3, w-1, h-1); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
@@ -189,6 +190,7 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 			c("c"), "category",
 			c("f"), "filters",
 			c("t"), "tags",
+			c("r"), "reload",
 		)
 	}
 
@@ -232,24 +234,26 @@ func (nc *nyaaCui) GetEditor() func(v *gocui.View, key gocui.Key, ch rune, mod g
 			nc.ChangeFilter()
 		case ch == 't':
 			nc.FilterByTag()
+		case ch == 'r':
+			nc.Reload()
 		}
 	}
 }
 
-func (nc *nyaaCui) Reload(gui *gocui.Gui) {
+func (nc *nyaaCui) Reload() {
 	var resultPage nyaa_scraper.NyaaResultPage
 	var searchErr error
 	f := func() {
 		resultPage, searchErr = nyaa_scraper.Search(nc.SearchTerm, nc.Category, nc.Filter)
 	}
-	jobDone, err := dialog.StuffLoader(dialog.FitMessage(gui, "Loading "+nc.SearchTerm), f)
+	jobDone, err := dialog.StuffLoader(dialog.FitMessage(nc.Gui, "Loading "+nc.SearchTerm), f)
 	if err != nil {
-		gocuiReturnError(gui, err)
+		gocuiReturnError(nc.Gui, err)
 	}
 	go func() {
 		ok := <-jobDone
 		if searchErr != nil {
-			dialog.JustShowOkDialog(gui, "Error", searchErr.Error())
+			dialog.JustShowOkDialog(nc.Gui, "Error", searchErr.Error())
 			return
 		}
 		if ok {
@@ -260,7 +264,7 @@ func (nc *nyaaCui) Reload(gui *gocui.Gui) {
 			nc.LoadedPages = 1
 		}
 
-		gui.Update(func(gui *gocui.Gui) error {
+		nc.Gui.Update(func(gui *gocui.Gui) error {
 			gui.DeleteView(ncResultsView)
 			gui.DeleteView(ncInfoView)
 			return nil
@@ -331,7 +335,7 @@ func (nc *nyaaCui) ChangeCategory() {
 		nc.Gui.Update(cleanUp)
 		if ok {
 			nc.Category = nyaa_scraper.Categories[idx]
-			nc.Reload(nc.Gui)
+			nc.Reload()
 		}
 	}()
 }
@@ -346,7 +350,7 @@ func (nc *nyaaCui) ChangeFilter() {
 		nc.Gui.Update(cleanUp)
 		if ok {
 			nc.Filter = nyaa_scraper.Filters[idx]
-			nc.Reload(nc.Gui)
+			nc.Reload()
 		}
 	}()
 }
@@ -385,6 +389,7 @@ func (nc *nyaaCui) FilterByTag() {
 				nc.TitleFilter = regex
 			}
 			nc.Gui.Update(func(gui *gocui.Gui) error {
+				gui.DeleteView(ncInfoView)
 				gui.DeleteView(ncResultsView)
 				return nil
 			})
