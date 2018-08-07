@@ -11,6 +11,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/jroimartin/gocui"
 	"github.com/urfave/cli"
+	"regexp"
 )
 
 func malNyaaCui(ctx *cli.Context) error {
@@ -114,7 +115,10 @@ type nyaaCui struct {
 	MaxPages    int
 	LoadedPages int
 
-	ResultsView *gocui.View
+	TitleFilter *regexp.Regexp
+
+	ResultsView      *gocui.View
+	DisplayedResults int
 }
 
 var red = color.New(color.FgRed).SprintFunc()
@@ -153,7 +157,11 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 		nc.ResultsView = v
 
 		//TODO Better/clearer results printing
+		nc.DisplayedResults = 0
 		for _, result := range nc.Results {
+			if nc.TitleFilter != nil && !nc.TitleFilter.MatchString(result.Title) {
+				continue
+			}
 			fmt.Fprintln(v,
 				result.Title,
 				red(result.Size),
@@ -162,6 +170,7 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 				red(result.Leechers),
 				blue(result.CompletedDownloads),
 			)
+			nc.DisplayedResults++
 		}
 	}
 
@@ -174,8 +183,13 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 		v.Editable = false
 
 		c := color.New(color.FgCyan).SprintFunc()
-		fmt.Fprintln(v, c("d"), "download", c("l"), "load next page",
-			c("c"), "category", c("f"), "filters")
+		fmt.Fprintln(v,
+			c("d"), "download",
+			c("l"), "load next page",
+			c("c"), "category",
+			c("f"), "filters",
+			c("t"), "tags",
+		)
 	}
 
 	return nil
@@ -188,7 +202,7 @@ func (nc *nyaaCui) GetEditor() func(v *gocui.View, key gocui.Key, ch rune, mod g
 			_, oy := v.Origin()
 			_, y := v.Cursor()
 			y += oy
-			if y < len(nc.Results)-1 {
+			if y < nc.DisplayedResults-1 {
 				v.MoveCursor(0, 1, false)
 			}
 		case key == gocui.KeyArrowUp || ch == 'k':
@@ -198,7 +212,7 @@ func (nc *nyaaCui) GetEditor() func(v *gocui.View, key gocui.Key, ch rune, mod g
 			v.SetOrigin(0, 0)
 		case ch == 'G':
 			_, viewH := v.Size()
-			totalH := len(nc.Results)
+			totalH := nc.DisplayedResults
 			if totalH <= viewH {
 				v.SetCursor(0, totalH-1)
 			} else {
@@ -216,6 +230,8 @@ func (nc *nyaaCui) GetEditor() func(v *gocui.View, key gocui.Key, ch rune, mod g
 			nc.ChangeCategory()
 		case ch == 'f':
 			nc.ChangeFilter()
+		case ch == 't':
+			nc.FilterByTag()
 		}
 	}
 }
@@ -331,6 +347,47 @@ func (nc *nyaaCui) ChangeFilter() {
 		if ok {
 			nc.Filter = nyaa_scraper.Filters[idx]
 			nc.Reload(nc.Gui)
+		}
+	}()
+}
+
+var tagRegex = `(?U)\[(.+)\]`
+
+func (nc *nyaaCui) FilterByTag() {
+	tags := make([]string, 1, len(nc.Results))
+	tagsDup := make(map[string]struct{})
+	re := regexp.MustCompile(tagRegex)
+	for _, result := range nc.Results {
+		if tsm := re.FindStringSubmatch(result.Title); len(tsm) >= 2 && tsm[1] != "" {
+			if _, ok := tagsDup[tsm[1]]; !ok {
+				tags = append(tags, tsm[1])
+				tagsDup[tsm[1]] = struct{}{}
+			}
+		}
+	}
+	tags[0] = "None"
+
+	selIdxChan, cleanUp, err := dialog.ListSelect(nc.Gui, "Select title filter", tags)
+	if err != nil {
+		gocuiReturnError(nc.Gui, err)
+	}
+	go func() {
+		idx, ok := <-selIdxChan
+		nc.Gui.Update(cleanUp)
+		if ok {
+			if idx == 0 {
+				nc.TitleFilter = nil
+			} else {
+				regex, err := regexp.Compile("\\[" + regexp.QuoteMeta(tags[idx]) + "\\]")
+				if err != nil {
+					gocuiReturnError(nc.Gui, err)
+				}
+				nc.TitleFilter = regex
+			}
+			nc.Gui.Update(func(gui *gocui.Gui) error {
+				gui.DeleteView(ncResultsView)
+				return nil
+			})
 		}
 	}()
 }
