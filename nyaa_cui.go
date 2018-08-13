@@ -118,7 +118,7 @@ type nyaaCui struct {
 	TitleFilter *regexp.Regexp
 
 	ResultsView      *gocui.View
-	DisplayedResults int
+	DisplayedIndexes []int
 }
 
 var red = color.New(color.FgRed).SprintFunc()
@@ -146,8 +146,8 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 		nc.ResultsView = v
 
 		//TODO Better/clearer results printing
-		nc.DisplayedResults = 0
-		for _, result := range nc.Results {
+		nc.DisplayedIndexes = make([]int, 0, len(nc.Results))
+		for i, result := range nc.Results {
 			if nc.TitleFilter != nil && !nc.TitleFilter.MatchString(result.Title) {
 				continue
 			}
@@ -159,7 +159,7 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 				red(result.Leechers),
 				blue(result.CompletedDownloads),
 			)
-			nc.DisplayedResults++
+			nc.DisplayedIndexes = append(nc.DisplayedIndexes, i)
 		}
 	}
 
@@ -172,7 +172,7 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 		v.Editable = false
 
 		fmt.Fprintf(v, "[%s]: displaying %d out of %d results",
-			nc.DisplayedInfo, nc.DisplayedResults, nc.MaxResults)
+			nc.DisplayedInfo, len(nc.DisplayedIndexes), nc.MaxResults)
 	}
 
 	if v, err := gui.SetView(ncShortcutsView, 0, h-3, w-1, h-1); err != nil {
@@ -204,7 +204,7 @@ func (nc *nyaaCui) GetEditor() func(v *gocui.View, key gocui.Key, ch rune, mod g
 			_, oy := v.Origin()
 			_, y := v.Cursor()
 			y += oy
-			if y < nc.DisplayedResults-1 {
+			if y < len(nc.DisplayedIndexes)-1 {
 				v.MoveCursor(0, 1, false)
 			}
 		case key == gocui.KeyArrowUp || ch == 'k':
@@ -214,7 +214,7 @@ func (nc *nyaaCui) GetEditor() func(v *gocui.View, key gocui.Key, ch rune, mod g
 			v.SetOrigin(0, 0)
 		case ch == 'G':
 			_, viewH := v.Size()
-			totalH := nc.DisplayedResults
+			totalH := len(nc.DisplayedIndexes)
 			if totalH <= viewH {
 				v.SetCursor(0, totalH-1)
 			} else {
@@ -273,12 +273,12 @@ func (nc *nyaaCui) Reload() {
 }
 
 func (nc *nyaaCui) Download(yIdx int) {
-	if yIdx >= len(nc.Results) {
+	if yIdx >= len(nc.DisplayedIndexes) {
 		return
 	}
 
 	link := ""
-	if entry := nc.Results[yIdx]; entry.MagnetLink != "" {
+	if entry := nc.Results[nc.DisplayedIndexes[yIdx]]; entry.MagnetLink != "" {
 		link = entry.MagnetLink
 	} else if entry.TorrentLink != "" {
 		link = entry.TorrentLink
