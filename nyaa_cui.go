@@ -154,7 +154,7 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 			fmt.Fprintln(v,
 				result.Title,
 				red(result.Size),
-				cyan(result.DateAdded.Format("15:04:05 02-01-2006 MST")),
+				cyan(result.DateAdded.Format("15:04 02-01-2006")),
 				green(result.Seeders),
 				red(result.Leechers),
 				blue(result.CompletedDownloads),
