@@ -18,9 +18,9 @@ type AniList struct {
 
 type List []anilist.MediaListEntry
 
-func (l List) GetMediaListById(listId int) *anilist.MediaListEntry {
+func (l List) GetMediaListById(id int) *anilist.MediaListEntry {
 	for i := 0; i < len(l); i++ {
-		if l[i].ListId == listId {
+		if l[i].Id == id {
 			return &l[i]
 		}
 	}
@@ -34,6 +34,23 @@ func (l List) GetMediaListByMalId(malId int) *anilist.MediaListEntry {
 		}
 	}
 	return nil
+}
+
+func (l List) DeleteById(listId int) List {
+	idx := 0
+	found := false
+	for i, entry := range l {
+		if entry.ListId == listId {
+			idx = i
+			found = true
+			break
+		}
+	}
+	if !found {
+		return l
+	}
+	l = append(l[:idx], l[idx+1:]...)
+	return l
 }
 
 func sliceOfEntryTitles(entry *anilist.MediaListEntry) []string {

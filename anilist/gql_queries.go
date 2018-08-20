@@ -144,3 +144,11 @@ query ($resetNotificationCount: Boolean) {
 		}
 	}
 }`
+
+var deleteMediaListEntry = `
+mutation ($id: Int) {
+	DeleteMediaListEntry(id: $id) {
+		deleted
+	}
+}
+`

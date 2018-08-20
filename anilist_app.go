@@ -70,6 +70,14 @@ func AniListApp(app *cli.App) *cli.App {
 			Action:    alSetEntryScore,
 		},
 		cli.Command{
+			Name: "delete",
+			Aliases: []string{"del"},
+			Category:"Update",
+			Usage: "Delete entry",
+			UsageText: "mal del",
+			Action: alDeleteEntry,
+		},
+		cli.Command{
 			Name:      "sel",
 			Aliases:   []string{"select"},
 			Category:  "Config",
@@ -208,7 +216,7 @@ func aniListDefaultAction(ctx *cli.Context) error {
 	var entry *anilist.MediaListEntry
 	for i := visibleEntries - 1; i >= 0; i-- {
 		entry = &list[i]
-		if entry.ListId == cfg.ALSelectedID {
+		if entry.Id == cfg.ALSelectedID {
 			color.HiYellow(pattern, i+1, entry.Title.UserPreferred,
 				fmt.Sprintf("%d/%d", entry.Progress, entry.Episodes),
 				entry.Score)
@@ -338,6 +346,23 @@ func alSetEntryScore(ctx *cli.Context) error {
 	return nil
 }
 
+func alDeleteEntry(ctx *cli.Context) error {
+	al, entry, _, err := loadAniListFull(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := anilist.DeleteMediaListEntry(entry, al.Token); err != nil {
+		return err
+	}
+
+	fmt.Println("Entry deleted successfully")
+	alPrintEntryDetails(entry)
+
+	al.List = al.List.DeleteById(entry.ListId)
+	return saveAniListAnimeLists(al)
+}
+
 func alSelectEntry(ctx *cli.Context) error {
 	al, err := loadAniList(ctx)
 	if err != nil {
@@ -370,7 +395,7 @@ func alSelectEntry(ctx *cli.Context) error {
 }
 
 func alSaveSelection(cfg *Config, entry *anilist.MediaListEntry) {
-	cfg.ALSelectedID = entry.ListId
+	cfg.ALSelectedID = entry.Id
 	cfg.Save()
 
 	fmt.Println("Selected entry:")

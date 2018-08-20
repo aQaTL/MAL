@@ -74,6 +74,24 @@ func QueryAiringNotification(markRead bool, token oauth2.OAuthToken) (AiringNoti
 	return data.AiringNotification, err
 }
 
+func DeleteMediaListEntry(entry *MediaListEntry, token oauth2.OAuthToken) error {
+	vars := make(map[string]interface{})
+	vars["id"] = entry.ListId
+	data := new(struct {
+		D struct {
+			Deleted bool `json:"deleted"`
+		} `json:"DeleteMediaListEntry"`
+	})
+	err := gqlErrorsHandler(graphQLRequestParsed(deleteMediaListEntry, vars, token, data))
+	if err != nil {
+		return err
+	}
+	if !data.D.Deleted {
+		return fmt.Errorf("deletion unsuccessfull")
+	}
+	return nil
+}
+
 func gqlErrorsHandler(gqlErrs []GqlError, err error) error {
 	if err != nil {
 		return err
