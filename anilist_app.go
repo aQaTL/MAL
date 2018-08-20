@@ -70,12 +70,12 @@ func AniListApp(app *cli.App) *cli.App {
 			Action:    alSetEntryScore,
 		},
 		cli.Command{
-			Name: "delete",
-			Aliases: []string{"del"},
-			Category:"Update",
-			Usage: "Delete entry",
+			Name:      "delete",
+			Aliases:   []string{"del"},
+			Category:  "Update",
+			Usage:     "Delete entry",
 			UsageText: "mal del",
-			Action: alDeleteEntry,
+			Action:    alDeleteEntry,
 		},
 		cli.Command{
 			Name:      "sel",
@@ -177,6 +177,20 @@ func AniListApp(app *cli.App) *cli.App {
 			Usage:     "Open selected entry's MyAnimeList site",
 			UsageText: "mal mal",
 			Action:    alOpenMalSite,
+		},
+		cli.Command{
+			Name:      "airnot",
+			Category:  "Action",
+			Usage:     "Fetch airing notifications",
+			UsageText: "mal airnot",
+			Action:    alAiringNotifications,
+			Flags: []cli.Flag{
+				cli.UintFlag{
+					Name: "max",
+					Usage: "Set max amount of notifications displayed",
+					Value: 50,
+				},
+			},
 		},
 	}
 
@@ -702,6 +716,33 @@ func alOpenMalSite(ctx *cli.Context) error {
 	openMalSite(cfg, entry.IdMal)
 	fmt.Println("Opened website for:")
 	alPrintEntryDetails(entry)
+
+	return nil
+}
+
+func alAiringNotifications(ctx *cli.Context) error {
+	al, err := loadAniList(ctx)
+	if err != nil {
+		return err
+	}
+
+	notifications, err := anilist.QueryAiringNotificationsWaitAnimation(
+		1, int(ctx.Uint("max")), false, al.Token)
+	if err != nil {
+		return err
+	}
+	sort.SliceStable(notifications, func(i, j int) bool {
+		return notifications[i].CreatedAt < notifications[j].CreatedAt
+	})
+
+	cyan := color.New(color.FgHiCyan).SprintFunc()
+	red := color.New(color.FgHiRed).SprintFunc()
+	yellow := color.New(color.FgHiYellow).SprintFunc()
+	for _, n := range notifications {
+		t := time.Unix(int64(n.CreatedAt), 0).Format("02-01-2006 15:04")
+		fmt.Fprintf(color.Output, "[%s] Episode %s of %s aired\n",
+			cyan(t), red(n.Episode), yellow(n.Title.UserPreferred))
+	}
 
 	return nil
 }

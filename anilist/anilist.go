@@ -74,6 +74,22 @@ func QueryAiringNotification(markRead bool, token oauth2.OAuthToken) (AiringNoti
 	return data.AiringNotification, err
 }
 
+func QueryAiringNotifications(page, perPage int, markRead bool, token oauth2.OAuthToken) (
+	[]AiringNotification, error,
+) {
+	vars := make(map[string]interface{})
+	vars["page"] = page
+	vars["perPage"] = perPage
+	vars["resetNotificationCount"] = markRead
+	data := new(struct {
+		Page struct {
+			Notifications []AiringNotification `json:"notifications"`
+		} `json:"Page"`
+	})
+	err := gqlErrorsHandler(graphQLRequestParsed(queryAiringNotifications, vars, token, data))
+	return data.Page.Notifications, err
+}
+
 func DeleteMediaListEntry(entry *MediaListEntry, token oauth2.OAuthToken) error {
 	vars := make(map[string]interface{})
 	vars["id"] = entry.ListId

@@ -145,6 +145,30 @@ query ($resetNotificationCount: Boolean) {
 	}
 }`
 
+var queryAiringNotifications = `
+query ($page: Int, $perPage: Int, $resetNotificationCount: Boolean) {
+	Page(page: $page, perPage: $perPage) {
+		notifications(type_in: [AIRING], resetNotificationCount: $resetNotificationCount) {
+			... on AiringNotification {
+				id
+				animeId
+				episode
+				contexts
+				createdAt
+				media {
+					title {
+						romaji
+						english
+						native
+						userPreferred				
+					}
+				}
+			}
+		}
+	}
+}
+`
+
 var deleteMediaListEntry = `
 mutation ($id: Int) {
 	DeleteMediaListEntry(id: $id) {

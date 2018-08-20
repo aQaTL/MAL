@@ -41,13 +41,13 @@ func QueryAiringScheduleWaitAnimation(mediaId, episode int, token oauth2.OAuthTo
 	return as, err
 }
 
-func QueryAiringNotificationWaitAnimation(markRead bool, token oauth2.OAuthToken) (
-	AiringNotification, error,
+func QueryAiringNotificationsWaitAnimation(page, perPage int, markRead bool, token oauth2.OAuthToken) (
+	[]AiringNotification, error,
 ) {
-	var n AiringNotification
+	var n []AiringNotification
 	var err error
 	cliwait.DoFuncWithWaitAnimation("Querying notification", func() {
-		n, err = QueryAiringNotification(markRead, token)
+		n, err = QueryAiringNotifications(page, perPage, markRead, token)
 	})
 	return n, err
 }
