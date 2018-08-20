@@ -122,3 +122,25 @@ query ($mediaId: Int, $episode: Int) {
 	}
 }
 `
+
+var queryAiringNotification = `
+query ($resetNotificationCount: Boolean) {
+	Notification(type: AIRING, resetNotificationCount: $resetNotificationCount) {
+		... on AiringNotification {
+			id
+			type
+			animeId
+			episode
+			contexts
+			createdAt
+			media {
+				title {
+					romaji
+					english
+					native
+					userPreferred				
+				}
+			}
+		}
+	}
+}`

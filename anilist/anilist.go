@@ -64,6 +64,16 @@ func QueryAiringSchedule(mediaId, episode int, token oauth2.OAuthToken) (AiringS
 	return data.AiringSchedule, err
 }
 
+func QueryAiringNotification(markRead bool, token oauth2.OAuthToken) (AiringNotification, error) {
+	vars := make(map[string]interface{})
+	vars["resetNotificationCount"] = markRead
+	data := new(struct {
+		AiringNotification `json:"Notification"`
+	})
+	err := gqlErrorsHandler(graphQLRequestParsed(queryAiringNotification, vars, token, data))
+	return data.AiringNotification, err
+}
+
 func gqlErrorsHandler(gqlErrs []GqlError, err error) error {
 	if err != nil {
 		return err
@@ -78,8 +88,8 @@ func gqlErrorsHandler(gqlErrs []GqlError, err error) error {
 		for _, loc := range gqlErrs[0].Locations {
 			locations.WriteString(fmt.Sprintf("Line %d column %d\n", loc.Line, loc.Column))
 		}
-		return fmt.Errorf("GraphQl Error (%d): %s\n%v",
-			gqlErrs[0].Status, gqlErrs[0].Message, locations)
+		return fmt.Errorf("GraphQl Error (%d): %s\n%s",
+			gqlErrs[0].Status, gqlErrs[0].Message, locations.String())
 	}
 	return nil
 }

@@ -1,6 +1,8 @@
 package anilist
 
-import "strings"
+import (
+	"strings"
+)
 
 type User struct {
 	Id                      int       `json:"id"`
@@ -112,24 +114,24 @@ type AiringSchedule struct {
 }
 
 type MediaTrailer struct {
-	Id string `json:"id"`
+	Id   string `json:"id"`
 	Site string `json:"site"`
 }
 
 type MediaCoverImage struct {
-	Large string `json:"large"`
+	Large  string `json:"large"`
 	Medium string `json:"medium"`
 }
 
 type MediaTag struct {
-	Id int `json:"id"`
-	Name string `json:"name"`
-	Description string `json:"description"`
-	Category string `json:"category"`
-	Rank int `json:"rank"`
-	IsGeneralSpoiler bool `json:"isGeneralSpoiler"`
-	IsMediaSpoiler bool `json:"isMediaSpoiler"`
-	IsAdult bool `json:"isAdult"`
+	Id               int    `json:"id"`
+	Name             string `json:"name"`
+	Description      string `json:"description"`
+	Category         string `json:"category"`
+	Rank             int    `json:"rank"`
+	IsGeneralSpoiler bool   `json:"isGeneralSpoiler"`
+	IsMediaSpoiler   bool   `json:"isMediaSpoiler"`
+	IsAdult          bool   `json:"isAdult"`
 }
 
 type GqlError struct {
@@ -163,4 +165,16 @@ func (status MediaListStatus) String() string {
 	} else {
 		return string(status[0]) + strings.ToLower(string(status[1:]))
 	}
+}
+
+type AiringNotification struct {
+	Id        int      `json:"id"`
+	Type      string   `json:"type"`
+	AnimeId   int      `json:"animeId"`
+	Episode   int      `json:"episode"`
+	Contexts  []string `json:"contexts"`
+	CreatedAt int      `json:"createdAt"`
+	Title     struct {
+		MediaTitle `json:"title"`
+	} `json:"media"`
 }
