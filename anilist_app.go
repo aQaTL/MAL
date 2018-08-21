@@ -186,9 +186,61 @@ func AniListApp(app *cli.App) *cli.App {
 			Action:    alAiringNotifications,
 			Flags: []cli.Flag{
 				cli.UintFlag{
-					Name: "max",
+					Name:  "max",
 					Usage: "Set max amount of notifications displayed",
 					Value: 50,
+				},
+			},
+		},
+		cli.Command{
+			Name:     "cfg",
+			Aliases:  []string{"config", "configuration"},
+			Category: "Config",
+			Usage:    "Change config values",
+			Subcommands: cli.Commands{
+				cli.Command{
+					Name:      "max",
+					Aliases:   []string{"visible"},
+					Usage:     "Change amount of displayed entries",
+					UsageText: "mal cfg max [number]",
+					Action:    configChangeMax,
+				},
+				cli.Command{
+					Name:      "status",
+					Usage:     "Status value of displayed entries",
+					UsageText: "mal cfg status [watching|planning|completed|dropped|paused|repeating]",
+					Action:    configChangeAlStatus,
+				},
+				cli.Command{
+					Name:      "status-auto-update",
+					Usage:     "Allows entry to be automatically set to completed when number of all episodes is reached or exceeded",
+					UsageText: "mal cfg status-auto-update [off|normal|after-threshold]",
+					Action:    configChangeAutoUpdateMode,
+				},
+				cli.Command{
+					Name:      "sort",
+					Usage:     "Specifies sorting mode for the displayed table",
+					UsageText: "mal cfg sort [last-updated|title|progress|score]",
+					Action:    configChangeSorting,
+				},
+				cli.Command{
+					Name:      "browser",
+					Usage:     "Specifies a browser to use",
+					UsageText: "mal cfg browser [browser_path]",
+					Action:    configChangeBrowser,
+					Flags: []cli.Flag{
+						cli.BoolFlag{
+							Name:  "clear",
+							Usage: "Clear browser path (return to default)",
+						},
+					},
+				},
+				cli.Command{
+					Name:            "torrent",
+					Usage:           "Sets path to torrent client and it args",
+					UsageText:       "mal cfg torrent [path] [args...]",
+					SkipFlagParsing: true,
+					Action:          configChangeTorrent,
 				},
 			},
 		},

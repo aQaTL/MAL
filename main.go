@@ -25,7 +25,7 @@ var (
 type Mode uint
 
 const (
-	MalMode     Mode = iota
+	MalMode Mode = iota
 	AniListMode
 )
 
