@@ -6,6 +6,7 @@ import (
 	"github.com/fatih/color"
 	"path/filepath"
 	"github.com/urfave/cli"
+	"log"
 )
 
 var dataDir = filepath.Join(homeDir(), ".mal")
@@ -49,6 +50,14 @@ func main() {
 		runApp(MalApp(app))
 	case AniListMode:
 		runApp(AniListApp(app))
+	}
+}
+
+func checkDataDir() {
+	if err := os.Mkdir(dataDir, os.ModePerm); err == nil {
+		log.Printf("Created cache directory at %s", dataDir)
+	} else if !os.IsExist(err) {
+		log.Printf("Error creating cache directory (%s): %v", dataDir, err)
 	}
 }
 

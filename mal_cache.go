@@ -17,14 +17,6 @@ import (
 	"github.com/aqatl/cliwait"
 )
 
-func checkDataDir() {
-	if err := os.Mkdir(dataDir, os.ModePerm); err == nil {
-		log.Printf("Created cache directory at %s", dataDir)
-	} else if !os.IsExist(err) {
-		log.Printf("Error creating cache directory (%s): %v", dataDir, err)
-	}
-}
-
 func loadCredentials(ctx *cli.Context) string {
 	if ctx.GlobalBool("prompt-credentials") { //Read credentials from console
 		reader := bufio.NewReader(os.Stdin)
