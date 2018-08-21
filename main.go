@@ -42,7 +42,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "mal"
 	app.Usage = "App for managing your MAL"
-	app.Version = "0.1"
+	app.Version = "4ever in beta"
 
 	switch appCfg.Mode {
 	case MalMode:
