@@ -520,7 +520,7 @@ func alOpenWebsite(ctx *cli.Context) error {
 		cfg.Save()
 
 		fmt.Print("Entry: ")
-		color.HiYellow("%v", entry.Title)
+		color.HiYellow("%s", entry.Title.UserPreferred)
 		fmt.Print("URL: ")
 		color.HiRed("%v", cfg.Websites[entry.IdMal])
 
