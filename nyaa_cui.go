@@ -6,12 +6,13 @@ import (
 	"os/exec"
 	"strings"
 
+	"regexp"
+
 	"github.com/aqatl/mal/dialog"
 	"github.com/aqatl/mal/nyaa_scraper"
 	"github.com/fatih/color"
 	"github.com/jroimartin/gocui"
 	"github.com/urfave/cli"
-	"regexp"
 )
 
 func malNyaaCui(ctx *cli.Context) error {
@@ -290,7 +291,10 @@ func (nc *nyaaCui) Download(yIdx int) {
 	link = "\"" + link + "\""
 	cmd := exec.Command(nc.Cfg.TorrentClientPath, nc.Cfg.TorrentClientArgs...)
 	cmd.Args = append(cmd.Args, link)
-	cmd.Args = cmd.Args[1:] //Why they include app name in the arguments???
+	if len(nc.Cfg.TorrentClientArgs) > 0 {
+		cmd.Args = cmd.Args[1:] //Why they include app name in the arguments???
+	}
+	gocuiReturnError(nc.Gui, fmt.Errorf("%s", strings.Join(cmd.Args, " ")))
 	if err := cmd.Start(); err != nil {
 		gocuiReturnError(nc.Gui, err)
 	}
