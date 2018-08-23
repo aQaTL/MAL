@@ -634,7 +634,7 @@ func alStats(ctx *cli.Context) error {
 	fmt.Fprintln(color.Output, "Total episodes watched:", red(totalEpisodesWatched))
 	fmt.Fprintln(color.Output, "Total shows:", red(totalShows))
 	fmt.Fprintf(color.Output,
-		"Total time spent watching: %s (%s days)",
+		"Total time spent watching: %s (%s days)\n",
 		yellow(durafmt.Parse(totalTimeSpentWatchingDuration).String()),
 		cyan(int(totalTimeSpentWatchingDuration.Hours()/24+0.5)))
 
