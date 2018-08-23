@@ -581,9 +581,9 @@ func alStats(ctx *cli.Context) error {
 	}
 
 	yellow := color.New(color.FgHiYellow).SprintFunc()
-	red := color.New(color.FgHiRed).SprintfFunc()
-	cyan := color.New(color.FgHiCyan).SprintfFunc()
-	magenta := color.New(color.FgHiMagenta).SprintfFunc()
+	red := color.New(color.FgHiRed).SprintFunc()
+	cyan := color.New(color.FgHiCyan).SprintFunc()
+	magenta := color.New(color.FgHiMagenta).SprintFunc()
 
 	lists := [6]List{
 		alGetList(al, anilist.Current),
@@ -615,23 +615,28 @@ func alStats(ctx *cli.Context) error {
 		timeSpentWatchingFormatted, _ := durafmt.ParseString(fmt.Sprint(timeSpentWatching, "m"))
 
 		fmt.Fprintf(color.Output,
-			"%-9s: %s entries | %5s episodes | time spent watching: %s\n",
+			`%s:
+  entries: %s
+  episodes: %s
+  time spent watching: %s
+`,
 			list[0].Status.String(),
-			red("%-3d", len(list)),
-			magenta("%-5d", episodesWatched),
-			cyan("%v", timeSpentWatchingFormatted))
+			red(len(list)),
+			magenta(episodesWatched),
+			cyan(timeSpentWatchingFormatted),
+		)
 	}
 
 	totalTimeSpentWatchingDuration, _ := time.ParseDuration(
 		fmt.Sprint(totalTimeSpentWatching, "m"))
 
 	fmt.Println()
-	fmt.Fprintln(color.Output, "Total episodes watched:", red("%d", totalEpisodesWatched))
-	fmt.Fprintln(color.Output, "Total shows:", red("%d", totalShows))
+	fmt.Fprintln(color.Output, "Total episodes watched:", red(totalEpisodesWatched))
+	fmt.Fprintln(color.Output, "Total shows:", red(totalShows))
 	fmt.Fprintf(color.Output,
 		"Total time spent watching: %s (%s days)",
 		yellow(durafmt.Parse(totalTimeSpentWatchingDuration).String()),
-		cyan("%d", int(totalTimeSpentWatchingDuration.Hours()/24+0.5)))
+		cyan(int(totalTimeSpentWatchingDuration.Hours()/24+0.5)))
 
 	return nil
 }
