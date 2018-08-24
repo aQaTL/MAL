@@ -13,6 +13,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/jroimartin/gocui"
 	"github.com/urfave/cli"
+	"sort"
 )
 
 func malNyaaCui(ctx *cli.Context) error {
@@ -372,6 +373,7 @@ func (nc *nyaaCui) FilterByTag() {
 			}
 		}
 	}
+	sort.Strings(tags)
 	tags[0] = "None"
 
 	selIdxChan, cleanUp, err := dialog.ListSelect(nc.Gui, "Select title filter", tags)
