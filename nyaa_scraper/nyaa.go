@@ -98,12 +98,12 @@ func GetNyaaCategory(major, minor int) NyaaCategory {
 
 type NyaaFilter struct {
 	Name string
-	Val uint8
+	Val  uint8
 }
 
 var (
-	NoFilter = NyaaFilter{"No filter", 0}
-	NoRemakes = NyaaFilter{"No remakes", 1}
+	NoFilter    = NyaaFilter{"No filter", 0}
+	NoRemakes   = NyaaFilter{"No remakes", 1}
 	TrustedOnly = NyaaFilter{"Trusted only", 2}
 )
 
@@ -121,8 +121,28 @@ var Filters = []NyaaFilter{
 	TrustedOnly,
 }
 
+type NyaaClass uint8
+
+const (
+	Default NyaaClass = iota
+	Trusted
+	Danger
+)
+
+func ParseNyaaClass(str string) NyaaClass {
+	switch strings.ToLower(str) {
+	case "success":
+		return Trusted
+	case "danger":
+		return Danger
+	default:
+		return Default
+	}
+}
+
 type NyaaEntry struct {
 	Category           NyaaCategory
+	Class              NyaaClass
 	Title              string
 	TorrentLink        string
 	MagnetLink         string
@@ -188,9 +208,10 @@ func SearchSpecificPage(query string, category NyaaCategory, filter NyaaFilter, 
 	return resultPage, nil
 }
 
-//TODO parsing green/neutral/red highlighted rows
 func parseNyaaEntry(sel *goquery.Selection) *NyaaEntry {
 	entry := NyaaEntry{}
+
+	entry.Class = ParseNyaaClass(sel.AttrOr("class", "default"))
 
 	currChild := sel.Children().First()
 	category := currChild.Find("a").AttrOr("href", "")

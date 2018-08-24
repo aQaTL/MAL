@@ -9,7 +9,7 @@ import (
 	"regexp"
 
 	"github.com/aqatl/mal/dialog"
-	"github.com/aqatl/mal/nyaa_scraper"
+	ns "github.com/aqatl/mal/nyaa_scraper"
 	"github.com/fatih/color"
 	"github.com/jroimartin/gocui"
 	"github.com/urfave/cli"
@@ -75,8 +75,8 @@ func startNyaaCui(cfg *Config, searchTerm, displayedInfo string) error {
 
 		SearchTerm:    searchTerm,
 		DisplayedInfo: displayedInfo,
-		Category:      nyaa_scraper.AnimeEnglishTranslated,
-		Filter:        nyaa_scraper.TrustedOnly,
+		Category:      ns.AnimeEnglishTranslated,
+		Filter:        ns.TrustedOnly,
 	}
 	gui.SetManager(nc)
 	nc.setGuiKeyBindings(gui)
@@ -109,10 +109,10 @@ type nyaaCui struct {
 
 	SearchTerm    string
 	DisplayedInfo string
-	Category      nyaa_scraper.NyaaCategory
-	Filter        nyaa_scraper.NyaaFilter
+	Category      ns.NyaaCategory
+	Filter        ns.NyaaFilter
 
-	Results     []nyaa_scraper.NyaaEntry
+	Results     []ns.NyaaEntry
 	MaxResults  int
 	MaxPages    int
 	LoadedPages int
@@ -127,6 +127,10 @@ var red = color.New(color.FgRed).SprintFunc()
 var cyan = color.New(color.FgCyan).SprintFunc()
 var blue = color.New(color.FgBlue).SprintFunc()
 var green = color.New(color.FgGreen).SprintFunc()
+
+var boldRed = color.New(color.FgRed).Add(color.Bold).SprintFunc()
+var boldGreen = color.New(color.FgGreen).Add(color.Bold).SprintFunc()
+var boldYellow = color.New(color.FgYellow).Add(color.Bold).SprintFunc()
 
 func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 	w, h := gui.Size()
@@ -153,8 +157,19 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 			if nc.TitleFilter != nil && !nc.TitleFilter.MatchString(result.Title) {
 				continue
 			}
+
+			title := result.Title
+			switch result.Class {
+			case ns.Default:
+				title = boldYellow(title)
+			case ns.Trusted:
+				title = boldGreen(title)
+			case ns.Danger:
+				title = boldRed(title)
+			}
+
 			fmt.Fprintln(v,
-				result.Title,
+				title,
 				red(result.Size),
 				cyan(result.DateAdded.Format("15:04 02-01-2006")),
 				green(result.Seeders),
@@ -243,10 +258,10 @@ func (nc *nyaaCui) GetEditor() func(v *gocui.View, key gocui.Key, ch rune, mod g
 }
 
 func (nc *nyaaCui) Reload() {
-	var resultPage nyaa_scraper.NyaaResultPage
+	var resultPage ns.NyaaResultPage
 	var searchErr error
 	f := func() {
-		resultPage, searchErr = nyaa_scraper.Search(nc.SearchTerm, nc.Category, nc.Filter)
+		resultPage, searchErr = ns.Search(nc.SearchTerm, nc.Category, nc.Filter)
 	}
 	jobDone, err := dialog.StuffLoader(dialog.FitMessage(nc.Gui, "Loading "+nc.SearchTerm), f)
 	if err != nil {
@@ -306,7 +321,7 @@ func (nc *nyaaCui) LoadNextPage() {
 	}
 	nc.LoadedPages++
 	go func() {
-		resultPage, _ := nyaa_scraper.SearchSpecificPage(
+		resultPage, _ := ns.SearchSpecificPage(
 			nc.SearchTerm,
 			nc.Category,
 			nc.Filter,
@@ -330,7 +345,7 @@ func (nc *nyaaCui) LoadNextPage() {
 }
 
 func (nc *nyaaCui) ChangeCategory() {
-	selIdxChan, cleanUp, err := dialog.ListSelect(nc.Gui, "Select category", nyaa_scraper.Categories)
+	selIdxChan, cleanUp, err := dialog.ListSelect(nc.Gui, "Select category", ns.Categories)
 	if err != nil {
 		gocuiReturnError(nc.Gui, err)
 	}
@@ -338,14 +353,14 @@ func (nc *nyaaCui) ChangeCategory() {
 		idx, ok := <-selIdxChan
 		nc.Gui.Update(cleanUp)
 		if ok {
-			nc.Category = nyaa_scraper.Categories[idx]
+			nc.Category = ns.Categories[idx]
 			nc.Reload()
 		}
 	}()
 }
 
 func (nc *nyaaCui) ChangeFilter() {
-	selIdxChan, cleanUp, err := dialog.ListSelect(nc.Gui, "Select filter", nyaa_scraper.Filters)
+	selIdxChan, cleanUp, err := dialog.ListSelect(nc.Gui, "Select filter", ns.Filters)
 	if err != nil {
 		gocuiReturnError(nc.Gui, err)
 	}
@@ -353,7 +368,7 @@ func (nc *nyaaCui) ChangeFilter() {
 		idx, ok := <-selIdxChan
 		nc.Gui.Update(cleanUp)
 		if ok {
-			nc.Filter = nyaa_scraper.Filters[idx]
+			nc.Filter = ns.Filters[idx]
 			nc.Reload()
 		}
 	}()
