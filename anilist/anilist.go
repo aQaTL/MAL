@@ -12,8 +12,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-//TODO Anilist support
-
 const ApiEndpoint = "https://graphql.anilist.co"
 const ALDomain = "https://anilist.co"
 

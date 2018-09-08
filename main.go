@@ -37,7 +37,7 @@ type AppConfig struct {
 func main() {
 	checkDataDir()
 
-	appCfg := AppConfig{}
+	appCfg := AppConfig{Mode: AniListMode}
 	LoadJsonFile(AppConfigFile, &appCfg)
 
 	app := cli.NewApp()
