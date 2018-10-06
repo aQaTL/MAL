@@ -147,7 +147,7 @@ func AniListApp(app *cli.App) *cli.App {
 			Category:  "Action",
 			Usage:     "Print airing time of next episode",
 			UsageText: "mal broadcast",
-			Action:    alNextAiringEpisode,
+			Action:    alAiringTime,
 		},
 		cli.Command{
 			Name:      "music",
@@ -641,14 +641,14 @@ func alStats(ctx *cli.Context) error {
 	return nil
 }
 
-func alNextAiringEpisode(ctx *cli.Context) error {
+func alAiringTime(ctx *cli.Context) error {
 	al, entry, cfg, err := loadAniListFull(ctx)
 	if err != nil {
 		return err
 	}
 
 	episode := entry.Progress
-	if cfg.StatusAutoUpdateMode != AfterThreshold && entry.Progress < entry.Episodes {
+	if episode == 0 || cfg.StatusAutoUpdateMode != AfterThreshold && entry.Progress < entry.Episodes {
 		episode++
 	}
 	schedule, err := anilist.QueryAiringScheduleWaitAnimation(entry.Id, episode, al.Token)
