@@ -1,4 +1,4 @@
-# Another MAL client
+# Another MAL/AniList client
 
 This time with CLI
 
@@ -23,8 +23,21 @@ In order to have `mal copy` command working, you need to have either `xsel` or `
 If you have a working Go environment, you can download the app via `go get -u github.com/aqatl/mal`. 
 Otherwise, download binaries from the [release](https://github.com/aQaTL/MAL/releases) page.
 
-First, you need to give the app your credentials - username and password (everything is 
-stored in `$HOME/.mal` or `%userprofile%\.mal` (Windows)). To do that, execute 
+Remember that everything is stored in `$HOME/.mal` or `%userprofile%\.mal` (Windows).
+
+### AniList mode
+
+AniList mode is used by default. All you need to do to configure the app is to simply execute the program. 
+It'll open AniList login page in your browser. Log in and authorize the app. And that's it - mal will cache 
+the received token on your disk and use it to authenticate your requests. 
+
+Run mal with `-r` flag to refresh cached lists.
+
+### MyAnimeList mode
+
+To switch between AniList and MyAnimeList mode use the `s` command (e.g. `mal s`).
+
+First, you need to give the app your credentials - username and password. To do that, execute 
 `mal --prompt-credentials --verify --save-password`. If everything went good, you should see 
 a list of 10 entries.
 
@@ -33,7 +46,8 @@ from your MAL. You can change the displayed list through some flags:
 
 ```
 --max value                    visible entries threshold (default: 0)
---status value                 display entries only with given status [watching|completed|onhold|dropped|plantowatch]
+--a							   display all entries; same as max -1
+--status value                 display entries only with given status [watching|planning|completed|repeating|paused|dropped]
 --sort value                   display entries sorted by: [last-updated|title|episodes|score]
 --reversed                     reversed list order
 ```
@@ -49,7 +63,7 @@ All actions are done by variety of commands. They are in the following form:
 
 Commands listed in `help` are divides into categories:
 
-* **Update** command changes entry data and sends the updated version to MAL service
+* **Update** command changes entry data and sends the updated version to your account
 * **Action** command performs action that uses the entry data like printing it to the console
 * **Config** command manipulates on the app configuration file (look at `mal cfg --help` for details)
 
@@ -71,14 +85,10 @@ USAGE:
 
 CATEGORY:
    Config
-
-OPTIONS:
-   --id  Select entry by id instead of by title
 ```
 
 For example, to select "Naruto", type `mal sel naruto` (case insensitive).
-If `sel` is given no arguments, it will just display info about currently selected entry 
-(if there's one).
+If `sel` is given no arguments, it will open a fuzzy search cui (console gui).
 
 #### Update entry
 
@@ -89,6 +99,7 @@ eps, episodes  Set the watched episodes value. If n not specified, the number wi
 score          Set your rating for selected entry
 status         Set your status for selected entry
 cmpl           Alias for 'mal status completed'
+delete, del    Delete entry
 ```
 
 ##### `mal eps` command
@@ -144,13 +155,16 @@ NAME:
    mal status - Set your status for selected entry
 
 USAGE:
-   mal status [watching|completed|onhold|dropped|plantowatch]
+   mal status [watching|planning|completed|dropped|paused|repeating]
 
 CATEGORY:
    Update
 ```
 
 There is also `cmpl` command that is an alias for `status completed`.
+
+Unfortunately, some commands may slightly differ between MyAnimeList and AniList mode and some may not
+be present in both.
 
 ## Examples
 
@@ -193,7 +207,7 @@ Again, you can add `--max -1` flag to turn off the list length limit.
 
 ### Checking entry details
 
-`mal detials`
+`mal details`
 
 `mal related`
 
