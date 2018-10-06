@@ -63,6 +63,13 @@ func AniListApp(app *cli.App) *cli.App {
 			Action:    alSetEntryStatus,
 		},
 		cli.Command{
+			Name:      "cmpl",
+			Category:  "Update",
+			Usage:     "Set entry status to completed",
+			UsageText: "mal cmpl",
+			Action:    alSetEntryStatusCompleted,
+		},
+		cli.Command{
 			Name:      "score",
 			Category:  "Update",
 			Usage:     "Set your rating for selected entry",
@@ -385,6 +392,10 @@ func alSetEntryStatus(ctx *cli.Context) error {
 	fmt.Println("Updated successfully")
 	alPrintEntryDetails(entry)
 	return nil
+}
+
+func alSetEntryStatusCompleted(ctx *cli.Context) error {
+	return ctx.App.Run([]string{"", "status", "completed"})
 }
 
 func alSetEntryScore(ctx *cli.Context) error {
