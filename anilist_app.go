@@ -679,7 +679,7 @@ func alAiringTime(ctx *cli.Context) error {
 			"Airing at: %s\n",
 		yellow(entry.Title.UserPreferred),
 		red(schedule.Episode),
-		cyan(airingAt.Format("15:04:05 02-01-2006 MST")),
+		cyan(airingAt.Format("15:04:05 02-01-2006 MST (Monday)")),
 	)
 
 	tua := schedule.TimeUntilAiring
