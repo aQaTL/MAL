@@ -153,7 +153,7 @@ func AniListApp(app *cli.App) *cli.App {
 			Aliases:   []string{"broadcast"},
 			Category:  "Action",
 			Usage:     "Print airing time of next episode",
-			UsageText: "mal broadcast",
+			UsageText: "mal airing [episode]",
 			Action:    alAiringTime,
 		},
 		cli.Command{
@@ -658,10 +658,23 @@ func alAiringTime(ctx *cli.Context) error {
 		return err
 	}
 
-	episode := entry.Progress
-	if episode == 0 || cfg.StatusAutoUpdateMode != AfterThreshold && entry.Progress < entry.Episodes {
-		episode++
+	var episode int
+	if argsLen := ctx.NArg(); argsLen == 1 {
+		episode, err = strconv.Atoi(ctx.Args().First())
+		if err != nil {
+			return err
+		}
+	} else if argsLen > 1 {
+		return fmt.Errorf("too many arguments")
+	} else {
+		episode = entry.Progress
+		if episode == 0 ||
+			cfg.StatusAutoUpdateMode != AfterThreshold && entry.Progress < entry.Episodes {
+
+			episode++
+		}
 	}
+
 	schedule, err := anilist.QueryAiringScheduleWaitAnimation(entry.Id, episode, al.Token)
 	if err != nil {
 		return err
