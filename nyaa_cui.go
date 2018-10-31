@@ -118,6 +118,7 @@ type nyaaCui struct {
 	LoadedPages int
 
 	TitleFilter *regexp.Regexp
+	QualityFilter *regexp.Regexp
 
 	ResultsView      *gocui.View
 	DisplayedIndexes []int
@@ -155,6 +156,9 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 		nc.DisplayedIndexes = make([]int, 0, len(nc.Results))
 		for i, result := range nc.Results {
 			if nc.TitleFilter != nil && !nc.TitleFilter.MatchString(result.Title) {
+				continue
+			}
+			if nc.QualityFilter != nil && !nc.QualityFilter.MatchString(result.Title) {
 				continue
 			}
 
@@ -207,6 +211,7 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 			c("c"), "category",
 			c("f"), "filters",
 			c("t"), "tags",
+			c("p"), "quality",
 			c("r"), "reload",
 		)
 	}
@@ -251,6 +256,8 @@ func (nc *nyaaCui) GetEditor() func(v *gocui.View, key gocui.Key, ch rune, mod g
 			nc.ChangeFilter()
 		case ch == 't':
 			nc.FilterByTag()
+		case ch == 'p':
+			nc.FilterByQuality()
 		case ch == 'r':
 			nc.Reload()
 		}
@@ -391,7 +398,7 @@ func (nc *nyaaCui) FilterByTag() {
 	sort.Strings(tags)
 	tags[0] = "None"
 
-	selIdxChan, cleanUp, err := dialog.ListSelect(nc.Gui, "Select title filter", tags, true)
+	selIdxChan, cleanUp, err := dialog.ListSelect(nc.Gui, "Select tag filter", tags, true)
 	if err != nil {
 		gocuiReturnError(nc.Gui, err)
 	}
@@ -424,6 +431,64 @@ func (nc *nyaaCui) FilterByTag() {
 					gocuiReturnError(nc.Gui, err)
 				}
 				nc.TitleFilter = regex
+			}
+			nc.Gui.Update(func(gui *gocui.Gui) error {
+				gui.DeleteView(ncInfoView)
+				gui.DeleteView(ncResultsView)
+				return nil
+			})
+		}
+	}()
+}
+
+var qualityTagRegex = `(\d{3,4}p)`
+
+func (nc *nyaaCui) FilterByQuality() {
+	tags := make([]string, 1, len(nc.Results))
+	tagsDup := make(map[string]struct{})
+	re := regexp.MustCompile(qualityTagRegex)
+	for _, result := range nc.Results {
+		if tsm := re.FindStringSubmatch(result.Title); len(tsm) >= 2 && tsm[1] != "" {
+			if _, ok := tagsDup[tsm[1]]; !ok {
+				tags = append(tags, tsm[1])
+				tagsDup[tsm[1]] = struct{}{}
+			}
+		}
+	}
+	sort.Strings(tags)
+	tags[0] = "None"
+
+	selIdxChan, cleanUp, err := dialog.ListSelect(nc.Gui, "Select quality filter", tags, true)
+	if err != nil {
+		gocuiReturnError(nc.Gui, err)
+	}
+	go func() {
+		idxs, ok := <-selIdxChan
+		nc.Gui.Update(cleanUp)
+		if ok {
+			containsNone := false
+			for _, v := range idxs {
+				if v == 0 {
+					containsNone = true
+					break
+				}
+			}
+			if len(idxs) == 0 || containsNone {
+				nc.QualityFilter = nil
+			} else {
+				tagBuffer := strings.Builder{}
+				for i, v := range idxs {
+					tagBuffer.WriteString(regexp.QuoteMeta(tags[v]))
+					if i < len(idxs)-1 {
+						tagBuffer.WriteString("|")
+					}
+				}
+
+				regex, err := regexp.Compile(tagBuffer.String())
+				if err != nil {
+					gocuiReturnError(nc.Gui, err)
+				}
+				nc.QualityFilter = regex
 			}
 			nc.Gui.Update(func(gui *gocui.Gui) error {
 				gui.DeleteView(ncInfoView)
