@@ -175,6 +175,13 @@ func MalApp(app *cli.App) *cli.App {
 					SkipFlagParsing: true,
 					Action:          configChangeTorrent,
 				},
+				cli.Command{
+					Name:            "nyaa-quality",
+					Usage:           "Sets default quality filter for nyaa search",
+					UsageText:       "mal cfg nyaa-quality [quality_text]",
+					SkipFlagParsing: true,
+					Action:          configChangeNyaaQuality,
+				},
 			},
 		},
 		cli.Command{

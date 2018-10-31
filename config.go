@@ -6,13 +6,13 @@ import (
 	"github.com/aqatl/mal/anilist"
 	"github.com/aqatl/mal/mal"
 	"github.com/fatih/color"
+	"github.com/urfave/cli"
 	"log"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
-	"github.com/urfave/cli"
 )
 
 type Config struct {
@@ -26,6 +26,7 @@ type Config struct {
 	BrowserPath       string
 	TorrentClientPath string
 	TorrentClientArgs []string
+	NyaaQuality       string
 
 	SelectedID int
 	Status     mal.MyStatus
@@ -227,6 +228,17 @@ func configChangeTorrent(ctx *cli.Context) error {
 		"New torrent config: %s %s\n",
 		color.HiYellowString("%s", cfg.TorrentClientPath),
 		color.HiCyanString("%s", strings.Join(cfg.TorrentClientArgs, " ")))
+
+	return nil
+}
+
+func configChangeNyaaQuality(ctx *cli.Context) error {
+	cfg := LoadConfig()
+
+	cfg.NyaaQuality = strings.Join(ctx.Args(), " ")
+	cfg.Save()
+
+	fmt.Fprintf(color.Output, "Changed nyaa default quality filter to %s\n", color.HiYellowString("%s", cfg.NyaaQuality))
 
 	return nil
 }

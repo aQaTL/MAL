@@ -31,6 +31,7 @@ func malNyaaCui(ctx *cli.Context) error {
 		cfg,
 		entry.Title,
 		fmt.Sprintf("%s %d/%d", entry.Title, entry.WatchedEpisodes, entry.Episodes),
+		cfg.NyaaQuality,
 	)
 }
 
@@ -60,15 +61,22 @@ func alNyaaCui(ctx *cli.Context) error {
 		cfg,
 		searchTerm,
 		fmt.Sprintf("%s %d/%d", searchTerm, entry.Progress, entry.Episodes),
+		cfg.NyaaQuality,
 	)
 }
 
-func startNyaaCui(cfg *Config, searchTerm, displayedInfo string) error {
+func startNyaaCui(cfg *Config, searchTerm, displayedInfo, quality string) error {
 	gui, err := gocui.NewGui(gocui.Output256)
 	defer gui.Close()
 	if err != nil {
 		return fmt.Errorf("gocui error: %v", err)
 	}
+
+	qualityRe, err := regexp.Compile(regexp.QuoteMeta(quality))
+	if err != nil {
+		return fmt.Errorf("failed to parse your quality tag")
+	}
+
 	nc := &nyaaCui{
 		Gui: gui,
 		Cfg: cfg,
@@ -77,6 +85,8 @@ func startNyaaCui(cfg *Config, searchTerm, displayedInfo string) error {
 		DisplayedInfo: displayedInfo,
 		Category:      ns.AnimeEnglishTranslated,
 		Filter:        ns.TrustedOnly,
+
+		QualityFilter: qualityRe,
 	}
 	gui.SetManager(nc)
 	nc.setGuiKeyBindings(gui)
