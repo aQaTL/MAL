@@ -345,30 +345,30 @@ func (nc *nyaaCui) LoadNextPage() {
 }
 
 func (nc *nyaaCui) ChangeCategory() {
-	selIdxChan, cleanUp, err := dialog.ListSelect(nc.Gui, "Select category", ns.Categories)
+	selIdxChan, cleanUp, err := dialog.ListSelect(nc.Gui, "Select category", ns.Categories, false)
 	if err != nil {
 		gocuiReturnError(nc.Gui, err)
 	}
 	go func() {
-		idx, ok := <-selIdxChan
+		idxs, ok := <-selIdxChan
 		nc.Gui.Update(cleanUp)
 		if ok {
-			nc.Category = ns.Categories[idx]
+			nc.Category = ns.Categories[idxs[0]]
 			nc.Reload()
 		}
 	}()
 }
 
 func (nc *nyaaCui) ChangeFilter() {
-	selIdxChan, cleanUp, err := dialog.ListSelect(nc.Gui, "Select filter", ns.Filters)
+	selIdxChan, cleanUp, err := dialog.ListSelect(nc.Gui, "Select filter", ns.Filters, false)
 	if err != nil {
 		gocuiReturnError(nc.Gui, err)
 	}
 	go func() {
-		idx, ok := <-selIdxChan
+		idxs, ok := <-selIdxChan
 		nc.Gui.Update(cleanUp)
 		if ok {
-			nc.Filter = ns.Filters[idx]
+			nc.Filter = ns.Filters[idxs[0]]
 			nc.Reload()
 		}
 	}()
@@ -391,18 +391,35 @@ func (nc *nyaaCui) FilterByTag() {
 	sort.Strings(tags)
 	tags[0] = "None"
 
-	selIdxChan, cleanUp, err := dialog.ListSelect(nc.Gui, "Select title filter", tags)
+	selIdxChan, cleanUp, err := dialog.ListSelect(nc.Gui, "Select title filter", tags, true)
 	if err != nil {
 		gocuiReturnError(nc.Gui, err)
 	}
 	go func() {
-		idx, ok := <-selIdxChan
+		idxs, ok := <-selIdxChan
 		nc.Gui.Update(cleanUp)
 		if ok {
-			if idx == 0 {
+			containsNone := false
+			for _, v := range idxs {
+				if v == 0 {
+					containsNone = true
+					break
+				}
+			}
+			if len(idxs) == 0 || containsNone {
 				nc.TitleFilter = nil
 			} else {
-				regex, err := regexp.Compile("\\[" + regexp.QuoteMeta(tags[idx]) + "\\]")
+				tagBuffer := strings.Builder{}
+				for i, v := range idxs {
+					tagBuffer.WriteString("\\[")
+					tagBuffer.WriteString(regexp.QuoteMeta(tags[v]))
+					tagBuffer.WriteString("\\]")
+					if i < len(idxs)-1 {
+						tagBuffer.WriteString("|")
+					}
+				}
+
+				regex, err := regexp.Compile(tagBuffer.String())
 				if err != nil {
 					gocuiReturnError(nc.Gui, err)
 				}
