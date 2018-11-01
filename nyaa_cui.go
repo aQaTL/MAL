@@ -8,12 +8,13 @@ import (
 
 	"regexp"
 
+	"sort"
+
 	"github.com/aqatl/mal/dialog"
 	ns "github.com/aqatl/mal/nyaa_scraper"
 	"github.com/fatih/color"
 	"github.com/jroimartin/gocui"
 	"github.com/urfave/cli"
-	"sort"
 )
 
 func malNyaaCui(ctx *cli.Context) error {
@@ -127,7 +128,7 @@ type nyaaCui struct {
 	MaxPages    int
 	LoadedPages int
 
-	TitleFilter *regexp.Regexp
+	TitleFilter   *regexp.Regexp
 	QualityFilter *regexp.Regexp
 
 	ResultsView      *gocui.View
@@ -394,7 +395,7 @@ func (nc *nyaaCui) ChangeFilter() {
 var tagRegex = `(?U)\[(.+)\]`
 
 func (nc *nyaaCui) FilterByTag() {
-	tags := make([]string, 1, len(nc.Results))
+	tags := make([]string, 1, len(nc.Results)+1)
 	tagsDup := make(map[string]struct{})
 	re := regexp.MustCompile(tagRegex)
 	for _, result := range nc.Results {
@@ -454,7 +455,7 @@ func (nc *nyaaCui) FilterByTag() {
 var qualityTagRegex = `(\d{3,4}p)`
 
 func (nc *nyaaCui) FilterByQuality() {
-	tags := make([]string, 1, len(nc.Results))
+	tags := make([]string, 1, len(nc.Results)+1)
 	tagsDup := make(map[string]struct{})
 	re := regexp.MustCompile(qualityTagRegex)
 	for _, result := range nc.Results {
