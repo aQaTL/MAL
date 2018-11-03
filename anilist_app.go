@@ -48,7 +48,7 @@ func AniListApp(app *cli.App) *cli.App {
 		},
 		cli.Command{
 			Name:     "eps",
-			Aliases:  []string{"episodes"},
+			Aliases:  []string{"episodes", "e"},
 			Category: "Update",
 			Usage: "Set the watched episodes value. " +
 				"If n not specified, the number will be increased by one",
