@@ -154,7 +154,6 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 
 		v.Title = "Search results"
 		v.SelBgColor = gocui.ColorGreen
-		v.SelBgColor = gocui.ColorGreen
 		v.SelFgColor = gocui.ColorBlack
 		v.Highlight = true
 		v.Editable = true

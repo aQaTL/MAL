@@ -49,21 +49,7 @@ query UserList ($userID: Int) {
 				progress
 				updatedAt
 				media {
-					id
-					idMal
-					title {
-						romaji
-						english
-						native
-						userPreferred
-					}
-					type
-					format
-					status
-					season
-					episodes
-					duration
-					synonyms
+					` + mediaFull + `
 				}
 			}
 			name
@@ -174,5 +160,85 @@ mutation ($id: Int) {
 	DeleteMediaListEntry(id: $id) {
 		deleted
 	}
+}
+`
+
+var mediaFull = `
+id
+idMal
+title {
+	romaji
+	english
+	native
+	userPreferred
+}
+type
+format
+status
+description
+startDate {
+	...FuzzyDateFields
+}
+endDate {
+	...FuzzyDateFields
+}
+season
+episodes
+duration
+chapters
+volumes
+countryOfOrigin
+isLicensed
+source
+hashtag
+trailer {
+	id
+	site
+}
+updatedAt
+coverImage {
+	large
+	medium
+}
+bannerImage
+genres
+synonyms
+averageScore
+meanScore
+popularity
+trending
+tags {
+	id
+	name
+	description
+	category
+	rank
+	isGeneralSpoiler
+	isMediaSpoiler
+	isAdult
+}
+isFavourite
+isAdult
+nextAiringEpisode {
+	id
+	airingAt
+	timeUntilAiring
+	episode
+}
+siteUrl
+`
+
+var queryMedia = `
+query ($page: Int, $perPage: Int, $search: String, $type: MediaType) {
+	Page(page: $page, perPage: $perPage) {
+		media(search: $search, type: $type) {
+			` + mediaFull + `		
+		}
+	}
+}
+fragment FuzzyDateFields on FuzzyDate {
+	year
+	month
+	day
 }
 `

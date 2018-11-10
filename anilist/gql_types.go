@@ -61,7 +61,7 @@ type MediaFull struct {
 	Id                int             `json:"id"`
 	IdMal             int             `json:"idMal"`
 	Title             MediaTitle      `json:"title"`
-	Type              string          `json:"type"`
+	Type              MediaType       `json:"type"`
 	Format            string          `json:"format"`
 	Status            string          `json:"status"`
 	Description       string          `json:"description"`
@@ -86,7 +86,7 @@ type MediaFull struct {
 	MeanScore         int             `json:"meanScore"`
 	Popularity        int             `json:"popularity"`
 	Trending          int             `json:"trending"`
-	Tags              MediaTag        `json:"tags"`
+	Tags              []MediaTag      `json:"tags"`
 	IsFavourite       bool            `json:"isFavourite"`
 	IsAdult           bool            `json:"isAdult"`
 	NextAiringEpisode AiringSchedule  `json:"nextAiringEpisode"`
@@ -99,6 +99,13 @@ type MediaTitle struct {
 	Native        string `json:"native"`
 	UserPreferred string `json:"userPreferred"`
 }
+
+type MediaType string
+
+const (
+	Anime = MediaType("ANIME")
+	Mange = MediaType("MANGA")
+)
 
 type FuzzyDate struct {
 	Year  int `json:"year"`

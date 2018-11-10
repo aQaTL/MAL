@@ -106,6 +106,22 @@ func DeleteMediaListEntry(entry *MediaListEntry, token oauth2.OAuthToken) error 
 	return nil
 }
 
+func Search(query string, page, perPage int, mtype MediaType, token oauth2.OAuthToken) ([]MediaFull, error) {
+	vars := make(map[string]interface{})
+	vars["page"] = page
+	vars["perPage"] = perPage
+	vars["search"] = query
+	vars["type"] = mtype
+
+	data := new(struct {
+		Page struct {
+			Media []MediaFull `json:"media"`
+		} `json:"Page"`
+	})
+	err := gqlErrorsHandler(graphQLRequestParsed(queryMedia, vars, token, data))
+	return data.Page.Media, err
+}
+
 func gqlErrorsHandler(gqlErrs []GqlError, err error) error {
 	if err != nil {
 		return err

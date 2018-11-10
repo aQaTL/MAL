@@ -142,6 +142,14 @@ func AniListApp(app *cli.App) *cli.App {
 			},
 		},
 		cli.Command{
+			Name: "search",
+			Category: "Action",
+			Usage: "Search online database",
+			UsageText: "mal search [search query]",
+			Action: alSearch,
+			SkipFlagParsing: true,
+		},
+		cli.Command{
 			Name:      "stats",
 			Category:  "Action",
 			Usage:     "Show your account statistics",
