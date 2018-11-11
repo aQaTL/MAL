@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/aqatl/mal/anilist"
-	"github.com/jroimartin/gocui"
-	"github.com/urfave/cli"
 	"strconv"
 	"strings"
+
+	"github.com/aqatl/mal/anilist"
 	"github.com/fatih/color"
+	"github.com/jroimartin/gocui"
+	"github.com/urfave/cli"
 )
 
 func alSearch(ctx *cli.Context) error {
@@ -22,6 +23,11 @@ func alSearch(ctx *cli.Context) error {
 		return err
 	}
 
+	descriptionReplacer := strings.NewReplacer("<br>", "")
+	for i := range results {
+		results[i].Description = descriptionReplacer.Replace(results[i].Description)
+	}
+
 	gui, err := gocui.NewGui(gocui.Output256)
 	defer gui.Close()
 	if err != nil {
@@ -33,6 +39,7 @@ func alSearch(ctx *cli.Context) error {
 		Gui:         gui,
 		SearchQuery: searchQuery,
 		Results:     results,
+		Mode:        scListView,
 	}
 
 	gui.SetManager(sc)
@@ -54,6 +61,13 @@ const (
 	scShortcutsView = "scShortcutsView"
 )
 
+type searchCuiMode uint8
+
+const (
+	scListView searchCuiMode = iota
+	scFullDetailsView
+)
+
 type searchCui struct {
 	Al  *AniList
 	Gui *gocui.Gui
@@ -61,6 +75,7 @@ type searchCui struct {
 	SearchQuery string
 	Results     []anilist.MediaFull
 
+	Mode   searchCuiMode
 	SelIdx int
 	Origin int
 }
@@ -70,23 +85,27 @@ var yellowC = color.New(color.FgYellow)
 var cyanC = color.New(color.FgCyan)
 
 func (sc *searchCui) Layout(gui *gocui.Gui) error {
-	w, h := gui.Size()
-
-	if v, err := gui.SetView(scFiltersView, 0, 0, w-1, 4); err != nil {
-		if err != gocui.ErrUnknownView {
-			return err
-		}
-
-		fmt.Fprintln(v, "Search:", sc.SearchQuery)
-		fmt.Fprintln(v, "Results:", len(sc.Results))
+	switch sc.Mode {
+	case scListView:
+		return sc.ListLayout()
+	case scFullDetailsView:
+		return sc.FullDetailsLayout()
+	default:
+		return fmt.Errorf("invalid mode: %d", sc.Mode)
 	}
+}
 
-	descriptionReplacer := strings.NewReplacer("<br>", "", "\n", " ")
+func (sc *searchCui) ListLayout() error {
+	w, h := sc.Gui.Size()
+
+	if err := sc.filtersView(); err != nil {
+		return err
+	}
 	y := 4
 	for i := sc.Origin; i < len(sc.Results) && y < h; i++ {
 		result := &sc.Results[i]
 
-		if v, err := gui.SetView(strconv.Itoa(result.Id), 0, y, w-1, y+7); err != nil {
+		if v, err := sc.Gui.SetView(strconv.Itoa(result.Id), 0, y, w-1, y+7); err != nil {
 			if err != gocui.ErrUnknownView {
 				return err
 			}
@@ -111,39 +130,101 @@ func (sc *searchCui) Layout(gui *gocui.Gui) error {
 				result.StartDate.Year,
 				result.Genres,
 			)))
-			fmt.Fprintln(v, descriptionReplacer.Replace(result.Description))
+			fmt.Fprintln(v, result.Description)
 
 		}
 		y += 6
 	}
 
 	if len(sc.Results) > 0 {
-		gui.SetCurrentView(strconv.Itoa(sc.Results[0].Id))
+		sc.Gui.SetCurrentView(strconv.Itoa(sc.Results[0].Id))
 	}
 
 	return nil
 }
 
+func (sc *searchCui) FullDetailsLayout() error {
+	w, h := sc.Gui.Size()
+
+	if err := sc.filtersView(); err != nil {
+		return err
+	}
+
+	if v, err := sc.Gui.SetView(strconv.Itoa(sc.Results[sc.SelIdx].Id), 0, 5, w-1, h-1); err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+
+		v.Wrap = true
+
+		fmt.Fprintln(v, sc.Results[sc.SelIdx].Description)
+	}
+
+	return nil
+}
+
+func (sc *searchCui) filtersView() error {
+	w, _ := sc.Gui.Size()
+	if v, err := sc.Gui.SetView(scFiltersView, 0, 0, w-1, 4); err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+
+		fmt.Fprintln(v, "Search:", sc.SearchQuery)
+		fmt.Fprintln(v, "Results:", len(sc.Results))
+	}
+	return nil
+}
+
 func (sc *searchCui) Edit(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
-	switch {
-	case ch == 'j' || key == gocui.KeyArrowDown:
-		if sc.SelIdx != len(sc.Results)-1 {
-			sc.SelIdx++
-			if _, h := sc.Gui.Size(); sc.SelIdx > (sc.Origin + int((h-6)/6)) {
-				sc.Origin++
+	switch sc.Mode {
+	case scListView:
+		switch {
+		case ch == 'j' || key == gocui.KeyArrowDown:
+			sc.nextResult()
+		case ch == 'k' || key == gocui.KeyArrowUp:
+			sc.previousResult()
+		case key == gocui.KeyEnter:
+			if len(sc.Results) == 0 || sc.SelIdx < 0 || sc.SelIdx > len(sc.Results)-1 {
+				return
 			}
-			sc.Gui.DeleteView(strconv.Itoa(sc.Results[sc.SelIdx].Id))
-			sc.Gui.DeleteView(strconv.Itoa(sc.Results[sc.SelIdx-1].Id))
-		}
-	case ch == 'k' || key == gocui.KeyArrowUp:
-		if sc.SelIdx != 0 {
-			sc.SelIdx--
-			if sc.SelIdx < sc.Origin {
-				sc.Origin--
+			sc.Mode = scFullDetailsView
+			for _, result := range sc.Results {
+				sc.Gui.DeleteView(strconv.Itoa(result.Id))
 			}
-			sc.Gui.DeleteView(strconv.Itoa(sc.Results[sc.SelIdx].Id))
-			sc.Gui.DeleteView(strconv.Itoa(sc.Results[sc.SelIdx+1].Id))
 		}
+	case scFullDetailsView:
+		switch {
+		case ch == 'j' || key == gocui.KeyArrowDown:
+			sc.nextResult()
+		case ch == 'k' || key == gocui.KeyArrowUp:
+			sc.previousResult()
+		case key == gocui.KeyEnter:
+			sc.Mode = scListView
+			sc.Gui.DeleteView(strconv.Itoa(sc.Results[sc.SelIdx].Id))
+		}
+	}
+}
+
+func (sc *searchCui) nextResult() {
+	if sc.SelIdx != len(sc.Results)-1 {
+		sc.SelIdx++
+		if _, h := sc.Gui.Size(); sc.SelIdx > (sc.Origin + int((h-6)/6)) {
+			sc.Origin++
+		}
+		sc.Gui.DeleteView(strconv.Itoa(sc.Results[sc.SelIdx].Id))
+		sc.Gui.DeleteView(strconv.Itoa(sc.Results[sc.SelIdx-1].Id))
+	}
+}
+
+func (sc *searchCui) previousResult() {
+	if sc.SelIdx != 0 {
+		sc.SelIdx--
+		if sc.SelIdx < sc.Origin {
+			sc.Origin--
+		}
+		sc.Gui.DeleteView(strconv.Itoa(sc.Results[sc.SelIdx].Id))
+		sc.Gui.DeleteView(strconv.Itoa(sc.Results[sc.SelIdx+1].Id))
 	}
 }
 
