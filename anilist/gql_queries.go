@@ -97,6 +97,36 @@ mutation ($listId: Int, $mediaId: Int, $status: MediaListStatus, $progress: Int,
 }
 `
 
+var addMediaListEntry = `
+mutation ($mediaId: Int, $status: MediaListStatus) {
+	SaveMediaListEntry (mediaId: $mediaId, status: $status) {
+		id
+		status
+		score(format: POINT_10)
+		progress
+		repeat
+		updatedAt
+		media {
+			id
+			idMal
+			title {
+				romaji
+				english
+				native
+				userPreferred
+			}
+			type
+			format
+			status
+			season
+			episodes
+			duration
+			synonyms
+		}
+	}
+}
+`
+
 var queryAiringSchedule = `
 query ($mediaId: Int, $episode: Int) {
 	AiringSchedule(mediaId: $mediaId, episode: $episode) {

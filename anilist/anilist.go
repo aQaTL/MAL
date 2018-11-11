@@ -17,7 +17,7 @@ const ALDomain = "https://anilist.co"
 
 var InvalidToken = errors.New("Invalid token")
 
-//TODO downloading only given list like watching/completed
+// TODO downloading only given list like watching/completed
 func QueryUserLists(userId int, token oauth2.OAuthToken) ([]MediaListGroup, error) {
 	vars := make(map[string]interface{})
 	vars["userID"] = userId
@@ -49,6 +49,19 @@ func SaveMediaListEntry(entry *MediaListEntry, token oauth2.OAuthToken) error {
 		*MediaListEntry `json:"SaveMediaListEntry"`
 	}{entry}
 	return gqlErrorsHandler(graphQLRequestParsed(saveMediaListEntry, vars, token, entryData))
+}
+
+func AddMediaListEntry(id int, status MediaListStatus, token oauth2.OAuthToken) (
+	MediaListEntry, error,
+) {
+	vars := make(map[string]interface{})
+	vars["mediaId"] = id
+	vars["status"] = string(status)
+	entryData := &struct {
+		MediaListEntry `json:"SaveMediaListEntry"`
+	}{}
+	err := gqlErrorsHandler(graphQLRequestParsed(addMediaListEntry, vars, token, entryData))
+	return entryData.MediaListEntry, err
 }
 
 func QueryAiringSchedule(mediaId, episode int, token oauth2.OAuthToken) (AiringSchedule, error) {
@@ -170,8 +183,8 @@ func graphQLRequestParsed(query string, vars map[string]interface{}, t oauth2.OA
 		return nil, err
 	}
 	if len(respData.Errors) > 0 {
-		//TODO include all error fields
-		//TODO better error handling -> maybe typedef error array as QueryErrors?
+		// TODO include all error fields
+		// TODO better error handling -> maybe typedef error array as QueryErrors?
 		return respData.Errors, nil
 	}
 	return nil, nil

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/aqatl/mal/anilist"
+	"github.com/aqatl/mal/dialog"
 	"github.com/fatih/color"
 	"github.com/jroimartin/gocui"
 	"github.com/urfave/cli"
@@ -84,18 +85,22 @@ var searchResultHighlight = color.New(color.FgBlack, color.BgYellow)
 var yellowC = color.New(color.FgYellow)
 var cyanC = color.New(color.FgCyan)
 
+func (sc *searchCui) setGuiKeyBindings(gui *gocui.Gui) {
+	gui.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quitGocui)
+}
+
 func (sc *searchCui) Layout(gui *gocui.Gui) error {
 	switch sc.Mode {
 	case scListView:
-		return sc.ListLayout()
+		return sc.listLayout()
 	case scFullDetailsView:
-		return sc.FullDetailsLayout()
+		return sc.fullDetailsLayout()
 	default:
 		return fmt.Errorf("invalid mode: %d", sc.Mode)
 	}
 }
 
-func (sc *searchCui) ListLayout() error {
+func (sc *searchCui) listLayout() error {
 	w, h := sc.Gui.Size()
 
 	if err := sc.filtersView(); err != nil {
@@ -143,7 +148,7 @@ func (sc *searchCui) ListLayout() error {
 	return nil
 }
 
-func (sc *searchCui) FullDetailsLayout() error {
+func (sc *searchCui) fullDetailsLayout() error {
 	w, h := sc.Gui.Size()
 
 	if err := sc.filtersView(); err != nil {
@@ -156,6 +161,10 @@ func (sc *searchCui) FullDetailsLayout() error {
 		}
 
 		v.Wrap = true
+		v.Editor = sc
+		v.Editable = true
+
+		sc.Gui.SetCurrentView(v.Name())
 
 		fmt.Fprintln(v, sc.Results[sc.SelIdx].Description)
 	}
@@ -169,6 +178,8 @@ func (sc *searchCui) filtersView() error {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
+
+		v.Editor = sc
 
 		fmt.Fprintln(v, "Search:", sc.SearchQuery)
 		fmt.Fprintln(v, "Results:", len(sc.Results))
@@ -202,6 +213,11 @@ func (sc *searchCui) Edit(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modif
 		case key == gocui.KeyEnter:
 			sc.Mode = scListView
 			sc.Gui.DeleteView(strconv.Itoa(sc.Results[sc.SelIdx].Id))
+		case ch == 'a':
+			if len(sc.Results) == 0 {
+				return
+			}
+			sc.addEntry()
 		}
 	}
 }
@@ -228,6 +244,22 @@ func (sc *searchCui) previousResult() {
 	}
 }
 
-func (sc *searchCui) setGuiKeyBindings(gui *gocui.Gui) {
-	gui.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quitGocui)
+func (sc *searchCui) addEntry() {
+	if entry := sc.Al.GetMediaListById(sc.Results[sc.SelIdx].Id); entry != nil {
+		dialog.JustShowOkDialog(sc.Gui, "Add entry",
+			"Entry already added (on list "+entry.Status.String()+")")
+		return
+	}
+
+	entry, err := anilist.AddMediaListEntry(sc.Results[sc.SelIdx].Id, anilist.Planning, sc.Al.Token)
+	if err != nil {
+		dialog.JustShowOkDialog(sc.Gui, "Error", err.Error())
+		return
+	}
+	dialog.JustShowOkDialog(sc.Gui, "Success", entry.Title.UserPreferred+" added")
+
+	sc.Al.List = append(sc.Al.List, entry)
+	sc.Gui.Update(func(gui *gocui.Gui) error {
+		return saveAniListAnimeLists(sc.Al)
+	})
 }

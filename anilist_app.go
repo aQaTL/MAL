@@ -142,11 +142,12 @@ func AniListApp(app *cli.App) *cli.App {
 			},
 		},
 		cli.Command{
-			Name: "search",
-			Category: "Action",
-			Usage: "Search online database",
-			UsageText: "mal search [search query]",
-			Action: alSearch,
+			Name:            "search",
+			Aliases:         []string{"add", "browse"},
+			Category:        "Action",
+			Usage:           "Browse online database and new entries",
+			UsageText:       "mal search [search query]",
+			Action:          alSearch,
 			SkipFlagParsing: true,
 		},
 		cli.Command{
