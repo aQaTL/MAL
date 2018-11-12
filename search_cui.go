@@ -29,7 +29,7 @@ func alSearch(ctx *cli.Context) error {
 		results[i].Description = descriptionReplacer.Replace(results[i].Description)
 	}
 
-	gui, err := gocui.NewGui(gocui.Output256)
+	gui, err := gocui.NewGui(gocui.OutputNormal)
 	defer gui.Close()
 	if err != nil {
 		return fmt.Errorf("gocui error: %v", err)
@@ -82,8 +82,8 @@ type searchCui struct {
 }
 
 var searchResultHighlight = color.New(color.FgBlack, color.BgYellow)
-var yellowC = color.New(color.FgYellow)
-var cyanC = color.New(color.FgCyan)
+var yellowC = color.New(color.FgYellow, color.Bold)
+var cyanC = color.New(color.FgCyan, color.Bold)
 
 func (sc *searchCui) setGuiKeyBindings(gui *gocui.Gui) {
 	gui.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quitGocui)
@@ -127,14 +127,16 @@ func (sc *searchCui) listLayout() error {
 			} else {
 				yellowC.Fprintln(v, result.Title.UserPreferred)
 			}
-			cyanC.Fprint(v, strings.ToLower(fmt.Sprintf("%s | %s | %d eps | %s %d | %v\n",
-				result.Format,
-				result.Status,
-				result.Episodes,
-				result.Season,
-				result.StartDate.Year,
-				result.Genres,
-			)))
+			cyanC.Fprint(v, strings.ToLower(
+				fmt.Sprintf("%s | %s | %d eps | %s %d | %d%% | %v\n",
+					result.Format,
+					result.Status,
+					result.Episodes,
+					result.Season,
+					result.StartDate.Year,
+					result.AverageScore,
+					result.Genres,
+				)))
 			fmt.Fprintln(v, result.Description)
 
 		}
