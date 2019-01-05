@@ -59,6 +59,7 @@ func alSearch(ctx *cli.Context) error {
 
 const (
 	scFiltersView   = "ncFiltersView"
+	scSearchView    = "scSearchView"
 	scShortcutsView = "scShortcutsView"
 )
 
@@ -85,6 +86,21 @@ var searchResultHighlight = color.New(color.FgBlack, color.BgYellow)
 var yellowC = color.New(color.FgYellow, color.Bold)
 var cyanC = color.New(color.FgCyan, color.Bold)
 
+// Safe to call from another goroutine
+func (sc *searchCui) reload() {
+	results, err := anilist.Search(sc.SearchQuery, 1, 50, anilist.Anime, sc.Al.Token)
+	if err != nil {
+		dialog.JustShowOkDialog(sc.Gui, "Error",
+			strings.TrimSpace(strings.Replace(err.Error(), "\n", " ", -1)))
+	}
+	sc.Gui.Update(func(gui *gocui.Gui) error {
+		sc.Results = results
+		sc.Gui.SetManager(sc)
+		sc.setGuiKeyBindings(sc.Gui)
+		return nil
+	})
+}
+
 func (sc *searchCui) setGuiKeyBindings(gui *gocui.Gui) {
 	gui.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quitGocui)
 }
@@ -102,8 +118,12 @@ func (sc *searchCui) Layout(gui *gocui.Gui) error {
 
 func (sc *searchCui) listLayout() error {
 	w, h := sc.Gui.Size()
+	h -= 4
 
 	if err := sc.filtersView(); err != nil {
+		return err
+	}
+	if err := sc.searchView(); err != nil {
 		return err
 	}
 	y := 4
@@ -123,9 +143,9 @@ func (sc *searchCui) listLayout() error {
 			sc.Gui.SetViewOnTop(v.Name())
 
 			if i == sc.SelIdx {
-				searchResultHighlight.Fprintln(v, result.Title.UserPreferred)
+				searchResultHighlight.Fprintf(v, "%s (%s)\n", result.Title.Romaji, result.Title.English)
 			} else {
-				yellowC.Fprintln(v, result.Title.UserPreferred)
+				yellowC.Fprintf(v, "%s (%s)\n", result.Title.Romaji, result.Title.English)
 			}
 			cyanC.Fprint(v, strings.ToLower(
 				fmt.Sprintf("%s | %s | %d eps | %s %d | %d%% | %v\n",
@@ -176,7 +196,8 @@ func (sc *searchCui) fullDetailsLayout() error {
 
 func (sc *searchCui) filtersView() error {
 	w, _ := sc.Gui.Size()
-	if v, err := sc.Gui.SetView(scFiltersView, 0, 0, w-1, 4); err != nil {
+	v, err := sc.Gui.SetView(scFiltersView, 0, 0, w-1, 4)
+	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
@@ -186,7 +207,33 @@ func (sc *searchCui) filtersView() error {
 		fmt.Fprintln(v, "Search:", sc.SearchQuery)
 		fmt.Fprintln(v, "Results:", len(sc.Results))
 	}
+
 	return nil
+}
+
+func (sc *searchCui) searchView() error {
+	w, h := sc.Gui.Size()
+	v, err := sc.Gui.SetView(scSearchView, 0, h-3, w-1, h-1)
+	if err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+
+		v.Title = "Search"
+		v.Frame = true
+		v.Editor = sc.searchViewEditor()
+
+		fmt.Fprint(v, sc.SearchQuery)
+	}
+
+	return nil
+}
+
+func (sc *searchCui) searchViewEditor() gocui.Editor {
+	return gocui.EditorFunc(func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
+		gocui.DefaultEditor.Edit(v, key, ch, mod)
+		go sc.reload()
+	})
 }
 
 func (sc *searchCui) Edit(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
