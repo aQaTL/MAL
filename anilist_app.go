@@ -93,6 +93,14 @@ func AniListApp(app *cli.App) *cli.App {
 			Action:    alSelectEntry,
 		},
 		cli.Command{
+			Name:      "selected",
+			Aliases:   []string{"curr"},
+			Category:  "Action",
+			Usage:     "Display info about currently selected entry",
+			UsageText: "mal curr",
+			Action:    alShowSelectedEntry,
+		},
+		cli.Command{
 			Name:     "nyaa",
 			Aliases:  []string{"n"},
 			Category: "Action",
@@ -292,7 +300,7 @@ func aniListDefaultAction(ctx *cli.Context) error {
 
 	var visibleEntries int
 	if visibleEntries = ctx.Int("max"); visibleEntries == 0 {
-		//`Max` flag not specified, get value from config
+		// `Max` flag not specified, get value from config
 		visibleEntries = cfg.MaxVisibleEntries
 	}
 	if visibleEntries > len(list) || visibleEntries < 0 || ctx.Bool("all") {
@@ -493,6 +501,15 @@ func alSaveSelection(cfg *Config, entry *anilist.MediaListEntry) {
 
 	fmt.Println("Selected entry:")
 	alPrintEntryDetails(entry)
+}
+
+func alShowSelectedEntry(ctx *cli.Context) error {
+	_, entry, _, err := loadAniListFull(ctx)
+	if err != nil {
+		return err
+	}
+	alPrintEntryDetails(entry)
+	return nil
 }
 
 func alNyaaWebsite(ctx *cli.Context) error {
