@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"net/url"
 	"sort"
 	"strconv"
@@ -230,6 +231,13 @@ func AniListApp(app *cli.App) *cli.App {
 					Action:    configChangeMax,
 				},
 				cli.Command{
+					Name:            "list-width",
+					Usage:           "Change the width of displayed list",
+					UsageText:       "mal cfg list-width [width]",
+					SkipFlagParsing: true,
+					Action:          configChangeListWidth,
+				},
+				cli.Command{
 					Name:      "status",
 					Usage:     "Status value of displayed entries",
 					UsageText: "mal cfg status [watching|planning|completed|dropped|paused|repeating]",
@@ -307,18 +315,23 @@ func aniListDefaultAction(ctx *cli.Context) error {
 		visibleEntries = len(list)
 	}
 
-	fmt.Printf("No%64s%8s%6s\n", "Title", "Eps", "Score")
-	fmt.Println(strings.Repeat("=", 80))
-	pattern := "%2d%64.64s%8s%6d\n"
+	numberFieldWidth := int(math.Max(math.Ceil(math.Log10(float64(visibleEntries+1))), 2))
+	titleWidth := cfg.ListWidth - numberFieldWidth - 8 - 6
+	fmt.Printf("%*s%*.*s%8s%6s\n",
+		numberFieldWidth, "No", titleWidth, titleWidth, "Title", "Eps", "Score")
+	fmt.Println(strings.Repeat("=", cfg.ListWidth))
+	pattern := "%*d%*.*s%8s%6d\n"
 	var entry *anilist.MediaListEntry
 	for i := visibleEntries - 1; i >= 0; i-- {
 		entry = &list[i]
 		if entry.Id == cfg.ALSelectedID {
-			color.HiYellow(pattern, i+1, entry.Title.UserPreferred,
+			color.HiYellow(pattern, numberFieldWidth, i+1, titleWidth, titleWidth,
+				entry.Title.UserPreferred,
 				fmt.Sprintf("%d/%d", entry.Progress, entry.Episodes),
 				entry.Score)
 		} else {
-			fmt.Printf(pattern, i+1, entry.Title.UserPreferred,
+			fmt.Printf(pattern, numberFieldWidth, i+1, titleWidth, titleWidth,
+				entry.Title.UserPreferred,
 				fmt.Sprintf("%d/%d", entry.Progress, entry.Episodes),
 				entry.Score)
 		}

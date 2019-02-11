@@ -22,6 +22,7 @@ type Config struct {
 	StatusAutoUpdateMode StatusAutoUpdateMode
 	Sorting              Sorting
 	LastUpdate           time.Time
+	ListWidth            int
 
 	BrowserPath       string
 	TorrentClientPath string
@@ -42,6 +43,7 @@ func NewConfig() *Config {
 		MaxVisibleEntries:    20,
 		StatusAutoUpdateMode: Off,
 		Sorting:              ByLastUpdated,
+		ListWidth:            80,
 
 		TorrentClientPath: "qbittorrent",
 
@@ -127,6 +129,19 @@ func configChangeMax(ctx *cli.Context) error {
 	}
 
 	cfg.MaxVisibleEntries = max
+	cfg.Save()
+	return nil
+}
+
+func configChangeListWidth(ctx *cli.Context) error {
+	cfg := LoadConfig()
+
+	width, err := strconv.Atoi(ctx.Args().First())
+	if err != nil || width < 20 {
+		return fmt.Errorf("invalid or too small width")
+	}
+
+	cfg.ListWidth = width
 	cfg.Save()
 	return nil
 }
