@@ -2,15 +2,10 @@
 
 This time with CLI
 
-- [mal in action](#mal-in-action) - video
 - [Dependencies](#dependencies)
 - [Quick start](#quick-start)
 - [Commands](#commands) - usage of some commands
 - [Examples](#examples) usage
-
-## mal in action
-
-[![asciicast](https://asciinema.org/a/DNvVHEadubTfNeZo6O84SVuaO.png)](https://asciinema.org/a/DNvVHEadubTfNeZo6O84SVuaO)
 
 ## Dependencies
 
