@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"math/rand"
 	"net/url"
 	"sort"
 	"strconv"
@@ -92,6 +93,12 @@ func AniListApp(app *cli.App) *cli.App {
 			Usage:     "Select an entry",
 			UsageText: "mal sel [entry title]",
 			Action:    alSelectEntry,
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "rand",
+					Usage: "select random entry from \"planning\" list",
+				},
+			},
 		},
 		cli.Command{
 			Name:      "selected",
@@ -478,6 +485,10 @@ func alDeleteEntry(ctx *cli.Context) error {
 }
 
 func alSelectEntry(ctx *cli.Context) error {
+	if ctx.Bool("rand") {
+		return alSelectRandomEntry(ctx)
+	}
+
 	al, err := loadAniList(ctx)
 	if err != nil {
 		return err
@@ -506,6 +517,19 @@ func alSelectEntry(ctx *cli.Context) error {
 	}
 
 	return alFuzzySelectEntry(ctx)
+}
+
+func alSelectRandomEntry(ctx *cli.Context) error {
+	al, err := loadAniList(ctx)
+	if err != nil {
+		return err
+	}
+
+	planToWatchList := alGetList(al, anilist.Planning)
+	idx := rand.New(rand.NewSource(time.Now().UnixNano())).Intn(len(planToWatchList))
+	alSaveSelection(LoadConfig(), &planToWatchList[idx])
+
+	return nil
 }
 
 func alSaveSelection(cfg *Config, entry *anilist.MediaListEntry) {
