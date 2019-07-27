@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aqatl/cliwait"
 	"github.com/aqatl/mal/mal"
 	"github.com/atotto/clipboard"
 	"github.com/fatih/color"
 	"github.com/skratchdot/open-golang/open"
 	"github.com/urfave/cli"
-	"github.com/aqatl/cliwait"
 )
 
 func MalApp(app *cli.App) *cli.App {

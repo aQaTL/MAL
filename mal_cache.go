@@ -1,20 +1,20 @@
 package main
 
 import (
-	"os"
-	"github.com/aqatl/mal/mal"
-	"time"
-	"encoding/xml"
-	"io"
-	"log"
-	"github.com/urfave/cli"
 	"bufio"
+	"encoding/xml"
 	"fmt"
-	"syscall"
-	"strings"
-	"io/ioutil"
-	"golang.org/x/crypto/ssh/terminal"
 	"github.com/aqatl/cliwait"
+	"github.com/aqatl/mal/mal"
+	"github.com/urfave/cli"
+	"golang.org/x/crypto/ssh/terminal"
+	"io"
+	"io/ioutil"
+	"log"
+	"os"
+	"strings"
+	"syscall"
+	"time"
 )
 
 func loadCredentials(ctx *cli.Context) string {

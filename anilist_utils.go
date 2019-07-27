@@ -2,12 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/aqatl/mal/anilist"
 	"github.com/aqatl/mal/oauth2"
+	"github.com/urfave/cli"
 	"os"
 	"time"
-	"fmt"
-	"github.com/urfave/cli"
 )
 
 type AniList struct {

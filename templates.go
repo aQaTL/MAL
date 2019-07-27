@@ -1,9 +1,9 @@
 package main
 
 import (
+	"github.com/aqatl/mal/mal"
 	"math"
 	"text/template"
-	"github.com/aqatl/mal/mal"
 )
 
 const PrettyListTemplate = `No{{printf "%57s" "Title"}}{{printf "%8s" "Eps"}}{{printf "%6s" "Score"}}{{printf "%7s" "ID"}}
@@ -28,7 +28,6 @@ var PrettyList = template.Must(
 )
 
 type PrettyListData struct {
-	List []*mal.Anime
+	List       []*mal.Anime
 	SelectedID int
 }
-

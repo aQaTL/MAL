@@ -36,6 +36,11 @@ func malNyaaCui(ctx *cli.Context) error {
 	)
 }
 
+type NyaaAlt struct {
+	Query string
+	Id    int
+}
+
 func alNyaaCui(ctx *cli.Context) error {
 	al, err := loadAniList(ctx)
 	if err != nil {
@@ -48,14 +53,33 @@ func alNyaaCui(ctx *cli.Context) error {
 		return fmt.Errorf("no entry found")
 	}
 
+	if alt := ctx.String("custom"); alt != "" {
+		addCustomAlt(alt+" "+strings.Join(ctx.Args(), " "), cfg)
+		return nil
+	}
+
+	var customAlt *string = nil
+	for _, alt := range cfg.NyaaAlts {
+		if alt.Id == entry.Id {
+			customAlt = &alt.Query
+			break
+		}
+	}
+
 	searchTerm := entry.Title.UserPreferred
 	if ctx.Bool("alt") {
 		fmt.Printf("Select desired title\n\n")
-		if searchTerm = chooseStrFromSlice(sliceOfEntryTitles(entry)); searchTerm == "" {
+		alts := sliceOfEntryTitles(entry)
+		if customAlt != nil {
+			alts = append(alts, *customAlt)
+		}
+		if searchTerm = chooseStrFromSlice(alts); searchTerm == "" {
 			return fmt.Errorf("no alternative titles")
 		}
 	} else if ctx.NArg() > 0 {
 		searchTerm = strings.Join(ctx.Args(), " ")
+	} else if customAlt != nil {
+		searchTerm = *customAlt
 	}
 
 	return startNyaaCui(
@@ -64,6 +88,22 @@ func alNyaaCui(ctx *cli.Context) error {
 		fmt.Sprintf("%s %d/%d", searchTerm, entry.Progress, entry.Episodes),
 		cfg.NyaaQuality,
 	)
+}
+
+func addCustomAlt(newAlt string, cfg *Config) {
+	// Assumes the entry ID is valid
+	defer cfg.Save()
+	for i, alt := range cfg.NyaaAlts {
+		if alt.Id == cfg.ALSelectedID {
+			cfg.NyaaAlts[i].Query = newAlt
+			return
+		}
+	}
+
+	cfg.NyaaAlts = append(cfg.NyaaAlts, NyaaAlt{
+		Id:    cfg.ALSelectedID,
+		Query: newAlt,
+	})
 }
 
 func startNyaaCui(cfg *Config, searchTerm, displayedInfo, quality string) error {
@@ -162,7 +202,7 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 		gui.SetCurrentView(ncResultsView)
 		nc.ResultsView = v
 
-		//TODO Better/clearer results printing
+		// TODO Better/clearer results printing
 		nc.DisplayedIndexes = make([]int, 0, len(nc.Results))
 		for i, result := range nc.Results {
 			if nc.TitleFilter != nil && !nc.TitleFilter.MatchString(result.Title) {
@@ -325,7 +365,7 @@ func (nc *nyaaCui) Download(yIdx int) {
 	cmd := exec.Command(nc.Cfg.TorrentClientPath, nc.Cfg.TorrentClientArgs...)
 	cmd.Args = append(cmd.Args, link)
 	if len(nc.Cfg.TorrentClientArgs) > 0 {
-		cmd.Args = cmd.Args[1:] //Why they include app name in the arguments???
+		cmd.Args = cmd.Args[1:] // Why they include app name in the arguments???
 	}
 	if err := cmd.Start(); err != nil {
 		gocuiReturnError(nc.Gui, err)

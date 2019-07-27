@@ -119,6 +119,10 @@ func AniListApp(app *cli.App) *cli.App {
 					Name:  "alt",
 					Usage: "choose an alternative title",
 				},
+				cli.StringFlag{
+					Name:  "custom",
+					Usage: "Adds custom nyaa search query for the selected entry",
+				},
 			},
 		},
 		cli.Command{

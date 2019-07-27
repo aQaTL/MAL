@@ -34,6 +34,8 @@ type Config struct {
 
 	ALSelectedID int
 	ALStatus     anilist.MediaListStatus
+
+	NyaaAlts []NyaaAlt
 }
 
 func NewConfig() *Config {

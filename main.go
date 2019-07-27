@@ -1,12 +1,12 @@
 package main
 
 import (
-	"os"
 	"fmt"
 	"github.com/fatih/color"
-	"path/filepath"
 	"github.com/urfave/cli"
 	"log"
+	"os"
+	"path/filepath"
 )
 
 var dataDir = filepath.Join(homeDir(), ".mal")
