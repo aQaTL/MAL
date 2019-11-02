@@ -82,12 +82,17 @@ func alNyaaCui(ctx *cli.Context) error {
 		searchTerm = *customAlt
 	}
 
-	return startNyaaCui(
+	if err := startNyaaCui(
 		cfg,
 		searchTerm,
 		fmt.Sprintf("%s %d/%d", searchTerm, entry.Progress, entry.Episodes),
 		cfg.NyaaQuality,
-	)
+	); err != nil {
+		return err
+	}
+
+	alPrintEntryDetails(entry)
+	return nil
 }
 
 func addCustomAlt(newAlt string, cfg *Config) {
