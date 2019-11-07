@@ -49,7 +49,7 @@ from your MAL. You can change the displayed list through some flags:
 --reversed                     reversed list order
 ```
 
-It's also good to run the app with `-r` (or `--refresh`) to update the cached list.
+It's also good to run the app with `-r` (or `--refresh`) to update the cached list. Mind that there is not refresh interval so you have to refresh manually.
 
 List of all commands and possible flags is available via `mal --help`. 
 
