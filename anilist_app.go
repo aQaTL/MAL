@@ -44,7 +44,7 @@ func AniListApp(app *cli.App) *cli.App {
 		cli.Command{
 			Name:      "switch",
 			Aliases:   []string{"s"},
-			Usage:     "Switches app mode to MyAnimeList",
+			Usage:     "Switches app mode between AniList and MyAnimeList",
 			UsageText: "mal mal",
 			Action:    switchToMal,
 		},

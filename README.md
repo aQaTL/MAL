@@ -30,24 +30,28 @@ Run mal with `-r` flag to refresh cached lists.
 
 ### MyAnimeList mode
 
+**Notice:** MAL API is shut down, currently it is not possible to access it.
+
 To switch between AniList and MyAnimeList mode use the `s` command (e.g. `mal s`).
 
 First, you need to give the app your credentials - username and password. To do that, execute 
 `mal --prompt-credentials --verify --save-password`. If everything went good, you should see 
 a list of 10 entries.
 
+### Default behavior
+
 The base command for everything is `mal`, which by default displays 10 last updated entries 
 from your MAL. You can change the displayed list through some flags: 
 
 ```
 --max value                    visible entries threshold (default: 0)
---a							   display all entries; same as max -1
+--a		               display all entries; same as max -1
 --status value                 display entries only with given status [watching|planning|completed|repeating|paused|dropped]
 --sort value                   display entries sorted by: [last-updated|title|episodes|score]
 --reversed                     reversed list order
 ```
 
-It's also good to run the app with `-r` (or `--refresh`) to update the cached list.
+It's also good to run the app with `-r` (or `--refresh`) to update the cached list. Mind that there is not refresh interval so you have to refresh manually.
 
 List of all commands and possible flags is available via `mal --help`. 
 
