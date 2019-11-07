@@ -30,6 +30,8 @@ Run mal with `-r` flag to refresh cached lists.
 
 ### MyAnimeList mode
 
+**Notice:** MAL API is shut down, currently it is not possible to access it.
+
 To switch between AniList and MyAnimeList mode use the `s` command (e.g. `mal s`).
 
 First, you need to give the app your credentials - username and password. To do that, execute 
