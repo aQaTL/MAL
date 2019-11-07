@@ -36,12 +36,14 @@ First, you need to give the app your credentials - username and password. To do 
 `mal --prompt-credentials --verify --save-password`. If everything went good, you should see 
 a list of 10 entries.
 
+### Default behavior
+
 The base command for everything is `mal`, which by default displays 10 last updated entries 
 from your MAL. You can change the displayed list through some flags: 
 
 ```
 --max value                    visible entries threshold (default: 0)
---a							   display all entries; same as max -1
+--a		               display all entries; same as max -1
 --status value                 display entries only with given status [watching|planning|completed|repeating|paused|dropped]
 --sort value                   display entries sorted by: [last-updated|title|episodes|score]
 --reversed                     reversed list order
