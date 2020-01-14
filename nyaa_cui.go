@@ -12,6 +12,7 @@ import (
 
 	"github.com/aqatl/mal/dialog"
 	ns "github.com/aqatl/mal/nyaa_scraper"
+	"github.com/atotto/clipboard"
 	"github.com/fatih/color"
 	"github.com/jroimartin/gocui"
 	"github.com/urfave/cli"
@@ -262,6 +263,7 @@ func (nc *nyaaCui) Layout(gui *gocui.Gui) error {
 		c := color.New(color.FgCyan).SprintFunc()
 		fmt.Fprintln(v,
 			c("d"), "download",
+			c("D"), "copy torrent link",
 			c("l"), "load next page",
 			c("c"), "category",
 			c("f"), "filters",
@@ -315,6 +317,11 @@ func (nc *nyaaCui) GetEditor() func(v *gocui.View, key gocui.Key, ch rune, mod g
 			nc.FilterByQuality()
 		case ch == 'r':
 			nc.Reload()
+		case ch == 'D':
+			_, y := v.Cursor()
+			_, oy := v.Origin()
+			y += oy
+			nc.CopyLinkToClipboard(y)
 		}
 	}
 }
@@ -374,6 +381,26 @@ func (nc *nyaaCui) Download(yIdx int) {
 	}
 	if err := cmd.Start(); err != nil {
 		gocuiReturnError(nc.Gui, err)
+	}
+}
+
+func (nc *nyaaCui) CopyLinkToClipboard(yIdx int) {
+	if yIdx >= len(nc.DisplayedIndexes) {
+		return
+	}
+
+	link := ""
+	if entry := nc.Results[nc.DisplayedIndexes[yIdx]]; entry.MagnetLink != "" {
+		link = entry.MagnetLink
+	} else if entry.TorrentLink != "" {
+		link = entry.TorrentLink
+	} else {
+		dialog.JustShowOkDialog(nc.Gui, "Error", "No link found")
+		return
+	}
+
+	if err := clipboard.WriteAll(link); err == nil {
+		dialog.JustShowOkDialog(nc.Gui, "Clipboard", "Link copied into clipboard")
 	}
 }
 
