@@ -373,12 +373,11 @@ func (nc *nyaaCui) Download(yIdx int) {
 		return
 	}
 
-	link = "\"" + link + "\""
-	cmd := exec.Command(nc.Cfg.TorrentClientPath, nc.Cfg.TorrentClientArgs...)
-	cmd.Args = append(cmd.Args, link)
-	if len(nc.Cfg.TorrentClientArgs) > 0 {
-		cmd.Args = cmd.Args[1:] // Why they include app name in the arguments???
-	}
+	args := make([]string, len(nc.Cfg.TorrentClientArgs))
+	copy(args, nc.Cfg.TorrentClientArgs)
+	args = append(args, link)
+
+	cmd := exec.Command(nc.Cfg.TorrentClientPath, args...)
 	if err := cmd.Start(); err != nil {
 		gocuiReturnError(nc.Gui, err)
 	}
