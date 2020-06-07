@@ -507,7 +507,7 @@ func alSelectEntry(ctx *cli.Context) error {
 	var matchedEntry *anilist.MediaListEntry = nil
 	for i, entry := range al.List {
 		title := entry.Title.Romaji + " " + entry.Title.English + " " + entry.Title.Native
-		if strings.ToLower(entry.Title.Romaji) == searchTerm {
+		if strings.ToLower(entry.Title.UserPreferred) == searchTerm {
 			matchedEntry = &al.List[i]
 			break
 		}
