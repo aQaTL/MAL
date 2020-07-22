@@ -235,7 +235,13 @@ func configChangeBrowser(ctx *cli.Context) error {
 func configChangeTorrent(ctx *cli.Context) error {
 	cfg := LoadConfig()
 
-	cfg.TorrentClientPath = ctx.Args().First()
+	clientPath := ctx.Args().First()
+
+	if clientPath == "" {
+		return fmt.Errorf("usage: mal cfg torrent <torrent path> <torrent args>")
+	}
+
+	cfg.TorrentClientPath = clientPath
 	cfg.TorrentClientArgs = ctx.Args().Tail()
 
 	cfg.Save()
