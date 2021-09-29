@@ -21,3 +21,6 @@ mal.iml
 
 # User files
 data
+
+# build directory
+build
