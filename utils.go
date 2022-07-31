@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/user"
 	"time"
+	"path/filepath"
 )
 
 func basicAuth(username, password string) string {
@@ -24,14 +25,27 @@ func reverseAnimeSlice(s []*mal.Anime) {
 	}
 }
 
-func homeDir() string {
+func getDataDir() string {
+	// Check for old cache dir at $HOME/.mal
 	usr, err := user.Current()
 	if err != nil {
-		log.Printf("Error getting current user: %v", err)
-		return ""
+		log.Printf("Error getting current user: %v. ignoring", err)
+	} else {
+		oldDir := filepath.Join(usr.HomeDir, ".mal")
+		_, err := os.Stat(oldDir)
+    if err == nil { return oldDir }
+    if os.IsExist(err) {
+			log.Printf("Error checking for old cache dir: %v, ignoring", err)
+		}
 	}
 
-	return usr.HomeDir
+	// Old dir isn't there, use new $XDG_CACHE_HOME/mal
+	dir, err := os.UserCacheDir()
+	if err != nil {
+		log.Printf("Error getting cache dir: %v", err)
+		return ""
+	}
+	return filepath.Join(dir, "mal")
 }
 
 func chooseStrFromSlice(alts []string) string {

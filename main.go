@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 )
 
-var dataDir = filepath.Join(homeDir(), ".mal")
+var dataDir = getDataDir()
 var (
 	AppConfigFile = filepath.Join(dataDir, "appConfig.json")
 
