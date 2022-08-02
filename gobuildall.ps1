@@ -70,8 +70,10 @@ $targets | ForEach-Object {
 			Write-Host "Compressing $BuildDir"
 
 			Set-Location $rootDir\build
-			7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on "$BuildDir.7z" (Get-ChildItem .\$BuildDir\*) | Out-Null
-			7z a -mx=9 -mfb=64 "$BuildDir.zip" (Get-ChildItem .\$BuildDir\*) | Out-Null
+			Compress-Archive `
+				-Path (Get-ChildItem .\$BuildDir\*) `
+				-DestinationPath "${BuildDir}.zip" `
+				-CompressionLevel Optimal
 		}
 }
 
