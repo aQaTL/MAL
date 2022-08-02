@@ -40,7 +40,7 @@ func getDataDir() string {
 	}
 
 	// Old dir isn't there, use new $XDG_CACHE_HOME/mal
-	dir, err := os.UserCacheDir()
+	dir, err := os.UserConfigDir()
 	if err != nil {
 		log.Printf("Error getting cache dir: %v", err)
 		return ""
