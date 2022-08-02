@@ -18,7 +18,11 @@ In order to have `mal copy` command working, you need to have either `xsel` or `
 If you have a working Go environment, you can download the app via `go get -u github.com/aqatl/mal`.
 Otherwise, download binaries from the [release](https://github.com/aQaTL/MAL/releases) page.
 
-Remember that everything is stored in `$XDG_CACHE_HOME/mal` or `%LocalAppData%\mal` (Windows).
+Config files location: 
+
+1. Linux: `$XDG_CONFIG_DIR/mal` (`$HOME/.config/mal` if `$XDG_CONFIG_DIR` env var is not set) .
+2. Windows: `%AppData%\mal`
+3. MacOS: `$HOME/Library/Application Support/mal`
 
 ### AniList mode
 

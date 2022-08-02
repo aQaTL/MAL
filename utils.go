@@ -4,14 +4,15 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/aqatl/mal/anilist"
-	"github.com/aqatl/mal/mal"
-	"github.com/fatih/color"
 	"log"
 	"os"
 	"os/user"
-	"time"
 	"path/filepath"
+	"time"
+
+	"github.com/aqatl/mal/anilist"
+	"github.com/aqatl/mal/mal"
+	"github.com/fatih/color"
 )
 
 func basicAuth(username, password string) string {
@@ -27,25 +28,27 @@ func reverseAnimeSlice(s []*mal.Anime) {
 
 func getDataDir() string {
 	// Check for old cache dir at $HOME/.mal
-	usr, err := user.Current()
-	if err != nil {
-		log.Printf("Error getting current user: %v. ignoring", err)
-	} else {
-		oldDir := filepath.Join(usr.HomeDir, ".mal")
-		_, err := os.Stat(oldDir)
-    if err == nil { return oldDir }
-    if os.IsExist(err) {
-			log.Printf("Error checking for old cache dir: %v, ignoring", err)
+	if usr, err := user.Current(); err == nil {
+		dir := filepath.Join(usr.HomeDir, ".mal")
+		if _, err := os.Stat(dir); err == nil {
+			return dir
+		} else {
+			if !os.IsNotExist(err) {
+				log.Printf("Error probing for %s: %v", dir, err)
+			}
 		}
+	} else {
+		log.Printf("Error getting current user: %v. ignoring", err)
 	}
 
-	// Old dir isn't there, use new $XDG_CACHE_HOME/mal
-	dir, err := os.UserConfigDir()
+	// Old cache dir not present, use user config dir
+	dataDir, err := os.UserConfigDir()
 	if err != nil {
-		log.Printf("Error getting cache dir: %v", err)
+		log.Printf("Error getting user config dir: %v", err)
 		return ""
 	}
-	return filepath.Join(dir, "mal")
+
+	return filepath.Join(dataDir, "mal")
 }
 
 func chooseStrFromSlice(alts []string) string {
