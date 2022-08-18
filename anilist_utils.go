@@ -201,16 +201,28 @@ func loadAniListAnimeLists(al *AniList) error {
 
 func fetchAniListAnimeLists(al *AniList) error {
 	lists, err := anilist.QueryUserListsWaitAnimation(al.User.Id, al.Token)
+	entryIds := make(map[int]bool)
 	for i := range lists {
-		al.List = append(al.List, lists[i].Entries...)
+		for _, entry := range lists[i].Entries {
+			if !entryIds[entry.Id] {
+				al.List = append(al.List, entry)
+				entryIds[entry.Id] = true
+			}
+		}
 	}
 	if err == anilist.InvalidToken {
 		if al.Token, err = requestAniListToken(); err != nil {
 			return err
 		}
 		lists, err = anilist.QueryUserListsWaitAnimation(al.User.Id, al.Token)
+		entryIds := make(map[int]bool)
 		for i := range lists {
-			al.List = append(al.List, lists[i].Entries...)
+			for _, entry := range lists[i].Entries {
+				if !entryIds[entry.Id] {
+					al.List = append(al.List, entry)
+					entryIds[entry.Id] = true
+				}
+			}
 		}
 	}
 	if err == nil {
