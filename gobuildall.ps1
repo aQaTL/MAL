@@ -5,6 +5,7 @@ New-Item -ItemType Directory -Force -Path @(
 	"build/windows_x86",
 	"build/linux_x64",
 	"build/linux_x86",
+	"build/linux_arm64",
 	"build/darwin_x64",
 	"build/darwin_x86",
 	"build/darwin_arm64"
@@ -38,6 +39,7 @@ class BuildTarget {
 $targets = @(
 	[BuildTarget]::new("linux", "amd64", "linux_x64"),
 	[BuildTarget]::new("linux", "386", "linux_x86"),
+	[BuildTarget]::new("linux", "arm64", "linux_arm64"),
 	[BuildTarget]::new("windows", "amd64", "windows_x64"),
 	[BuildTarget]::new("windows", "386", "windows_x86"),
 	[BuildTarget]::new("darwin", "amd64", "darwin_x64"),
