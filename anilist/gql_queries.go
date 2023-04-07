@@ -1,13 +1,13 @@
 package anilist
 
 var queryUserAnimeList = `
-query UserList ($userID: Int) {
+query UserList ($userID: Int, $scoreFormat: ScoreFormat) {
 	MediaListCollection (userId: $userID, type: ANIME) {
 		lists {
 			entries {
 				id
 				status
-				score(format: POINT_10)
+				score(format: $scoreFormat)
 				progress
 				repeat
 				updatedAt
@@ -81,6 +81,9 @@ query {
 		donatorTier
 		moderatorStatus
 		updatedAt
+		mediaListOptions {
+			scoreFormat
+		}
 	}
 }
 `

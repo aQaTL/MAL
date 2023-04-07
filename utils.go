@@ -74,10 +74,17 @@ func chooseStrFromSlice(alts []string) string {
 	return alts[idx-1]
 }
 
-func printEntryDetails(title, status string, watchedEps, eps, score int, lastUpdated time.Time) {
+func printEntryDetails(title, status string, watchedEps, eps int, score float32, scoreFormat anilist.ScoreFormat, lastUpdated time.Time) {
+	var scorePattern string
+	if scoreFormat == anilist.Point10Decimal {
+		scorePattern = "%.1f"
+	} else {
+		scorePattern = "%.f"
+	}
+
 	titleStr := color.HiYellowString("%s", title)
 	episodesStr := color.HiRedString("%d/%d", watchedEps, eps)
-	scoreStr := color.HiRedString("%d", score)
+	scoreStr := color.HiRedString(scorePattern, score)
 	statusStr := color.HiRedString("%s", status)
 	lastUpdatedStr := color.HiRedString("%v", lastUpdated)
 
@@ -96,11 +103,18 @@ func printEntryDetails(title, status string, watchedEps, eps, score int, lastUpd
 	)
 }
 
-func printEntryDetailsAfterUpdatedEpisodes(title, status string, epsBefore, epsNow, eps, score int, lastUpdated time.Time) {
+func printEntryDetailsAfterUpdatedEpisodes(title, status string, epsBefore, epsNow, eps int, score float32, scoreFormat anilist.ScoreFormat, lastUpdated time.Time) {
+	var scorePattern string
+	if scoreFormat == anilist.Point10Decimal {
+		scorePattern = "%.1f"
+	} else {
+		scorePattern = "%.f"
+	}
+
 	titleStr := color.HiYellowString("%s", title)
 	episodesBeforeStr := color.HiRedString("%d/%d", epsBefore, eps)
 	episodesAfterStr := color.HiRedString("%d/%d", epsNow, eps)
-	scoreStr := color.HiRedString("%d", score)
+	scoreStr := color.HiRedString(scorePattern, score)
 	statusStr := color.HiRedString("%s", status)
 	lastUpdatedStr := color.HiRedString("%v", lastUpdated)
 
@@ -126,7 +140,8 @@ func malPrintEntryDetails(entry *mal.Anime) {
 		entry.MyStatus.String(),
 		entry.WatchedEpisodes,
 		entry.Episodes,
-		int(entry.MyScore),
+		float32(int(entry.MyScore)),
+		anilist.Point10,
 		time.Unix(entry.LastUpdated, 0))
 }
 
@@ -137,20 +152,22 @@ func malPrintEntryDetailsAfterUpdatedEpisodes(entry *mal.Anime, epsBefore int) {
 		epsBefore,
 		entry.WatchedEpisodes,
 		entry.Episodes,
-		int(entry.MyScore),
+		float32(int(entry.MyScore)),
+		anilist.Point10,
 		time.Unix(entry.LastUpdated, 0))
 }
 
-func alPrintEntryDetails(entry *anilist.MediaListEntry) {
+func alPrintEntryDetails(entry *anilist.MediaListEntry, scoreFormat anilist.ScoreFormat) {
 	printEntryDetails(entry.Title.UserPreferred,
 		entry.Status.String(),
 		entry.Progress,
 		entry.Episodes,
 		entry.Score,
+		scoreFormat,
 		time.Unix(int64(entry.UpdatedAt), 0))
 }
 
-func alPrintEntryDetailsAfterUpdatedEpisodes(entry *anilist.MediaListEntry, epsBefore int) {
+func alPrintEntryDetailsAfterUpdatedEpisodes(entry *anilist.MediaListEntry, epsBefore int, scoreFormat anilist.ScoreFormat) {
 	printEntryDetailsAfterUpdatedEpisodes(
 		entry.Title.UserPreferred,
 		entry.Status.String(),
@@ -158,10 +175,11 @@ func alPrintEntryDetailsAfterUpdatedEpisodes(entry *anilist.MediaListEntry, epsB
 		entry.Progress,
 		entry.Episodes,
 		entry.Score,
+		scoreFormat,
 		time.Unix(int64(entry.UpdatedAt), 0))
 }
 
-//Returns true if file was loaded correctly
+// Returns true if file was loaded correctly
 func LoadJsonFile(file string, i interface{}) bool {
 	f, err := os.Open(file)
 	defer f.Close()
@@ -171,14 +189,12 @@ func LoadJsonFile(file string, i interface{}) bool {
 			return true
 		} else {
 			panic(err)
-			return false
 		}
 	}
 	if os.IsNotExist(err) {
 		return false
 	}
 	panic(err)
-	return false
 }
 
 func SaveJsonFile(file string, i interface{}) error {

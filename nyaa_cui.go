@@ -92,7 +92,7 @@ func alNyaaCui(ctx *cli.Context) error {
 		return err
 	}
 
-	alPrintEntryDetails(entry)
+	alPrintEntryDetails(entry, al.User.MediaListOptions.ScoreFormat)
 	return nil
 }
 

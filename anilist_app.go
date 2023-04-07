@@ -330,7 +330,12 @@ func aniListDefaultAction(ctx *cli.Context) error {
 	fmt.Printf("%*s%*.*s%8s%6s\n",
 		numberFieldWidth, "No", titleWidth, titleWidth, "Title", "Eps", "Score")
 	fmt.Println(strings.Repeat("=", cfg.ListWidth))
-	pattern := "%*d%*.*s%8s%6d\n"
+	var pattern string
+	if al.User.MediaListOptions.ScoreFormat == anilist.Point10Decimal {
+		pattern = "%*d%*.*s%8s%6.1f\n"
+	} else {
+		pattern = "%*d%*.*s%8s%6.f\n"
+	}
 	var entry *anilist.MediaListEntry
 	for i := visibleEntries - 1; i >= 0; i-- {
 		entry = &list[i]
@@ -393,7 +398,7 @@ func alSetEntryEpisodes(ctx *cli.Context) error {
 	}
 
 	fmt.Println("Updated successfully")
-	alPrintEntryDetailsAfterUpdatedEpisodes(entry, epsBefore)
+	alPrintEntryDetailsAfterUpdatedEpisodes(entry, epsBefore, al.User.MediaListOptions.ScoreFormat)
 	return nil
 }
 
@@ -437,7 +442,7 @@ func alSetEntryStatus(ctx *cli.Context) error {
 	}
 
 	fmt.Println("Updated successfully")
-	alPrintEntryDetails(entry)
+	alPrintEntryDetails(entry, al.User.MediaListOptions.ScoreFormat)
 	return nil
 }
 
@@ -451,9 +456,9 @@ func alSetEntryScore(ctx *cli.Context) error {
 		return err
 	}
 
-	score, err := strconv.Atoi(ctx.Args().First())
-	if err != nil || score < 0 || score > 10 {
-		return fmt.Errorf("invalid score; valid range: <0;10>")
+	score, err := parseScore(ctx.Args().First(), al.User.MediaListOptions.ScoreFormat)
+	if err != nil {
+		return err
 	}
 
 	entry.Score = score
@@ -466,8 +471,47 @@ func alSetEntryScore(ctx *cli.Context) error {
 	}
 
 	fmt.Println("Updated successfully")
-	alPrintEntryDetails(entry)
+	alPrintEntryDetails(entry, al.User.MediaListOptions.ScoreFormat)
 	return nil
+}
+
+func parseScore(score string, scoreFormat anilist.ScoreFormat) (float32, error) {
+	maxScore := 0
+	switch scoreFormat {
+	case anilist.Point10Decimal:
+		maxScore = 10
+		decimalPartIdx := strings.Index(score, ".")
+		if decimalPartIdx == -1 {
+			break
+		} else if decimalPartIdx == len(score)-1 {
+			score = score[:decimalPartIdx]
+			break
+		}
+
+		decimalPart := score[(decimalPartIdx + 1):]
+		if len(decimalPart) > 1 {
+			return 0, fmt.Errorf("invalid score; up to 1 decimal place allowed")
+		}
+
+		parsedScore, err := strconv.ParseFloat(score, 32)
+		if err != nil || parsedScore < 0.0 || parsedScore > 10.0 {
+			return 0, fmt.Errorf("invalid score; valid range: <0;10>")
+		}
+		return float32(parsedScore), err
+	case anilist.Point100:
+		maxScore = 100
+	case anilist.Point10:
+		maxScore = 10
+	case anilist.Point5:
+		maxScore = 5
+	case anilist.Point3:
+		maxScore = 3
+	}
+	parsedScore, err := strconv.Atoi(score)
+	if err != nil || parsedScore < 0 || parsedScore > maxScore {
+		return 0, fmt.Errorf("invalid score; valid range: <0;%d>", maxScore)
+	}
+	return float32(parsedScore), err
 }
 
 func alDeleteEntry(ctx *cli.Context) error {
@@ -481,7 +525,7 @@ func alDeleteEntry(ctx *cli.Context) error {
 	}
 
 	fmt.Println("Entry deleted successfully")
-	alPrintEntryDetails(entry)
+	alPrintEntryDetails(entry, al.User.MediaListOptions.ScoreFormat)
 
 	al.List = al.List.DeleteById(entry.ListId)
 	return saveAniListAnimeLists(al)
@@ -519,7 +563,7 @@ func alSelectEntry(ctx *cli.Context) error {
 		}
 	}
 	if matchedEntry != nil {
-		alSaveSelection(cfg, matchedEntry)
+		alSaveSelection(cfg, matchedEntry, al.User.MediaListOptions.ScoreFormat)
 		return nil
 	}
 
@@ -534,25 +578,25 @@ func alSelectRandomEntry(ctx *cli.Context) error {
 
 	planToWatchList := alGetList(al, anilist.Planning)
 	idx := rand.New(rand.NewSource(time.Now().UnixNano())).Intn(len(planToWatchList))
-	alSaveSelection(LoadConfig(), &planToWatchList[idx])
+	alSaveSelection(LoadConfig(), &planToWatchList[idx], al.User.MediaListOptions.ScoreFormat)
 
 	return nil
 }
 
-func alSaveSelection(cfg *Config, entry *anilist.MediaListEntry) {
+func alSaveSelection(cfg *Config, entry *anilist.MediaListEntry, scoreFormat anilist.ScoreFormat) {
 	cfg.ALSelectedID = entry.Id
 	cfg.Save()
 
 	fmt.Println("Selected entry:")
-	alPrintEntryDetails(entry)
+	alPrintEntryDetails(entry, scoreFormat)
 }
 
 func alShowSelectedEntry(ctx *cli.Context) error {
-	_, entry, _, err := loadAniListFull(ctx)
+	al, entry, _, err := loadAniListFull(ctx)
 	if err != nil {
 		return err
 	}
-	alPrintEntryDetails(entry)
+	alPrintEntryDetails(entry, al.User.MediaListOptions.ScoreFormat)
 	return nil
 }
 
@@ -586,7 +630,7 @@ func alNyaaWebsite(ctx *cli.Context) error {
 	}
 
 	fmt.Println("Searched for:")
-	alPrintEntryDetails(entry)
+	alPrintEntryDetails(entry, al.User.MediaListOptions.ScoreFormat)
 	return nil
 }
 
@@ -631,7 +675,7 @@ func alOpenWebsite(ctx *cli.Context) error {
 		}
 
 		fmt.Println("Opened website for:")
-		alPrintEntryDetails(entry)
+		alPrintEntryDetails(entry, al.User.MediaListOptions.ScoreFormat)
 		fmt.Fprintf(color.Output, "URL: %v\n", color.CyanString("%v", entryUrl))
 	} else {
 		fmt.Println("Nothing to open")
@@ -848,7 +892,7 @@ func alCopyIntoClipboard(ctx *cli.Context) error {
 }
 
 func alOpenEntrySite(ctx *cli.Context) error {
-	_, entry, cfg, err := loadAniListFull(ctx)
+	al, entry, cfg, err := loadAniListFull(ctx)
 	if err != nil {
 		return err
 	}
@@ -860,20 +904,20 @@ func alOpenEntrySite(ctx *cli.Context) error {
 		open.StartWith(uri, path)
 	}
 	fmt.Println("Opened website for:")
-	alPrintEntryDetails(entry)
+	alPrintEntryDetails(entry, al.User.MediaListOptions.ScoreFormat)
 
 	return nil
 }
 
 func alOpenMalSite(ctx *cli.Context) error {
-	_, entry, cfg, err := loadAniListFull(ctx)
+	al, entry, cfg, err := loadAniListFull(ctx)
 	if err != nil {
 		return err
 	}
 
 	openMalSite(cfg, entry.IdMal)
 	fmt.Println("Opened website for:")
-	alPrintEntryDetails(entry)
+	alPrintEntryDetails(entry, al.User.MediaListOptions.ScoreFormat)
 
 	return nil
 }

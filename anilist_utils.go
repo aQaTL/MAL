@@ -200,7 +200,7 @@ func loadAniListAnimeLists(al *AniList) error {
 }
 
 func fetchAniListAnimeLists(al *AniList) error {
-	lists, err := anilist.QueryUserListsWaitAnimation(al.User.Id, al.Token)
+	lists, err := anilist.QueryUserListsWaitAnimation(al.User.Id, al.User.MediaListOptions.ScoreFormat, al.Token)
 	entryIds := make(map[int]bool)
 	for i := range lists {
 		for _, entry := range lists[i].Entries {
@@ -214,7 +214,7 @@ func fetchAniListAnimeLists(al *AniList) error {
 		if al.Token, err = requestAniListToken(); err != nil {
 			return err
 		}
-		lists, err = anilist.QueryUserListsWaitAnimation(al.User.Id, al.Token)
+		lists, err = anilist.QueryUserListsWaitAnimation(al.User.Id, al.User.MediaListOptions.ScoreFormat, al.Token)
 		entryIds := make(map[int]bool)
 		for i := range lists {
 			for _, entry := range lists[i].Entries {

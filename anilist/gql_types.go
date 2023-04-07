@@ -5,21 +5,36 @@ import (
 )
 
 type User struct {
-	Id                      int       `json:"id"`
-	Name                    string    `json:"name"`
-	About                   string    `json:"about"`
-	BannerImage             string    `json:"bannerImage"`
-	Stats                   UserStats `json:"stats"`
-	UnreadNotificationCount int       `json:"unreadNotificationCount"`
-	SiteUrl                 string    `json:"siteUrl"`
-	DonatorTier             int       `json:"donatorTier"`
-	ModeratorStatus         string    `json:"moderatorStatus"`
-	UpdatedAt               int       `json:"updatedAt"`
+	Id                      int              `json:"id"`
+	Name                    string           `json:"name"`
+	About                   string           `json:"about"`
+	BannerImage             string           `json:"bannerImage"`
+	Stats                   UserStats        `json:"stats"`
+	UnreadNotificationCount int              `json:"unreadNotificationCount"`
+	SiteUrl                 string           `json:"siteUrl"`
+	DonatorTier             int              `json:"donatorTier"`
+	ModeratorStatus         string           `json:"moderatorStatus"`
+	UpdatedAt               int              `json:"updatedAt"`
+	MediaListOptions        MediaListOptions `json:"mediaListOptions"`
 }
 
 type UserStats struct {
 	WatchedTime int `json:"watchedTime"`
 }
+
+type MediaListOptions struct {
+	ScoreFormat ScoreFormat `json:"scoreFormat"`
+}
+
+type ScoreFormat string
+
+const (
+	Point100       ScoreFormat = "POINT_100"
+	Point10Decimal ScoreFormat = "POINT_10_DECIMAL"
+	Point10        ScoreFormat = "POINT_10"
+	Point5         ScoreFormat = "POINT_5"
+	Point3         ScoreFormat = "POINT_3"
+)
 
 type MediaListCollection struct {
 	Lists []MediaListGroup `json:"lists"`
@@ -36,7 +51,7 @@ type MediaListGroup struct {
 type MediaListEntry struct {
 	ListId    int             `json:"id"`
 	Status    MediaListStatus `json:"status"`
-	Score     int             `json:"score"`
+	Score     float32         `json:"score"`
 	Progress  int             `json:"progress"`
 	Repeat    int             `json:"repeat"`
 	UpdatedAt int             `json:"updatedAt"`

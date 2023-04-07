@@ -18,9 +18,10 @@ const ALDomain = "https://anilist.co"
 var InvalidToken = errors.New("Invalid token")
 
 // TODO downloading only given list like watching/completed
-func QueryUserLists(userId int, token oauth2.OAuthToken) ([]MediaListGroup, error) {
+func QueryUserLists(userId int, scoreFormat ScoreFormat, token oauth2.OAuthToken) ([]MediaListGroup, error) {
 	vars := make(map[string]interface{})
 	vars["userID"] = userId
+	vars["scoreFormat"] = scoreFormat
 
 	resp := struct {
 		MediaListCollection `json:"MediaListCollection"`

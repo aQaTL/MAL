@@ -5,11 +5,11 @@ import (
 	"github.com/aqatl/cliwait"
 )
 
-func QueryUserListsWaitAnimation(userId int, token oauth2.OAuthToken) ([]MediaListGroup, error) {
+func QueryUserListsWaitAnimation(userId int, scoreFormat ScoreFormat, token oauth2.OAuthToken) ([]MediaListGroup, error) {
 	var mlg []MediaListGroup
 	var err error
 	cliwait.DoFuncWithWaitAnimation("Queyring user list", func() {
-		mlg, err = QueryUserLists(userId, token)
+		mlg, err = QueryUserLists(userId, scoreFormat, token)
 	})
 	return mlg, err
 }

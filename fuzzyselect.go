@@ -91,7 +91,7 @@ func alFuzzySelectEntry(ctx *cli.Context) error {
 		if matchesLen := len(fsc.Matches); matchesLen == 0 {
 			return fmt.Errorf("no match found")
 		} else if matchesLen == 1 {
-			alSaveSelection(cfg, &list[fsc.Matches[0].Index])
+			alSaveSelection(cfg, &list[fsc.Matches[0].Index], al.User.MediaListOptions.ScoreFormat)
 			return nil
 		}
 	}
@@ -99,7 +99,7 @@ func alFuzzySelectEntry(ctx *cli.Context) error {
 	if err = startFuzzySelectCUI(fsc, initSearch); err != nil || fsc.MatchIdx == -1 {
 		return err
 	}
-	alSaveSelection(cfg, &list[fsc.MatchIdx])
+	alSaveSelection(cfg, &list[fsc.MatchIdx], al.User.MediaListOptions.ScoreFormat)
 
 	return nil
 }

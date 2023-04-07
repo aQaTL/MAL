@@ -50,7 +50,7 @@ func saveCredentials(credentials string) {
 	}
 }
 
-//Loads Client statistic data and returns Client's AnimeList
+// Loads Client statistic data and returns Client's AnimeList
 func loadData(c *mal.Client, ctx *cli.Context) (mal.AnimeList, error) {
 	var list []*mal.Anime
 
